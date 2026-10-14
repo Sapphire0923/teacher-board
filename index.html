@@ -313,6 +313,18 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 15px 18px 60px;
 
 /* ---------- 表格 ---------- */
 .wrap-table { overflow: auto; max-height: calc(100vh - 190px); border-radius: var(--radius); box-shadow: var(--shadow); }
+
+/* 成绩页：内容区不再自己滚，让里面那张表格成为唯一的滚动容器 —— 之前
+   section.list 和 .wrap-table 各有一条竖滚动条，右边并排出现两条，拉着别扭
+   （2026-10-14 用户反馈）。solo 由 JS 按 mode 加减，只作用于成绩页；
+   卡片/表格页照旧（那边 wrap-table 的 max-height 正好填满，不会多出一条）。 */
+/* 保留 overflow-y:auto —— 正常情况内容正好铺满、不会出条；万一窗口特别矮
+   （标签行 + 统计卡 + 表格最小高度挤不下），宁可多出一条兜底也不要被裁掉看不全。 */
+section.list.solo { display: flex; flex-direction: column; padding-bottom: 18px; }
+section.list.solo > #stage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+/* 表格铺满剩下的高度自己滚：标题、统计卡、表头都留在原地不动，只有名单在滚。
+   人数少时表格盒子也不会缩成一条（有背景，看起来就是一张空白的成绩单）。 */
+section.list.solo .wrap-table { flex: 1 1 auto; min-height: 60px; max-height: none; background: var(--panel); }
 table.grid { width: 100%; border-collapse: collapse; background: var(--panel); }
 table.grid th, table.grid td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; font-size: 13px; white-space: nowrap; }
 table.grid th { background: var(--panel-2); font-weight: 650; color: var(--ink-2); position: sticky; top: 0; z-index: 1; cursor: pointer; user-select: none; }
@@ -3086,7 +3098,15 @@ input[type=range] { accent-color: var(--accent); }
     </div>`;
   }
 
+  // 成绩页专用：把内容区切成「不自己滚、由里面那张表格滚」，
+  // 免掉两条竖滚动条并排（见 style.css 里 section.list.solo 的注释）。
+  function setListSolo(on) {
+    const sec = document.querySelector("section.list");
+    if (sec) sec.classList.toggle("solo", !!on);
+  }
+
   function renderStage(keepDetail) {
+    setListSolo(view.mode === "score");
     // 独立页面（打卡 / 成绩）不渲染学员列表，但**必须处理详情面板的开关**。
     // 否则在成绩页点开某个学生后按「关闭」，view.selected 清了、面板却没人去关，
     // 看上去就是「关闭按钮点不掉」。
