@@ -3959,7 +3959,7 @@ input[type=range] { accent-color: var(--accent); }
     return msgs;
   }
 
-  const coreName = (n) => String(n).replace(/(同学|妈妈|爸爸|家长|妈妈咪|老师)$/g, "").trim();
+  const coreName = (n) => String(n).replace(/(同学|学生|妈妈|爸爸|家长|妈妈咪|老师)$/g, "").trim();
 
   function matchStudents(msg) {
     const hay = msg.speaker + "\n" + msg.text;
@@ -4199,11 +4199,40 @@ input[type=range] { accent-color: var(--accent); }
    *   「李老师 我们文然语文考了107分，选择和阅读错的都比较多」（一句家长原话，也能认出「文然」+107）
    */
   function parseScoreRows(raw) {
-    const out = [];
-    for (const rawLine of normScoreText(raw).split(/[\n\r]+/)) {
-      const clean = rawLine.trim().replace(/^\s*(?:\d+\s*[.、)）]|[-–—•*])\s*/, "").trim();
-      if (!clean) continue;
+    // 先按行拆，并做一个「姓名行 + 分数行」的合并：
+    // 有些系统导出的成绩是两行一对（「孟昭森学生」/「语文科目分数:110.0」），
+    // 光按单行解析会把姓名和分数拆散，一个认不出、一个没分数。
+    const rawLines = normScoreText(raw).split(/[\n\r]+/)
+      .map((l) => l.trim().replace(/^\s*(?:\d+\s*[.、)）]|[-–—•*])\s*/, "").trim())
+      .filter((l) => l);
 
+    // 下一行是「分数行」的判据：有数字，且去掉科目/标签字样后基本只剩数字。
+    // 例：「语文科目分数:110.0」「总分 110」「110」「成绩:110」
+    const looksLikeScoreOnly = (l) => {
+      if (!/\d/.test(l)) return false;
+      const stripped = l
+        .replace(/[\u4e00-\u9fa5]/g, "")     // 去掉所有汉字（科目标签）
+        .replace(/[A-Za-z]/g, "")            // 去掉字母
+        .replace(/[^\d./%\s]/g, "")          // 只留数字和分数符号
+        .trim();
+      return stripped.length > 0 && /\d/.test(stripped);
+    };
+
+    const lines = [];
+    for (let i = 0; i < rawLines.length; i++) {
+      const cur = rawLines[i];
+      const next = rawLines[i + 1];
+      // 本行认得出学生、但没有数字；下一行只有分数 → 合并成一行
+      const curHasNum = /\d/.test(cur);
+      const curHasStu = !!matchLineStudent(cur);
+      if (curHasStu && !curHasNum && next && looksLikeScoreOnly(next)) {
+        lines.push(cur + " " + next);
+        i++;
+      } else lines.push(cur);
+    }
+
+    const out = [];
+    for (const clean of lines) {
       let sid = "", name = "", rest = clean;
 
       const hit = matchLineStudent(clean);
