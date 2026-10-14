@@ -2982,10 +2982,11 @@ input[type=range] { accent-color: var(--accent); }
   }
 
   function renderStage(keepDetail) {
-    // 语文打卡是一个独立页面，不走学员筛选列表
-    if (view.mode === "checkin") { renderCheckin(); return; }
-    // 成绩页：按考试分类看全班分数，也是独立页面
-    if (view.mode === "score") { renderScorePage(); return; }
+    // 独立页面（打卡 / 成绩）不渲染学员列表，但**必须处理详情面板的开关**。
+    // 否则在成绩页点开某个学生后按「关闭」，view.selected 清了、面板却没人去关，
+    // 看上去就是「关闭按钮点不掉」。
+    if (view.mode === "checkin") { closeDetailIfNotSelected(); renderCheckin(); return; }
+    if (view.mode === "score") { closeDetailIfNotSelected(); renderScorePage(); return; }
 
     // 今日队列为空就自动排 5 个（必须在 visible() 之前，否则筛出来是空的）
     if (view.filter.kind === "today") {
@@ -3544,6 +3545,23 @@ input[type=range] { accent-color: var(--accent); }
       <button class="btn aibtn" data-ai="${e.id}">🤖 用 DeepSeek 分析这份卷子</button>
       <span class="hint-inline">${hint}${aiKey() ? "" : " · 还没填 API key"}</span>
     </div>`;
+  }
+
+  /**
+   * 独立页面（打卡 / 成绩）不渲染学员列表，所以详情面板是本页**唯一**要单独管的东西。
+   *
+   * 只在「已经没有选中的人、但面板还开着」时才去关它；
+   * 选中的人还在就原样留着，避免每次重绘详情面板被重建（会打断正在输入的文字）。
+   */
+  function closeDetailIfNotSelected() {
+    const d = $("detail");
+    if (!d) return;
+    if (view.selected && DB.students.some((x) => x.id === view.selected)) return;
+    if (!d.classList.contains("open") && !d.innerHTML) return;
+    d.classList.remove("open");
+    d.innerHTML = "";
+    _detScroll = 0;
+    _detId = null;
   }
 
   function renderDetail() {
