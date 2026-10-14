@@ -614,7 +614,8 @@ input[type=range] { accent-color: var(--accent); }
   /* 表格跨页时表头重复，老师翻页不会看串行 */
   #printHost table.ptable thead { display: table-header-group; }
   #printHost table.ptable tr { page-break-inside: avoid; }
-  @page { size: A4 portrait; margin: 14mm 12mm; }
+  /* 只有 4 列但行数多，纵版每页能多装十来行，比横版省纸 */
+  @page { size: A4 portrait; margin: 12mm 14mm; }
 }
 
 </style>
