@@ -2291,6 +2291,8 @@ input[type=range] { accent-color: var(--accent); }
     $("obCsv").onclick = () => $("fileCsv").click();
     $("fileCsv").onchange = (e) => e.target.files[0] && handleCsvFile(e.target.files[0]);
     $("obPaste").onclick = pasteTable;
+    $("obSet").onclick = openSettings;
+    $("obData").onclick = () => { refreshAttStat(); $("mData").classList.add("open"); };
     bindDrop($("drop"));
   }
 
