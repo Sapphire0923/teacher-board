@@ -597,6 +597,26 @@ input[type=range] { accent-color: var(--accent); }
   aside.side { display: none; }
   .stats { display: none; }
 }
+
+/* ---------- 打印（导出 PDF 走这里） ---------- */
+/* 打印容器平时不占位、不显示；只有点了「导出 PDF」才填内容并切到打印视图 */
+#printHost { display: none; }
+#printHost h1 { font-size: 19px; margin: 0 0 4px; }
+#printHost .pmeta { font-size: 12px; color: #555; margin-bottom: 10px; }
+#printHost table.ptable { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+#printHost table.ptable th, #printHost table.ptable td { border: 1px solid #999; padding: 5px 9px; text-align: left; }
+#printHost table.ptable th { background: #eee; }
+
+@media print {
+  /* 打印时只留打印容器，界面外壳全部藏掉 */
+  body.printing > *:not(#printHost) { display: none !important; }
+  body.printing #printHost { display: block !important; }
+  /* 表格跨页时表头重复，老师翻页不会看串行 */
+  #printHost table.ptable thead { display: table-header-group; }
+  #printHost table.ptable tr { page-break-inside: avoid; }
+  @page { size: A4 portrait; margin: 14mm 12mm; }
+}
+
 </style>
 </head>
 <body>
@@ -804,6 +824,9 @@ input[type=range] { accent-color: var(--accent); }
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- 打印专用容器：平时是空的，点「导出 PDF」时才填内容 -->
+<div id="printHost"></div>
 
 <!-- 看图 -->
 <div class="lightbox" id="lightbox">
@@ -1331,8 +1354,89 @@ input[type=range] { accent-color: var(--accent); }
     return new Blob([...parts, ...central, eocd], { type: "application/zip" });
   }
 
+  /* ---------------------------------------------------------------- xlsx 写 */
+
+  /**
+   * 造一个最小的 .xlsx（Excel 能打开、能打印）。
+   *
+   * 为什么要自己写：这个应用不引第三方库，而 xlsx 本质就是个 zip ——
+   * 上面那个 makeZip 正好能当容器，再手写几个固定 XML 零件就成。
+   *
+   * sheets 形如 [{ name:"名单", widths:[6,10,8], rows:[[...],[...]] }]
+   * 单元格值可以是 string | number。字符串一律走 inlineStr，免得再维护 sharedStrings。
+   */
+  function makeXlsx(sheets) {
+    const enc = new TextEncoder();
+    const u8 = (s) => enc.encode(s);
+
+    const escXml = (v) => String(v)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      // XML 1.0 不允许这些控制字符，出现就整份文件打不开
+      .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "");
+
+    /** 第 1 列 → A、第 27 列 → AA */
+    const colName = (n) => {
+      let s = "";
+      while (n > 0) { const r = (n - 1) % 26; s = String.fromCharCode(65 + r) + s; n = Math.floor((n - 1) / 26); }
+      return s;
+    };
+
+    const sheetXml = (sh) => {
+      const cols = (sh.widths && sh.widths.length)
+        ? `<cols>${sh.widths.map((w, i) =>
+            `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("")}</cols>`
+        : "";
+      const rows = (sh.rows || []).map((row, ri) => {
+        const cells = row.map((v, ci) => {
+          if (v === null || v === undefined || v === "") return "";
+          const ref = colName(ci + 1) + (ri + 1);
+          // 表头（第 1 行）加粗、冻结时不加样式也能看清；正文用 s=1 走普通样式
+          const st = ri === 0 ? 1 : 0;
+          if (typeof v === "number" && isFinite(v)) {
+            return `<c r="${ref}" s="${st}"><v>${v}</v></c>`;
+          }
+          return `<c r="${ref}" s="${st}" t="inlineStr"><is><t xml:space="preserve">${escXml(v)}</t></is></c>`;
+        }).join("");
+        return `<row r="${ri + 1}">${cells}</row>`;
+      }).join("");
+      // 首行冻结 + 自动筛选，方便老师直接在 Excel 里排序
+      return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="18"/>${cols}<sheetData>${rows}</sheetData><autoFilter ref="A1:${colName(Math.max(1, Math.max(0, ...(sh.rows || []).map((r) => r.length))))}${(sh.rows || []).length}"/></worksheet>`;
+    };
+
+    const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="等线"/></font><font><b/><sz val="11"/><name val="等线"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="center"/></xf><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment vertical="center"/></xf></cellXfs><cellStyles count="1"><cellStyle name="常规" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+
+    const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheets.map((sh, i) =>
+      `<sheet name="${escXml(sh.name || "Sheet" + (i + 1))}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join("")}</sheets></workbook>`;
+
+    const wbRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((sh, i) =>
+      `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join("")}<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+
+    const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${sheets.map((sh, i) =>
+      `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("")}<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`;
+
+    const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+
+    const entries = [
+      { name: "[Content_Types].xml", data: u8(contentTypes) },
+      { name: "_rels/.rels", data: u8(rootRels) },
+      { name: "xl/workbook.xml", data: u8(workbook) },
+      { name: "xl/_rels/workbook.xml.rels", data: u8(wbRels) },
+      { name: "xl/styles.xml", data: u8(styles) },
+      ...sheets.map((sh, i) => ({ name: `xl/worksheets/sheet${i + 1}.xml`, data: u8(sheetXml(sh)) })),
+    ];
+
+    return makeZip(entries);
+  }
+
   root.FileBox = {
-    put, get, del, all, keys, putMany, estimate, shrink, makeZip, crc32,
+    put, get, del, all, keys, putMany, estimate, shrink, makeZip, crc32, makeXlsx,
   };
 })(typeof globalThis !== "undefined" ? globalThis : window);
 </script>
@@ -4845,6 +4949,85 @@ input[type=range] { accent-color: var(--accent); }
     : (Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : v.toFixed(1));
   const fmtPct = (v) => (v === null || v === undefined || !isFinite(v)) ? "—" : Math.round(v * 100) + "%";
 
+  /** 某场考试的导出用行：名次 + 姓名 + 分数 + 得分率。打印和 Excel 共用一份数据 */
+  function scoreRowsFor(name) {
+    const recs = examRecords(name);
+    return recs.map((r, i) => ({
+      rank: i + 1,
+      name: r.sname,
+      score: r.score,
+      full: typeof r.full === "number" ? r.full : "",
+      rate: typeof r.full === "number" && r.full ? Math.round(r.score / r.full * 100) + "%" : "",
+    }));
+  }
+
+  /** 文件名里不能带 \ / : * ? " < > |，统一换成 - */
+  function safeFileName(s) {
+    return String(s || "").replace(/[\\/:*?"<>|]/g, "-").trim() || "名单";
+  }
+
+  /** 导出这场考试的名单为 .xlsx（老师可直接在 Excel 里排序、打印） */
+  function exportScoreXlsx(name) {
+    const c = DB.config;
+    const full = examFull(name);
+    const rows = scoreRowsFor(name);
+    if (!rows.length) { toast("这场考试还没有人录分数"); return; }
+    const head = ["名次", "姓名", "分数", "满分", "得分率"];
+    const body = rows.map((r) => [r.rank, r.name, r.score, full, r.rate]);
+    const st = examStats(name);
+    // 末尾附一行统计，老师看排名表时不用再自己算
+    body.push([]);
+    body.push(["参考人数", rows.length]);
+    if (st.avg !== null) body.push(["平均分", Number(fmtScore(st.avg))]);
+    if (st.max !== null) body.push(["最高分", st.max]);
+    if (st.min !== null) body.push(["最低分", st.min]);
+    if (st.passRate !== null) body.push(["及格率", fmtPct(st.passRate)]);
+    if (st.goodRate !== null) body.push(["优秀率", fmtPct(st.goodRate)]);
+
+    const blob = FB().makeXlsx([{
+      name: safeFileName(name),
+      widths: [6, 14, 8, 8, 9],
+      rows: [head, ...body],
+    }]);
+    downloadBlob(`${safeFileName(c.className || "学员")}_${safeFileName(name)}.xlsx`, blob);
+    toast("已导出 Excel");
+  }
+
+  /**
+   * 打印当前的成绩表。
+   *
+   * 不引 PDF 库：直接把「这张表 + 一个标题」渲染成打印专用的 DOM，
+   * 然后调 window.print()，老师在打印对话框里选「另存为 PDF」即可。
+   * 这样中文不用内嵌字体，文件也不虚。
+   */
+  function printScore(name) {
+    const rows = scoreRowsFor(name);
+    if (!rows.length) { toast("这场考试还没有人录分数"); return; }
+    const c = DB.config;
+    const full = examFull(name);
+    const host = $("printHost");
+    if (!host) { window.print(); return; }
+    host.innerHTML = `
+      <h1>${esc(c.className || "学员")} · ${esc(name)}</h1>
+      <div class="pmeta">共 ${rows.length} 人 · 满分 ${full} · 打印日期 ${esc(todayStr())}</div>
+      <table class="ptable">
+        <thead><tr><th>名次</th><th>姓名</th><th>分数</th><th>得分率</th></tr></thead>
+        <tbody>${rows.map((r) => `<tr>
+          <td>${r.rank}</td><td>${esc(r.name)}</td><td>${r.score}/${full}</td><td>${esc(r.rate)}</td>
+        </tr>`).join("")}</tbody>
+      </table>`;
+    document.body.classList.add("printing");
+    const done = () => {
+      document.body.classList.remove("printing");
+      host.innerHTML = "";
+      window.removeEventListener("afterprint", done);
+    };
+    window.addEventListener("afterprint", done);
+    // 有些浏览器（含 Edge 的部分版本）不触发 afterprint，兜个底防打印样式残留
+    setTimeout(done, 60000);
+    window.print();
+  }
+
   function renderScorePage() {
     const stage = $("stage");
     const listbar = $("listbar");
@@ -4932,6 +5115,8 @@ input[type=range] { accent-color: var(--accent); }
         <div class="sc-detail-h">
           <div class="sc-detail-title"><span>${esc(cur)}</span>
             <span class="sc-actions">
+              <button class="btn ghost" id="scExportX">导出 Excel</button>
+              <button class="btn ghost" id="scExportP">导出 PDF</button>
               <button class="btn ghost" id="scRename">改名</button>
               <button class="btn ghost" id="scDel" style="color:var(--red)">删除这场考试</button>
             </span>
@@ -4977,6 +5162,8 @@ input[type=range] { accent-color: var(--accent); }
     // 加 / 导入 / 改名 / 删
     const a = $("scAdd"); if (a) a.onclick = addExam;
     const b = $("scImport"); if (b) b.onclick = openScore;
+    const ex1 = $("scExportX"); if (ex1) ex1.onclick = () => exportScoreXlsx(cur);
+    const ex2 = $("scExportP"); if (ex2) ex2.onclick = () => printScore(cur);
     const rn = $("scRename");
     if (rn) rn.onclick = () => {
       const nn = (window.prompt(`把「${cur}」改成：`, cur) || "").trim();
