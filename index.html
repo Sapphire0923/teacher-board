@@ -232,11 +232,29 @@ aside.side { width: 208px; flex: 0 0 208px; background: var(--panel);
 .sc-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
 .sc-tabs .nav { width: auto; padding: 6px 12px; border: 1px solid var(--line); border-radius: 8px; }
 .sc-tabs .nav.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); font-weight: 600; }
+.sc-tabs .nav .a { font-size: 11px; color: var(--ink-3); padding-left: 6px; font-variant-numeric: tabular-nums; }
+.sc-tabs .nav.on .a { color: var(--accent); opacity: .75; }
 .sc-detail-h { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 12px 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
 .sc-detail-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .sc-detail-title .sc-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .sc-detail-src { font-size: 12px; color: var(--ink-3); margin-top: 4px; }
+
+/* ---------- 成绩统计条（平均分/最高最低/及格率…） ---------- */
+.sc-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.sc-stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 8px 14px; min-width: 92px; box-shadow: var(--shadow); }
+.sc-stat .k { display: block; font-size: 11px; color: var(--ink-3); margin-bottom: 2px; }
+.sc-stat b { font-size: 17px; color: var(--ink); font-weight: 700; }
+.sc-stat .s { display: block; font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+
+/* 表格底部的统计行 / 与平均分的差 */
+table.grid tfoot .stat-row td { background: var(--panel-2); font-size: 12px; color: var(--ink-2);
+  border-top: 1px solid var(--line-strong); }
+table.grid tfoot .stat-row td:first-child { font-weight: 600; color: var(--ink); }
+table.grid tfoot .stat-row td.avg { color: var(--accent); font-weight: 600; }
+table.grid td.diff.up { color: #1f8a5f; }
+table.grid td.diff.down { color: #c0392b; }
 
 /* ---------- 姓名联想下拉 ---------- */
 .ac-list { position: fixed; z-index: 3000; background: var(--panel);
@@ -4774,6 +4792,41 @@ input[type=range] { accent-color: var(--accent); }
   }
 
   /** 成绩页：顶部考试名标签（可加/改名/删），点某场看全班分数表 */
+  /**
+   * 一场考试的统计（成绩单上常见的那些）：人数、平均分、最高、最低、中位数、及格率、优秀率。
+   *
+   * 及格 / 优秀的线是按**得分率**算的：满分 150 时 60% = 90 分及格、85% = 127.5 优秀，
+   * 这样换成 100 分卷、120 分卷也不用改设置，哪个卷子都对得上。
+   */
+  function examStats(name) {
+    const recs = examRecords(name);
+    const full = examFull(name);
+    const scores = recs.map((r) => r.score).filter((v) => typeof v === "number" && isFinite(v));
+    if (!scores.length) return { n: 0, full, avg: null, max: null, min: null, mid: null, pass: null, passRate: null, good: null, goodRate: null };
+    const sorted = [...scores].sort((a, b) => a - b);
+    const sum = scores.reduce((a, b) => a + b, 0);
+    const avg = sum / scores.length;
+    const mid = sorted.length % 2
+      ? sorted[(sorted.length - 1) / 2]
+      : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
+    const passLine = full * 0.6;
+    const goodLine = full * 0.85;
+    const pass = scores.filter((v) => v >= passLine).length;
+    const good = scores.filter((v) => v >= goodLine).length;
+    return {
+      n: scores.length, full,
+      avg, max: sorted[sorted.length - 1], min: sorted[0], mid,
+      pass, passRate: pass / scores.length,
+      good, goodRate: good / scores.length,
+      passLine, goodLine,
+    };
+  }
+
+  /** 分数保留一位小数，整数就不带小数点（平均分 106.3 而不是 106.33333） */
+  const fmtScore = (v) => (v === null || v === undefined || !isFinite(v)) ? "—"
+    : (Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : v.toFixed(1));
+  const fmtPct = (v) => (v === null || v === undefined || !isFinite(v)) ? "—" : Math.round(v * 100) + "%";
+
   function renderScorePage() {
     const stage = $("stage");
     const listbar = $("listbar");
@@ -4790,15 +4843,18 @@ input[type=range] { accent-color: var(--accent); }
     }
 
     const cur = view.scoreExam && names.includes(view.scoreExam) ? view.scoreExam : null;
+    const curSt = cur ? examStats(cur) : null;
 
-    // 考试名标签：全部 + 每场
+    // 考试名标签：全部 + 每场（标签上带平均分，一眼能比）
     const tab = (nm, label) =>
       `<button class="nav sc-tab ${(!cur && nm === null) || (cur && cur === nm) ? "on" : ""}" data-exam="${esc(nm ?? "")}">
-        ${esc(label)}<span class="n">${nm === null ? names.length : examRecords(nm).length}</span></button>`;
+        ${esc(label)}<span class="n">${nm === null ? names.length : examRecords(nm).length}</span>${
+          nm !== null && examStats(nm).avg !== null ? `<span class="a">均 ${esc(fmtScore(examStats(nm).avg))}</span>` : ""}</button>`;
     const tabs = `<button class="nav sc-tab ${!cur ? "on" : ""}" data-exam="">全部 <span class="n">${names.length}</span></button>` +
       names.map((nm) => tab(nm, nm)).join("");
 
-    listbar.innerHTML = `<b>成绩</b> · ${names.length} 场考试
+    listbar.innerHTML = `<b>成绩</b> · ${names.length} 场考试${
+      curSt && curSt.n ? ` · ${esc(cur)}平均 <b>${esc(fmtScore(curSt.avg))}</b>` : ""}
       <span style="flex:1"></span>
       <button class="btn" id="scAdd">＋ 加考试</button>
       <button class="btn ghost" id="scImport">导入成绩</button>`;
@@ -4806,23 +4862,53 @@ input[type=range] { accent-color: var(--accent); }
     // 「全部」= 跨考试总表：行是学生，列是每场考试的分数
     if (!cur) {
       const scored = DB.students.filter((s) => (s.exams || []).some(hasScore));
+      const sts = names.map((nm) => examStats(nm));
+      const statRow = (label, fn, cls) =>
+        `<tr class="stat-row"><td class="sticky-l ${cls || ""}">${esc(label)}</td>${
+          sts.map((st) => `<td class="${cls || ""}">${esc(fn(st))}</td>`).join("")}</tr>`;
       stage.innerHTML = `
         <div class="sc-tabs">${tabs}</div>
         <div class="wrap-table"><table class="grid"><thead><tr>
-          <th class="sticky-l">姓名</th>${names.map((nm) => `<th>${esc(nm)}</th>`).join("")}</tr></thead>
-          <tbody>${scored.map((s) => `<tr data-id="${s.id}">
-            <td class="sticky-l"><b>${esc(s.name)}</b></td>
-            ${names.map((nm) => {
+          <th class="sticky-l">姓名</th>${names.map((nm) => `<th>${esc(nm)}</th>`).join("")}<th>平均</th></tr></thead>
+          <tbody>${scored.map((s) => {
+            const vals = names.map((nm) => {
               const e = (s.exams || []).find((x) => (x.name || "").trim() === nm && hasScore(x));
-              return `<td>${e ? `<b>${e.score}</b>${typeof e.full === "number" ? "/" + e.full : ""}` : "—"}</td>`;
-            }).join("")}
-          </tr>`).join("")}</tbody></table></div>`;
+              return e ? { e, nm } : null;
+            });
+            const got = vals.filter(Boolean).map((v) => v.e.score);
+            const mineAvg = got.length ? got.reduce((a, b) => a + b, 0) / got.length : null;
+            return `<tr data-id="${s.id}">
+            <td class="sticky-l"><b>${esc(s.name)}</b></td>
+            ${vals.map((v) => v
+              ? `<td><b>${v.e.score}</b>${typeof v.e.full === "number" ? "/" + v.e.full : ""}</td>`
+              : `<td>—</td>`).join("")}
+            <td><b>${fmtScore(mineAvg)}</b></td>
+          </tr>`; }).join("")}</tbody>
+          <tfoot>
+            ${statRow("班级平均", (st) => fmtScore(st.avg), "avg")}
+            ${statRow("最高分", (st) => fmtScore(st.max))}
+            ${statRow("最低分", (st) => fmtScore(st.min))}
+            ${statRow("及格率", (st) => fmtPct(st.passRate))}
+            ${statRow("优秀率", (st) => fmtPct(st.goodRate))}
+          </tfoot></table></div>`;
       if (!scored.length) stage.innerHTML = `<div class="sc-tabs">${tabs}</div><div class="empty-hint">还没有任何人记过成绩</div>`;
     } else {
-      // 单场考试：按分数降序，带名次、满分、日期
+      // 单场考试：按分数降序，带名次、满分、日期 + 成绩单上常见的统计
       const recs = examRecords(cur);
       const full = examFull(cur);
       const date = recs[0]?.date || "";
+      const st = examStats(cur);
+      const statCell = (label, val, sub) =>
+        `<div class="sc-stat"><span class="k">${esc(label)}</span><b>${esc(val)}</b>${sub ? `<span class="s">${esc(sub)}</span>` : ""}</div>`;
+      const statsHtml = st.n ? `<div class="sc-stats">
+          ${statCell("参考人数", st.n + " 人")}
+          ${statCell("平均分", fmtScore(st.avg), fmtPct(st.avg / (st.full || 1)))}
+          ${statCell("最高分", fmtScore(st.max))}
+          ${statCell("最低分", fmtScore(st.min))}
+          ${statCell("中位数", fmtScore(st.mid))}
+          ${statCell("及格率", fmtPct(st.passRate), `${st.pass}/${st.n} · ${fmtScore(st.passLine)} 分以上`)}
+          ${statCell("优秀率", fmtPct(st.goodRate), `${st.good}/${st.n} · ${fmtScore(st.goodLine)} 分以上`)}
+        </div>` : "";
       stage.innerHTML = `
         <div class="sc-tabs">${tabs}</div>
         <div class="sc-detail-h">
@@ -4834,14 +4920,19 @@ input[type=range] { accent-color: var(--accent); }
           </div>
           <div class="sc-detail-src">${recs.length} 人已录 ${date ? "· " + esc(date) : ""} · 满分 ${full}</div>
         </div>
+        ${statsHtml}
         <div class="wrap-table"><table class="grid"><thead><tr>
-          <th class="sticky-l">名次</th><th class="sticky-l">姓名</th><th>分数</th><th>得分率</th></tr></thead>
-          <tbody>${recs.map((r, i) => `<tr data-id="${r.sid}">
+          <th class="sticky-l">名次</th><th class="sticky-l">姓名</th><th>分数</th><th>得分率</th><th>与平均分</th></tr></thead>
+          <tbody>${recs.map((r, i) => {
+            const diff = st.avg === null ? null : r.score - st.avg;
+            return `<tr data-id="${r.sid}">
             <td class="sticky-l">${i + 1}</td>
             <td class="sticky-l"><b>${esc(r.sname)}</b></td>
             <td><b>${r.score}</b>${typeof r.full === "number" ? "/" + r.full : ""}</td>
             <td>${typeof r.full === "number" && r.full ? Math.round(r.score / r.full * 100) + "%" : "—"}</td>
-          </tr>`).join("")}</tbody></table></div>`;
+            <td class="diff ${diff === null ? "" : (diff >= 0 ? "up" : "down")}">${
+              diff === null ? "—" : (diff >= 0 ? "+" : "−") + fmtScore(Math.abs(diff))}</td>
+          </tr>`; }).join("")}</tbody></table></div>`;
       if (!recs.length) stage.innerHTML = `<div class="sc-tabs">${tabs}</div>
         <div class="sc-detail-h">
           <div class="sc-detail-title"><span>${esc(cur)}</span>
