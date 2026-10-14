@@ -234,9 +234,9 @@ aside.side { width: 208px; flex: 0 0 208px; background: var(--panel);
 .sc-tabs .nav.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); font-weight: 600; }
 .sc-detail-h { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 12px 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
-.sc-detail-title { font-size: 15px; font-weight: 700; }
+.sc-detail-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sc-detail-title .sc-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .sc-detail-src { font-size: 12px; color: var(--ink-3); margin-top: 4px; }
-.sc-detail-src .btn { margin-left: 8px; }
 
 /* ---------- 姓名联想下拉 ---------- */
 .ac-list { position: fixed; z-index: 3000; background: var(--panel);
@@ -4797,13 +4797,13 @@ input[type=range] { accent-color: var(--accent); }
       stage.innerHTML = `
         <div class="sc-tabs">${tabs}</div>
         <div class="sc-detail-h">
-          <div class="sc-detail-title">${esc(cur)}</div>
-          <div class="sc-detail-src">${recs.length} 人已录 ${date ? "· " + esc(date) : ""} · 满分 ${full}
-            <span style="float:right">
+          <div class="sc-detail-title"><span>${esc(cur)}</span>
+            <span class="sc-actions">
               <button class="btn ghost" id="scRename">改名</button>
               <button class="btn ghost" id="scDel" style="color:var(--red)">删除这场考试</button>
             </span>
           </div>
+          <div class="sc-detail-src">${recs.length} 人已录 ${date ? "· " + esc(date) : ""} · 满分 ${full}</div>
         </div>
         <div class="wrap-table"><table class="grid"><thead><tr>
           <th class="sticky-l">名次</th><th class="sticky-l">姓名</th><th>分数</th><th>得分率</th></tr></thead>
@@ -4815,13 +4815,13 @@ input[type=range] { accent-color: var(--accent); }
           </tr>`).join("")}</tbody></table></div>`;
       if (!recs.length) stage.innerHTML = `<div class="sc-tabs">${tabs}</div>
         <div class="sc-detail-h">
-          <div class="sc-detail-title">${esc(cur)}</div>
-          <div class="sc-detail-src">还没有人录分数 · 满分 ${full}
-            <span style="float:right">
+          <div class="sc-detail-title"><span>${esc(cur)}</span>
+            <span class="sc-actions">
               <button class="btn ghost" id="scRename">改名</button>
               <button class="btn ghost" id="scDel" style="color:var(--red)">删除这场考试</button>
             </span>
           </div>
+          <div class="sc-detail-src">还没有人录分数 · 满分 ${full}</div>
         </div>
         <div class="empty-hint">这场考试还没有人录分数，点右上角「导入成绩」</div>`;
     }
