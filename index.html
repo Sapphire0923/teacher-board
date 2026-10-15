@@ -1004,6 +1004,63 @@ input[type=range] { accent-color: var(--accent); }
   text-overflow: ellipsis; white-space: nowrap; }
 .recmeta { font-size: var(--fs-mini); color: var(--ink-3); }
 .recaudio { width: 100%; margin: 6px 0; height: 34px; }
+
+/* ---- 录音文件那一块（2026-10-15 重做：自建播放器 + 格式标签 + 转写/转换按钮） ---- */
+.recfilebox { border: 1px solid var(--line); border-radius: var(--radius-s);
+  background: var(--panel-2); padding: 9px 11px; margin: 8px 0; }
+.recfilehead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.recfilebtns { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.recfmt { font-size: var(--fs-mini); font-weight: 650; border-radius: 5px; padding: 1px 7px;
+  border: 1px solid var(--line); color: var(--ink-3); }
+.recfmt.ok { color: #1a7f4b; border-color: #1a7f4b55; background: #1a7f4b14; }
+.recfmt.warn { color: #b06a00; border-color: #b06a0055; background: #b06a0014; }
+
+/* 自建播放器：一条能拖的进度条 + 当前/总时长。原生 <audio controls> 在 webm 上会显示 --:-- 且拖不动 */
+.recplayer { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.rp-play { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--panel); color: var(--ink); font-size: 13px; cursor: pointer; line-height: 1; }
+.rp-play:hover { border-color: var(--accent); color: var(--accent); }
+.rp-bar { position: relative; flex: 1; min-width: 120px; height: 8px; border-radius: 4px;
+  background: var(--line); cursor: pointer; touch-action: none; }
+.rp-bar.dead { opacity: .45; cursor: not-allowed; }
+.rp-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 4px; background: var(--accent); }
+.rp-knob { position: absolute; top: 50%; left: 0; width: 13px; height: 13px; border-radius: 50%;
+  background: #fff; border: 2px solid var(--accent); transform: translate(-50%, -50%); pointer-events: none; }
+.rp-time { flex: none; font-size: var(--fs-mini); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.rp-note { flex: none; font-size: var(--fs-mini); color: var(--ink-3); }
+.rp-note.bad { color: var(--red); }
+
+/* 录音条上的「听写」状态：录音和听写是两码事，别让老师以为录音断了 */
+.recsrstate { font-size: var(--fs-mini); color: var(--ink-3); }
+.recsrstate.on { color: var(--accent); font-weight: 600; }
+.recsrstate.bad { color: var(--red); font-weight: 600; }
+
+.recjob { margin-top: 8px; border-radius: var(--radius-s); padding: 8px 11px;
+  font-size: var(--fs-aux); line-height: var(--lh); border: 1px solid var(--line); background: var(--panel); }
+.recjob.run { border-color: var(--accent); color: var(--ink); }
+.recjob.ok { border-color: #1a7f4b55; background: #1a7f4b10; color: var(--ink); }
+.recjob.bad { border-color: var(--red-line); background: var(--red-soft); color: var(--ink); }
+.recjob .spin { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%;
+  border: 2px solid var(--accent); border-top-color: transparent; animation: recspin .8s linear infinite;
+  vertical-align: -1px; }
+@keyframes recspin { to { transform: rotate(360deg); } }
+
+/* 转码/转写的进度浮层（长活儿，得让人看见还活着） */
+.recprog { position: fixed; inset: 0; z-index: 90; display: none; align-items: center;
+  justify-content: center; background: rgba(0, 0, 0, .38); }
+.recprog.open { display: flex; }
+.recprog .box { width: 520px; max-width: calc(100vw - 40px); background: var(--panel);
+  border-radius: var(--radius); padding: 18px 20px; box-shadow: 0 18px 50px rgba(0, 0, 0, .3); }
+.recprog h4 { margin: 0 0 10px; font-size: var(--fs-sub); }
+.pgbar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.pgbar i { display: block; height: 100%; background: var(--accent); transition: width .35s linear; }
+
+/* 设置页里转写服务的状态条 */
+.asrstat { margin-top: 10px; padding: 8px 11px; border-radius: var(--radius-s);
+  font-size: var(--fs-aux); line-height: var(--lh); border: 1px solid var(--amber-line);
+  background: var(--amber-soft); color: var(--ink); }
+.asrstat.ok { border-color: #1a7f4b55; background: #1a7f4b10; }
+.asrstat.bad { border-color: var(--red-line); background: var(--red-soft); }
 .warnbox { border: 1px solid var(--amber-line); background: var(--amber-soft); color: var(--ink);
   border-radius: var(--radius-s); padding: 8px 11px; font-size: var(--fs-aux); line-height: var(--lh); }
 .agree { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: var(--fs-cell);
@@ -2632,13 +2689,38 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     starting: false,
   };
 
+  /**
+   * 挑录音容器。**优先 M4A（audio/mp4 + AAC）**：
+   * 微信、手机、Windows 播放器都认；而且 MediaRecorder 录 mp4 时会把**总时长写进文件头**，
+   * 进度条一加载就是对的。webm 这两条都不行（头里没时长，播放器拿到的是 Infinity）。
+   * 2026-10-15 在 Edge 155 上实测：audio/mp4 / audio/mp4;codecs=mp4a.40.2 都支持，
+   * 录出来的头是 `ftyp isom`，3 秒的录音读出来就是 2.96 秒。
+   * Firefox 不支持 mp4，会落到 webm —— 那种情况界面上会明确标出格式。
+   */
   function recPickMime() {
     if (typeof MediaRecorder === "undefined") return "";
-    for (const t of ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"]) {
+    for (const t of ["audio/mp4;codecs=mp4a.40.2", "audio/mp4", "audio/webm;codecs=opus", "audio/webm"]) {
       try { if (MediaRecorder.isTypeSupported(t)) return t; } catch {}
     }
     return "";
   }
+
+  /** 容器 → 文件后缀。写错会把 mp4 存成 .webm，聊天软件就打不开了。 */
+  function recExtOf(mime) {
+    const m = String(mime || "");
+    if (/mp4|m4a|aac/i.test(m)) return "m4a";
+    if (/ogg/i.test(m)) return "ogg";
+    if (/mpeg|mp3/i.test(m)) return "mp3";
+    if (/wav/i.test(m)) return "wav";
+    return "webm";
+  }
+  const recIsM4a = (mime) => recExtOf(mime) === "m4a";
+
+  function recCanMp4() {
+    try { return typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("audio/mp4;codecs=mp4a.40.2"); }
+    catch (e) { return false; }
+  }
+
 
   function recCanRecord() {
     return typeof MediaRecorder !== "undefined" && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
@@ -2652,6 +2734,14 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
   function recFmt(sec) {
     const m = Math.floor(sec / 60), s = sec % 60;
     return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+  }
+
+  /** 文件大小：不到 1 MB 就说 KB —— 一律写「0.0 MB」看着像没录上。 */
+  function recSizeText(bytes) {
+    const n = Number(bytes) || 0;
+    if (n < 1024) return n + " B";
+    if (n < 1048576) return (n / 1024).toFixed(0) + " KB";
+    return (n / 1048576).toFixed(1) + " MB";
   }
 
   function recBarShow(on) {
@@ -2705,6 +2795,8 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     REC.mr = mr; REC.stream = stream; REC.chunks = []; REC.src = src;
     REC.startedAt = Date.now(); REC.pausedAt = 0; REC.pausedMs = 0; REC.sec = 0;
     REC.sid = view.callEdit?.sid || ""; REC.bid = view.callEdit?.bid || ""; REC.eid = view.callEdit?.id || "";
+    // 上一段录音留下的听写报错不要带到新的一段里
+    REC.srErr = "";
 
     mr.ondataavailable = (ev) => { if (ev.data && ev.data.size) REC.chunks.push(ev.data); };
     mr.onstop = () => { recFinish(); };
@@ -2764,7 +2856,8 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
 
     if (REC.pendingUrl) URL.revokeObjectURL(REC.pendingUrl);
     REC.pendingUrl = URL.createObjectURL(blob);
-    const ext = /mp4/.test(mime) ? "m4a" : "webm";
+    // 后缀按真实容器给：录到 mp4 就存 .m4a（微信、手机、播放器都认）
+    const ext = recExtOf(mime);
     const who = ($("clgWho") && $("clgWho").textContent) || "电联";
     REC.pending = {
       blob,
@@ -2852,11 +2945,54 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     });
   }
 
+  /** 语音识别各种错误的人话解释。听懂这句，老师才知道该去改哪儿。 */
+  const SR_ERR_TEXT = {
+    "no-speech": "没听见说话",
+    "audio-capture": "找不到麦克风 —— 看看是不是被别的程序占着",
+    "not-allowed": "浏览器不让用麦克风 —— 点地址栏左边那个锁，把「麦克风」改成允许",
+    "service-not-allowed": "浏览器把语音识别关了",
+    "network": "网络断了，或者连不上语音服务",
+    "aborted": "听写被打断了",
+    "language-not-supported": "这个语言浏览器不认",
+  };
+
+  /** 录音条上那行听写状态。**录音和听写是两件事，界面上必须分开说** */
+  function srStateText() {
+    if (!REC.mr) return "";
+    if (REC.srErr) return "· 听写：断了";
+    if (REC.srOn) return "· 听写：开着";
+    return "· 听写：关着";
+  }
+
+  function srHintText() {
+    if (REC.srErr) return "断了 —— 已经听到的字都留着";
+    if (REC.srOn) return "听着呢，说吧";
+    return srCtor() ? "浏览器自带听写，音频会发到微软 —— 点的时候会再问一次" : "这个浏览器没有语音识别";
+  }
+
   async function srToggle() {
-    if (REC.srOn) { recStopSR(); renderCallSheet(); toast("听写关了"); return; }
+    if (REC.srOn) {
+      recStopSR();
+      REC.srErr = "";
+      renderCallSheet();
+      return toast("听写关了 —— 已经写下来的字一个字没动", 5000);
+    }
     const SR = srCtor();
     if (!SR) return toast("这个浏览器没有语音识别（Edge / Chrome 才有）", 4500);
     if (!(await srAskConsent())) return;
+    REC.srErr = "";
+    srStart(SR);
+  }
+
+  async function srRetry() {
+    const SR = srCtor();
+    if (!SR) return toast("这个浏览器没有语音识别", 4500);
+    if (!(await srAskConsent())) return;
+    REC.srErr = "";
+    srStart(SR);
+  }
+
+  function srStart(SR) {
     const rec = new SR();
     rec.lang = "zh-CN";
     rec.continuous = true;
@@ -2869,26 +3005,63 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         else interim += r[0].transcript;
       }
       if (fin) {
-        REC.srBuf += (REC.srBuf && !/[\s。！？，]$/.test(REC.srBuf) ? "" : "") + fin;
+        REC.srBuf += fin;
         const ta = $("clgTr");
-        if (ta) { ta.value = (ta.value.replace(/\s*（听写中…[^）]*）\s*$/, "") + (ta.value ? "\n" : "") + fin.trim()).trim(); }
+        if (ta) {
+          // 实时听写出来的字**要打标记**：它不是录音转写，准确率也不一样，
+          // 后面导出和 AI 纪要都得能看出这段是哪来的（用户 2026-10-15 明确要求）
+          const d = view.callDraft || {};
+          d.trSrc = "边说边转";
+          d.trDict = (typeof d.trDict === "number" ? d.trDict : 0) + 1;
+          ta.value = (ta.value.replace(/\s*（听写中…[^）]*）\s*$/, "") + (ta.value ? "\n" : "") + fin.trim()).trim();
+          d.tr = ta.value;
+          d.trAt = d.trAt || nowStamp();
+        }
         markTrDirty(ta);
       }
       const hint = $("clgSrhint");
       if (hint) hint.textContent = interim ? `听写中… ${interim}` : (REC.srOn ? "听着呢，说吧" : "");
     };
-    rec.onerror = (ev) => { toast("听写出错：" + (ev.error || "未知"), 4000); recStopSR(); renderCallSheet(); };
-    rec.onend = () => { if (REC.srOn) { try { rec.start(); } catch {} } };   // 会自动停，续上
-    REC.sr = rec; REC.srOn = true;
-    try { rec.start(); } catch (err) { REC.srOn = false; REC.sr = null; return toast("听写起不来：" + err.message, 4500); }
+    rec.onerror = (ev) => {
+      const code = (ev && ev.error) || "未知";
+      // no-speech / aborted 是浏览器自己的正常抖动，等它续上就行，不用吓老师
+      if (code === "no-speech" || code === "aborted") return;
+      const why = SR_ERR_TEXT[code] || `不认识这个错（${code}）`;
+      // **关键**：出错只停听写。已经听到的字、正在录的音，一个字都不动。
+      recStopSR();
+      REC.srErr = why;
+      renderCallSheet();
+      toast(`听写断了：${why} —— 之前听到的字都留着了，录音也没停`, 9000);
+    };
+    rec.onend = () => {
+      // 浏览器隔一阵就自己停一次（这是它的常态，不是坏），只要还开着就续上
+      if (!REC.srOn || REC.srErr || REC.sr !== rec) return;
+      REC.srRestart = (REC.srRestart || 0) + 1;
+      if (REC.srRestart > 300) { REC.srErr = "自动重启太多次了，先停下"; renderCallSheet(); return; }
+      setTimeout(() => {
+        if (REC.srOn && !REC.srErr && REC.sr === rec) { try { rec.start(); } catch (e) {} }
+      }, 250);
+    };
+    REC.sr = rec;
+    REC.srOn = true;
+    REC.srRestart = 0;
+    try { rec.start(); }
+    catch (err) {
+      REC.srOn = false;
+      REC.sr = null;
+      REC.srErr = "起不来：" + err.message;
+      renderCallSheet();
+      return toast("听写起不来：" + err.message, 5000);
+    }
     renderCallSheet();
+    toast("听写开着 —— 说话就出字。不想用了点同一个按钮关掉。", 6000);
   }
 
   function recStopSR() {
     REC.srOn = false;
     const r = REC.sr;
     REC.sr = null;
-    if (r) { try { r.onend = null; r.stop(); } catch {} }
+    if (r) { try { r.onend = null; r.onerror = null; r.stop(); } catch {} }
   }
 
   function markTrDirty(ta) {
@@ -2947,6 +3120,32 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     return CALL_STATUSES.map((x) => `<button class="chip ${x === st ? "on" : ""}" data-clgst="${esc(x)}">${esc(x)}</button>`).join("");
   }
 
+  /**
+   * 自建播放器。**不用 `<audio controls>`** —— 浏览器原生控件在 webm（时长读不出来）上
+   * 会显示成 `--:--`、进度条也拖不动，用户看到的就是「播放器坏了」。
+   * 自己画一条：时长读出来就显示 `当前 / 总长`，读不出来就把原因写在旁边（读不出就说读不出）。
+   */
+  function recPlayerHtml(which) {
+    return `<div class="recplayer" data-recplayer="${which}">
+      <button class="rp-play" data-rpplay="1" type="button" title="播放 / 暂停">▶</button>
+      <div class="rp-bar" data-rpbar="1" title="点或拖到想听的位置">
+        <div class="rp-fill" data-rpfill="1"></div>
+        <div class="rp-knob" data-rpknob="1"></div>
+      </div>
+      <span class="rp-time" data-rptime="1">--:-- / --:--</span>
+      <span class="rp-note" data-rpnote="1">读时长…</span>
+    </div>`;
+  }
+
+  /** 录音文件的格式标签：直接说人话，别让老师猜 webm 是什么 */
+  function recFmtLabel(mime) {
+    const e = recExtOf(mime);
+    if (e === "m4a") return { text: "M4A", cls: "ok", tip: "微信、手机、Windows 播放器都能直接放" };
+    if (e === "webm") return { text: "WebM", cls: "warn", tip: "微信里多半放不了，也发不进手机相册 —— 想发给别人先转成 M4A" };
+    if (e === "ogg") return { text: "OGG", cls: "warn", tip: "部分播放器不认，想发给别人先转成 M4A" };
+    return { text: e.toUpperCase(), cls: "", tip: "" };
+  }
+
   function recBoxHtml() {
     const d = view.callDraft || {};
     const on = !!REC.mr;
@@ -2959,25 +3158,50 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         <b>${paused ? "已暂停" : "正在录音"}</b>
         <span class="rectime">${recFmt(REC.sec)}</span>
         <span class="recsrc">${esc(REC_SRC_NAME[REC.src] || "")}</span>
+        <span class="recsrstate ${REC.srState === "on" ? "on" : REC.srState === "error" ? "bad" : ""}" data-srstate="1">${srStateText()}</span>
         <span style="flex:1"></span>
         <button class="btn" id="recPauseBtn">${paused ? "继续" : "暂停"}</button>
         <button class="btn danger" id="recStopBtn">结束并保存到这条</button>
         <button class="btn" id="recDropBtn">丢弃</button></div>`;
     }
 
-    const one = (m, tag) => `<span class="recfile"><span class="rectag">${tag}</span>
-      <span class="recname" title="${esc(m.name)}">${esc(m.name)}</span>
-      <span class="recmeta">${recFmt(m.sec || 0)} · ${(m.size / 1048576).toFixed(1)} MB · ${esc(REC_SRC_NAME[m.src] || m.src || "")}</span>
-      <button class="btn btnmini" data-recplay="1">▶ 试听</button>
-      <button class="btn btnmini" data-recget="1">⬇ 存成文件</button>
-      <button class="btn btnmini danger" data-recdel="1">🗑 删掉</button></span>`;
+    const one = (m, tag, which) => {
+      const fl = recFmtLabel(m.type);
+      const isWebm = recExtOf(m.type) !== "m4a";
+      return `<div class="recfilebox">
+        <div class="recfilehead"><span class="rectag">${tag}</span>
+          <span class="recname" title="${esc(m.name)}">${esc(m.name)}</span>
+          <span class="recmeta">${m.sec ? recFmt(m.sec) + " · " : ""}${recSizeText(m.size)} · ${esc(REC_SRC_NAME[m.src] || m.src || "")}</span>
+          <span class="recfmt ${fl.cls}" title="${esc(fl.tip)}">${fl.text}</span></div>
+        ${recPlayerHtml(which)}
+        <div class="recfilebtns">
+          ${isWebm ? `<button class="btn btnmini" data-recconv="${which}">🔄 转成 M4A（微信能发）</button>` : ""}
+          <button class="btn btnmini" data-recget="${which}">⬇ ${isWebm ? "下载原始录音" : "下载录音"}（.${recExtOf(m.type)}）</button>
+          ${which === "saved" ? `<button class="btn btnmini" data-rectr="1" ${asrReady() ? "" : "disabled title=\"先去「设置 → 录音与转写」填好服务地址和密钥\""}>📝 转写这段录音</button>` : ""}
+          <button class="btn btnmini danger" data-recdel="1">🗑 删掉</button>
+        </div>
+        ${which === "saved" ? recTrJobHtml() : ""}</div>`;
+    };
 
     return `${p ? `<div class="warnbox">刚录好的这一段还没保存 —— 点下面的「保存」才会写进这条记录。</div>
-        <audio class="recaudio" controls src="${esc(REC.pendingUrl)}"></audio>
-        ${one(p.meta, "待保存")}` : ""}
-      ${saved ? `<audio class="recaudio" controls preload="none" data-recpreview="1"></audio>
-        ${one(saved, "已保存")}` : ""}
+        ${one(p.meta, "待保存", "pending")}` : ""}
+      ${saved ? one(saved, "已保存", "saved") : ""}
       ${!p && !saved ? `<div class="hint" style="margin:0 0 8px">这条还没有录音。</div>` : ""}`;
+  }
+
+  /** 「转写这段录音」任务的状态条：跑着 / 成了 / 败了（失败要把服务原话写出来） */
+  function recTrJobHtml() {
+    const j = (view.callDraft || {}).trJob;
+    if (!j || !j.state) return "";
+    if (j.state === "running") {
+      return `<div class="recjob run" data-trjob="1"><span class="spin"></span>
+        正在送去转写…（${esc(j.at || "")}）—— 长录音要等一会儿，开着别关页面。</div>`;
+    }
+    if (j.state === "done") {
+      return `<div class="recjob ok" data-trjob="1">✅ 转写好了（${esc(j.at || "")}）—— 文字填进下面的「转写」框了，记得看一眼有没有听错。</div>`;
+    }
+    return `<div class="recjob bad" data-trjob="1">❌ 转写没成：${esc(j.msg || "不知道原因")}
+      <br><span class="hint-inline">文字没有被改动，录音也还在。修好设置或换个网络再点一次。</span></div>`;
   }
 
   function callSheetHtml(s) {
@@ -3028,14 +3252,24 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
 
         <div class="clg-sec"><h5>转写<span class="h5tag">自己打的 / 粘的都行</span></h5>
           <div class="hint" style="margin:0 0 8px">
-            <b>没有本地自动转写</b> —— 看板不会偷偷把录音传到哪个服务去。
-            你可以自己听录音打要点，或者用下面的听写。
+            看板<b>自己不会转写</b>，也不会偷偷把录音传到哪儿去。三条路，用哪条你定：<br>
+            ① <b>自己听录音打</b> —— 不出这台电脑，最保险；<br>
+            ${srOk ? "② <b>边说边转</b>（浏览器实时听写）—— 说话当时就出字，<b>音频会发到微软</b>，默认关；<br>" : ""}
+            ③ <b>转写已保存的录音</b> —— 用上面录音那块的「📝 转写这段录音」按钮，
+            ${asrReady() ? "已经接通（音频会发到你填的那个服务地址）" : "<b>现在是灰的</b>：去「设置 → 录音与转写」填上服务地址和密钥才能用"}。
           </div>
           <textarea id="clgTr" rows="6" placeholder="把通话内容记在这里。听不清的地方写「（听不清 03:12）」，别猜。">${esc(d.tr || "")}</textarea>
           <div class="recbtns" style="margin-top:8px">
-            <button class="btn ${REC.srOn ? "primary" : ""}" id="srBtn" ${srOk ? "" : "disabled"}>🎧 边说边转${REC.srOn ? "（开着）" : "（默认关）"}</button>
-            <span class="hint" style="margin:0">${srOk ? "用浏览器自带听写，<b>音频会发到微软的服务器</b>，点的时候会再问一次" : "这个浏览器没有语音识别"}</span>
+            <button class="btn ${REC.srOn && !REC.srErr ? "primary" : ""}" id="srBtn" ${srOk ? "" : "disabled"}>🎧 边说边转${REC.srOn && !REC.srErr ? "（开着）" : "（默认关）"}</button>
+            ${REC.srErr ? `<button class="btn" id="srRetry">🔁 重试听写</button>` : ""}
+            <span class="hint" style="margin:0" id="clgSrhint">${esc(srHintText())}</span>
           </div>
+          ${REC.srErr ? `<div class="warnbox" style="margin:8px 0 0">
+            听写断了：<b>${esc(REC.srErr)}</b>。<br>
+            已经听到的文字<b>都留在上面的框里了</b>，没有被清掉；录音也一直在录、没受影响。<br>
+            想接着听就点「🔁 重试听写」；不想听了，剩下的自己补也行。</div>` : ""}
+          ${d.trSrc === "边说边转" ? `<div class="hint" style="margin:8px 0 0;color:var(--ink-3)">
+            ℹ️ 这段里有 <b>${d.trDict || "几"} 处「实时听写」</b>出来的内容 —— 是浏览器边听边写的，不是录音转写，错字会比正经转写多，交上去之前自己过一遍。</div>` : ""}
         </div>
 
         <div class="clg-sec"><h5>AI 纪要<span class="h5tag">只根据上面的转写写，不听录音</span></h5>
@@ -3170,17 +3404,19 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
 
     if (body) body.onclick = (ev) => {
       const t = ev.target;
-      if (t.closest("[data-recplay]")) return recPlay();
-      if (t.closest("[data-recget]")) return recSaveFile();
+      if (t.closest("[data-recget]")) return recSaveFile(t.closest("[data-recget]").dataset.recget);
+      if (t.closest("[data-recconv]")) return recConvertFile(t.closest("[data-recconv]").dataset.recconv);
+      if (t.closest("[data-rectr]")) return transcribeSavedRec();
       if (t.closest("[data-recdel]")) return recDelete();
       if (t.closest("[data-aicopy]")) return copyCallAi();
       if (t.closest("[data-aiview]")) return showCallAiOld();
     };
 
-    const pv = body && body.querySelector("[data-recpreview]");
-    if (pv) pv.addEventListener("play", () => loadRecPreview(pv), { once: true });
+    // 录音播放器（自建的那条，不是浏览器原生控件）
+    bindRecPlayers();
 
     one("srBtn", srToggle);
+    one("srRetry", srRetry);
     one("clgAi", () => runCallAi(s));
     one("clgExpDoc", () => exportCallDoc(s, false));
     one("clgExpZip", () => exportCallDoc(s, true));
@@ -3232,31 +3468,353 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     } catch (e) { return null; }
   }
 
-  async function loadRecPreview(el) {
-    const d = view.callDraft || {};
-    const b = await recBlobOf(d.rec);
-    if (!b) { toast("录音文件找不到了 —— 可能在别的电脑上，或浏览器数据被清过", 6000); return; }
-    el.src = URL.createObjectURL(b);
-    el.play().catch(() => {});
-  }
-
-  async function recPlay() {
-    const d = view.callDraft || {};
-    const el = $("clgBody") && $("clgBody").querySelector(".recaudio");
-    if (!el) return;
-    const b = await recBlobOf(REC.pending ? REC.pending.meta : d.rec);
-    if (!b) return toast("录音文件找不到了", 5000);
-    if (el.src && /^blob:/.test(el.src)) URL.revokeObjectURL(el.src);
-    el.src = URL.createObjectURL(b);
-    el.play().catch(() => {});
-  }
-
-  async function recSaveFile() {
-    const d = view.callDraft || {};
-    const meta = REC.pending ? REC.pending.meta : d.rec;
+  /** 取某一边（待保存 / 已保存）的录音文件 */
+  async function recBlobFor(which) {
+    const meta = which === "pending" ? (REC.pending || {}).meta : (view.callDraft || {}).rec;
     const b = await recBlobOf(meta);
-    if (!b) return toast("录音文件找不到了", 5000);
-    downloadBlob((meta && meta.name) || "电联录音.webm", b);
+    return { meta, blob: b };
+  }
+
+  /**
+   * 把自建播放器接到录音上。**时长读不出来不是「没有时长」，是要把原因写出来** ——
+   * 所以这里一律走 recReadDuration，拿到 err 就显示 err，进度条置灰但不假装能用。
+   */
+  async function bindRecPlayer(box, which) {
+    if (!box) return;
+    const play = box.querySelector("[data-rpplay]");
+    const bar = box.querySelector("[data-rpbar]");
+    const fill = box.querySelector("[data-rpfill]");
+    const knob = box.querySelector("[data-rpknob]");
+    const time = box.querySelector("[data-rptime]");
+    const note = box.querySelector("[data-rpnote]");
+    const a = document.createElement("audio");
+    a.preload = "metadata";
+    a.style.display = "none";
+    box.appendChild(a);
+
+    let dur = 0, url = "", ready = false, dragging = false;
+    const mmss = (s) => {
+      s = Math.max(0, Math.floor(s || 0));
+      const m = Math.floor(s / 60);
+      return String(m).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+    };
+    const paint = () => {
+      const cur = a.currentTime || 0;
+      const pct = dur > 0 ? Math.min(100, (cur / dur) * 100) : 0;
+      if (fill) fill.style.width = pct + "%";
+      if (knob) knob.style.left = pct + "%";
+      if (time) time.textContent = mmss(cur) + " / " + (dur > 0 ? mmss(dur) : "--:--");
+    };
+    const seek = (clientX) => {
+      if (!ready || dur <= 0) return;
+      const r = bar.getBoundingClientRect();
+      const ratio = Math.max(0, Math.min(1, (clientX - r.left) / Math.max(1, r.width)));
+      try { a.currentTime = ratio * dur; } catch (e) {}
+      paint();
+    };
+
+    if (play) play.onclick = () => {
+      if (!ready) return toast("这段录音还没准备好", 4000);
+      if (a.paused) a.play().catch((e) => toast("放不出来：" + (e && e.message ? e.message : e), 7000));
+      else a.pause();
+    };
+    if (bar) {
+      bar.onpointerdown = (ev) => {
+        if (!ready) return;
+        dragging = true;
+        try { bar.setPointerCapture(ev.pointerId); } catch (e) {}
+        seek(ev.clientX);
+      };
+      bar.onpointermove = (ev) => { if (dragging) seek(ev.clientX); };
+      bar.onpointerup = () => { dragging = false; };
+      bar.onpointercancel = () => { dragging = false; };
+    }
+    a.onplay = () => { if (play) play.textContent = "⏸"; };
+    a.onpause = () => { if (play) play.textContent = "▶"; };
+    a.ontimeupdate = paint;
+    a.onended = () => { if (play) play.textContent = "▶"; paint(); };
+
+    const { meta, blob } = await recBlobFor(which);
+    if (!blob) {
+      if (note) note.textContent = "录音文件找不到了";
+      if (note) note.className = "rp-note bad";
+      return;
+    }
+    try { url = URL.createObjectURL(blob); } catch (e) {
+      if (note) { note.textContent = "建不出临时地址"; note.className = "rp-note bad"; }
+      return;
+    }
+    a.src = url;
+    const got = await recReadDuration(blob);
+    if (got.sec > 0) {
+      dur = got.sec;
+      // meta 里如果存着 0（老录音当时没读出来），这里补上，但**不动数据库**，只改界面
+      if (meta && !meta.sec) meta.sec = dur;
+      ready = true;
+      if (note) { note.textContent = ""; note.className = "rp-note"; }
+      paint();
+    } else {
+      ready = false;
+      if (bar) bar.classList.add("dead");
+      if (note) { note.textContent = got.err || "读不出时长"; note.className = "rp-note bad"; }
+      if (time) time.textContent = "--:-- / --:--";
+    }
+  }
+
+  function bindRecPlayers() {
+    const body = $("clgBody");
+    if (!body) return;
+    body.querySelectorAll("[data-recplayer]").forEach((box) => {
+      if (box.dataset.bound) return;
+      box.dataset.bound = "1";
+      bindRecPlayer(box, box.dataset.recplayer);
+    });
+  }
+
+  /** 转码/转写这种长活儿，给一个能看见进度的浮层（不然老师以为死机了，会去点别处） */
+  function recProgressShow(title) {
+    let el = document.getElementById("recProg");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "recProg";
+      el.className = "recprog";
+      document.body.appendChild(el);
+    }
+    el.innerHTML = `<div class="box"><h4>${esc(title)}</h4>
+      <div class="pgbar"><i data-pgfill style="width:0%"></i></div>
+      <p class="desc" data-pgtext style="margin:8px 0 0">准备中…</p>
+      <p class="desc" style="margin:6px 0 0;color:var(--ink-3)">
+        这件事**必须实时跑**（把音频从头放一遍才能录下来），所以耗时跟录音一样长。
+        页面可以切走，但别关掉。中途点下面的「停下」不会动你原来的录音。</p>
+      <button class="btn" data-pgcancel="1" style="margin-top:10px">算了，停下</button></div>`;
+    el.classList.add("open");
+    let cancelled = false;
+    const btn = el.querySelector("[data-pgcancel]");
+    if (btn) btn.onclick = () => { cancelled = true; el.classList.remove("open"); };
+    return {
+      set(pct, text) {
+        const f = el.querySelector("[data-pgfill]");
+        if (f) f.style.width = Math.max(0, Math.min(100, pct || 0)) + "%";
+        const t = el.querySelector("[data-pgtext]");
+        if (t && text) t.textContent = text;
+      },
+      isCancelled: () => cancelled,
+      close() { el.classList.remove("open"); },
+    };
+  }
+
+  /**
+   * WebM → M4A：只能**实时**重录一遍。
+   *
+   * 为什么不能「转码」：浏览器里没有现成的解码/编码器能一次性把 webm 转成 m4a，
+   * 唯一有的是 AudioContext（解码）+ MediaRecorder（编码），而 MediaRecorder 是**实时**的
+   * —— 录多久就等多久，5 分 40 秒的录音就得等 5 分 40 秒。这是 2026-10-15 实测确认的，
+   * 界面上必须提前跟老师说明白，别让他以为卡死了。
+   */
+  async function recToM4a(blob, onPct, isCancelled) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) throw new Error("这个浏览器没有 AudioContext，转不了");
+    if (!recCanMp4()) throw new Error("这个浏览器录不出 M4A（Firefox 就不行）—— 请改用 Edge 或 Chrome");
+    const ac = new AC();
+    try {
+      if (ac.state === "suspended") { try { await ac.resume(); } catch (e) {} }
+      let buf = null;
+      try { buf = await ac.decodeAudioData(await blob.arrayBuffer()); }
+      catch (e) { throw new Error("这段音频解不开（浏览器不认这个编码），转不了"); }
+      const dest = ac.createMediaStreamDestination();
+      const src = ac.createBufferSource();
+      src.buffer = buf;
+      src.connect(dest);
+      const mr = new MediaRecorder(dest.stream, { mimeType: "audio/mp4;codecs=mp4a.40.2" });
+      const chunks = [];
+      mr.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+      const stopped = new Promise((r) => { mr.onstop = r; });
+      const total = buf.duration || 0;
+      const t0 = ac.currentTime;
+      let cancelled = false;
+      mr.start(500);
+      src.start();
+      const tick = setInterval(() => {
+        const t = ac.currentTime - t0;
+        if (onPct) onPct(total ? (t / total) * 100 : 0, t, total);
+        if (isCancelled && isCancelled()) {
+          cancelled = true;
+          clearInterval(tick);
+          try { src.stop(); } catch (e) {}
+          try { mr.stop(); } catch (e) {}
+        }
+      }, 400);
+      await new Promise((resolve) => { src.onended = () => { clearInterval(tick); resolve(); }; });
+      if (cancelled) { try { await stopped; } catch (e) {} throw new Error("cancel"); }
+      // 最后一片数据要等 onstop 前才吐出来
+      await new Promise((r) => setTimeout(r, 500));
+      try { mr.stop(); } catch (e) {}
+      await stopped;
+      const out = new Blob(chunks, { type: "audio/mp4" });
+      if (!out.size) throw new Error("转出来是空的（浏览器没有吐数据）");
+      return out;
+    } finally {
+      try { await ac.close(); } catch (e) {}
+    }
+  }
+
+  /** 下载录音。**扩展名按真实容器给**，别把 mp4 存成 .webm（那样聊天软件打不开）。 */
+  async function recSaveFile(which) {
+    const { meta, blob } = await recBlobFor(which || (REC.pending ? "pending" : "saved"));
+    if (!blob) return toast("录音文件找不到了", 5000);
+    const ext = recExtOf((meta && meta.type) || blob.type);
+    const base = String((meta && meta.name) || "电联录音").replace(/\.[a-z0-9]{1,5}$/i, "");
+    downloadBlob(base + "." + ext, blob);
+    toast("存下来了：" + base + "." + ext, 5000);
+  }
+
+  async function recConvertFile(which) {
+    const { meta, blob } = await recBlobFor(which || "saved");
+    if (!blob) return toast("录音文件找不到了", 5000);
+    if (recIsM4a((meta && meta.type) || blob.type)) return toast("这条本来就是 M4A，不用转", 4000);
+    const pg = recProgressShow("把这支录音转成 M4A");
+    try {
+      const out = await recToM4a(blob, (pct, t, total) => {
+        pg.set(pct, "已经走了 " + recFmt(Math.round(t)) + (total ? " / " + recFmt(Math.round(total)) : "") + " —— 转完会自动存下来");
+      }, pg.isCancelled);
+      pg.close();
+      const base = String((meta && meta.name) || "电联录音").replace(/\.[a-z0-9]{1,5}$/i, "");
+      downloadBlob(base + ".m4a", out);
+      toast("转好了：存成 " + base + ".m4a", 6000);
+    } catch (err) {
+      pg.close();
+      if (String((err && err.message) || "") === "cancel") return toast("停下了，原来的录音一点没动", 5000);
+      toast("没转成：" + ((err && err.message) || err), 10000);
+    }
+  }
+
+  /**
+   * 把「已经保存下来的录音」送去转写。
+   * 真话：这要有外部转写服务（OpenAI 兼容的 /v1/audio/transcriptions）。
+   * 没接上就不假装能转 —— 按钮是灰的，提示写清去哪儿配。
+   * 转写结果**追加**到转写框末尾，绝不覆盖老师已经写过的东西。
+   */
+  async function transcribeSavedRec() {
+    const d = view.callDraft || {};
+    if (!d.rec) return toast("这条还没有保存过的录音", 5000);
+    if (!asrReady()) return toast("转写还没接通 —— 去「设置 → 录音与转写」填服务地址和密钥", 9000);
+    if (d.trJob && d.trJob.state === "running") return toast("上一次还在转，等它回来再点", 4000);
+    const b = await recBlobOf(d.rec);
+    if (!b) return toast("录音文件找不到了 —— 可能在别的电脑上，或浏览器数据被清过", 8000);
+    if (b.size > 24 * 1048576) {
+      return toast("这段 " + (b.size / 1048576).toFixed(1) + " MB，超过多数转写服务 25 MB 的上限 —— 先「下载」拿出去切短了再转", 13000);
+    }
+    d.trJob = { state: "running", at: nowStamp() };
+    renderCallSheet();
+    try {
+      const text = await asrCall(b, d.rec);
+      const box = $("clgTr");
+      if (box) {
+        const cur = String(box.value || "");
+        box.value = (cur.trim() ? cur.replace(/\s+$/, "") + "\n\n" : "") + "（录音转写）\n" + text;
+        d.tr = box.value;
+      }
+      // 来源要记明白：要是老师先自己写了字、后来又转了一次，
+      // 就写成「手打 + 录音转写」，别让导出的 Word 里只写「手打」把转写那半藏了。
+      const srcWas = String(d.trSrc || "");
+      if (srcWas.indexOf("录音转写") < 0) d.trSrc = srcWas ? srcWas + " + 录音转写" : "录音转写";
+      d.edited = true;
+      d.trJob = { state: "done", at: nowStamp() };
+      const ed = view.callEdit || {};
+      if (ed.id) { putCallLog(ed.bid, ed.sid, d); view.callDirty = false; }
+      renderCallSheet();
+      toast("转写好了 —— 文字填进「转写」框了，记得看一眼有没有听错", 8000);
+    } catch (err) {
+      d.trJob = { state: "failed", at: nowStamp(), msg: (err && err.message) ? err.message : String(err) };
+      renderCallSheet();
+      toast("转写没成：" + d.trJob.msg, 12000);
+    }
+  }
+
+  /** 真·调转写服务（OpenAI 兼容的 /v1/audio/transcriptions）。错了就把服务原话带回来。 */
+  async function asrCall(blob, meta) {
+    const c = asrCfg();
+    const url = String(c.url || "").trim();
+    const key = String(c.key || "").trim();
+    if (!url || !key) throw new Error("还没填转写服务地址或密钥");
+    const type = (meta && meta.type) || blob.type || "audio/webm";
+    const ext = recExtOf(type);
+    const fd = new FormData();
+    fd.append("file", new File([blob], "call." + ext, { type }), "call." + ext);
+    fd.append("model", c.model || "whisper-1");
+    if (c.lang) fd.append("language", c.lang);
+    fd.append("response_format", "json");
+    let res;
+    try {
+      res = await fetch(url, { method: "POST", headers: { Authorization: "Bearer " + key }, body: fd });
+    } catch (e) {
+      throw new Error("连不上转写服务（" + ((e && e.message) || e) + "）—— 检查地址对不对、这台电脑能不能上网");
+    }
+    if (!res.ok) {
+      let t = "";
+      try { t = (await res.text()).slice(0, 200); } catch (e) {}
+      throw new Error("服务回了 HTTP " + res.status + (t ? "：" + t : ""));
+    }
+    let j = null;
+    try { j = await res.json(); } catch (e) {}
+    const text = j && (j.text || j.result || (j.data && j.data.text)
+      || (Array.isArray(j.segments) ? j.segments.map((x) => x.text || "").join("") : ""));
+    if (!text || !String(text).trim()) throw new Error("服务回了 200，但里面没有文字（返回的字段名可能不是 text）");
+    return String(text).trim();
+  }
+
+  /** 生成一段 0.6 秒的静音 WAV（全 0 采样）。拿去测转写服务时发这个，不带任何人声。 */
+  function silentWav(sec) {
+    const rate = 8000, n = Math.max(1, Math.floor(rate * (sec || 0.6)));
+    const buf = new ArrayBuffer(44 + n * 2);
+    const v = new DataView(buf);
+    const wr = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    wr(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); wr(8, "WAVE");
+    wr(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+    wr(36, "data"); v.setUint32(40, n * 2, true);
+    return new Blob([buf], { type: "audio/wav" });
+  }
+
+  /**
+   * 真·测一次转写服务：POST 一段 0.6 秒静音。
+   * 为什么值得这么干：光看「地址和密钥都填了」说明不了任何事（可能 401、可能 404 少了路径）。
+   * 发静音不涉及任何隐私，回来的 HTTP 状态码就能把问题指到具体哪一项上。
+   */
+  async function testAsrService() {
+    const c = asrCfg();
+    const url = String(c.url || "").trim();
+    const key = String(c.key || "").trim();
+    if (!url) return { ok: false, msg: "还没填服务地址 —— 填上 OpenAI 兼容的 /v1/audio/transcriptions 地址再测" };
+    if (!/^https?:\/\//i.test(url)) return { ok: false, msg: "地址要以 http:// 或 https:// 开头" };
+    if (!key) return { ok: false, msg: "还没填密钥" };
+    let res;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { Authorization: "Bearer " + key },
+        body: (() => {
+          const fd = new FormData();
+          fd.append("file", new File([silentWav()], "silence.wav", { type: "audio/wav" }), "silence.wav");
+          fd.append("model", c.model || "whisper-1");
+          if (c.lang) fd.append("language", c.lang);
+          fd.append("response_format", "json");
+          return fd;
+        })(),
+      });
+    } catch (e) {
+      return { ok: false, msg: "连不上这个地址（" + ((e && e.message) || e) + "）—— 检查网址对不对、这台电脑能不能上网" };
+    }
+    const raw = await (async () => { try { return (await res.text()).slice(0, 240); } catch (e) { return ""; } })();
+    if (res.status === 401 || res.status === 403) return { ok: false, msg: "地址通了，但**密钥不对**（HTTP " + res.status + "）" };
+    if (res.status === 404) return { ok: false, msg: "密钥那关过了，但**地址不对**（HTTP 404）—— 多半少了 /v1/audio/transcriptions 这一段" };
+    if (res.status === 400) return { ok: false, msg: "服务能连上，但它不收这段请求（HTTP 400）：" + raw + " —— 检查「模型」名填对没有" };
+    if (!res.ok) return { ok: false, msg: "服务回了 HTTP " + res.status + "：" + raw };
+    let j = null; try { j = JSON.parse(raw); } catch (e) {}
+    const text = j && (j.text !== undefined ? j.text : (j.result || (j.data && j.data.text)));
+    if (text === undefined) return { ok: false, msg: "通了（HTTP 200），但返回里没有 text 字段 —— 原样回的是：" + raw };
+    return { ok: true, msg: "**通了** —— 发了一段 0.6 秒的静音过去，服务正常回话（认出 " + String(text).length + " 个字："
+      + (String(text).trim() ? "「" + String(text).trim().slice(0, 20) + "」" : "空的，静音本来就该是空的，正常") + "）。地址和密钥都对。" };
   }
 
   async function recDelete() {
@@ -3290,25 +3848,53 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     toast("录音导进来了 —— 记得点「保存」，不然关掉就没了", 4200);
   }
 
-  /** 读音频时长。读不出来就返回 0（界面上只显示大小，不编时长） */
-  function audioDuration(blob) {
+  /**
+   * 读音频时长，读不出来要说清**为什么**。
+   *
+   * 为什么不能只看 `loadedmetadata` 的 duration：MediaRecorder 录 webm 时流是「没有结尾的」，
+   * 文件头里根本没有时长字段，浏览器把 `duration` 报成 **Infinity**，
+   * 于是进度条上永远显示 `--:--`、拖动也拖不动（用户 2026-10-15 报的正是这个）。
+   * 唯一可靠的办法是 `currentTime = 1e101` 逼浏览器自己扫到文件末尾把真实时长算出来。
+   * 返回 `{ sec, err }`：sec=0 且 err 有字时，界面上要把 err 原样显示出来，不要编一个假时长。
+   */
+  function recReadDuration(blob) {
     return new Promise((resolve) => {
       let url = "";
-      try { url = URL.createObjectURL(blob); } catch (e) { return resolve(0); }
+      try { url = URL.createObjectURL(blob); } catch (e) { return resolve({ sec: 0, err: "建不出临时地址" }); }
       const a = document.createElement("audio");
       let done = false;
-      const fin = (v) => {
+      const fin = (sec, err) => {
         if (done) return;
         done = true;
+        a.ontimeupdate = null;
+        a.onloadedmetadata = null;
+        a.onerror = null;
+        try { a.removeAttribute("src"); a.load(); } catch (e) {}
         try { URL.revokeObjectURL(url); } catch (e) {}
-        resolve(v || 0);
+        resolve({ sec: Math.max(0, Math.round(sec || 0)), err: err || "" });
       };
-      const t = setTimeout(() => fin(0), 5000);
+      const t = setTimeout(() => fin(0, "读了 8 秒也没读出时长"), 8000);
       a.preload = "metadata";
-      a.onloadedmetadata = () => { clearTimeout(t); fin(isFinite(a.duration) ? Math.round(a.duration) : 0); };
-      a.onerror = () => { clearTimeout(t); fin(0); };
+      a.onloadedmetadata = () => {
+        if (isFinite(a.duration) && a.duration > 0) { clearTimeout(t); return fin(a.duration); }
+        // duration 是 Infinity / NaN —— 走「拖到最后」那条路
+        let n = 0;
+        a.ontimeupdate = () => {
+          n++;
+          if (isFinite(a.duration) && a.duration > 0) { clearTimeout(t); return fin(a.duration); }
+          if (n > 60) { clearTimeout(t); fin(0, "浏览器扫到末尾也没算出时长"); }
+        };
+        try { a.currentTime = 1e101; }
+        catch (e) { clearTimeout(t); fin(0, "浏览器不让跳到文件末尾，读不出时长"); }
+      };
+      a.onerror = () => { clearTimeout(t); fin(0, "这个文件浏览器打不开（格式不支持或已损坏）"); };
       a.src = url;
     });
+  }
+
+  /** 只要数字的老接口（读不出来就 0）。新代码请用 recReadDuration，能拿到原因。 */
+  async function audioDuration(blob) {
+    return (await recReadDuration(blob)).sec;
   }
 
   /* ---------------- AI 纪要（只吃转写文字，不听录音） ---------------- */
@@ -5211,6 +5797,17 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
   const aiCfg = () => (DB.config.ai = DB.config.ai || { key: "", model: "deepseek-flash" });
   const aiKey = () => String(aiCfg().key || "").trim();
   const aiModel = () => String(aiCfg().model || "deepseek-flash").trim() || "deepseek-flash";
+
+  /**
+   * 录音转写（OpenAI 兼容的 /v1/audio/transcriptions）。
+   * **默认是空的**：这台电脑上没接任何转写服务，所以界面上必须老实显示「未接通」，
+   * 不许假装能转。老师填上地址和密钥，功能就活了。
+   */
+  const asrCfg = () => (DB.config.asr = DB.config.asr || { url: "", key: "", model: "whisper-1", lang: "zh" });
+  const asrReady = () => {
+    const c = asrCfg();
+    return !!(String(c.url || "").trim() && String(c.key || "").trim());
+  };
 
   const isImageAtt = (a) => /^image\//.test(a.type || "") || /\.(png|jpe?g|webp|gif)$/i.test(a.name || "");
 
@@ -9449,6 +10046,52 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
           </ul>
         </div>
       </div>
+
+      <div class="sect">
+        <h4>录音与转写</h4>
+        <p class="desc">
+          电联录音<b>只存在这台电脑的浏览器里</b>，看板不会自己把录音传到哪儿去。
+          想让电联那块出现能用的「📝 转写这段录音」，得在这儿填一个转写服务；<b>不填，那个按钮就是灰的</b>。
+        </p>
+        <div class="rowset">
+          <label style="flex:0 0 88px;font-size:12px;color:var(--ink-3)">服务地址</label>
+          <input type="text" id="asrUrl" value="${esc(c.asr?.url || "")}" placeholder="https://…/v1/audio/transcriptions" style="flex:1;min-width:220px" spellcheck="false" autocomplete="off">
+        </div>
+        <div class="rowset">
+          <label style="flex:0 0 88px;font-size:12px;color:var(--ink-3)">密钥</label>
+          <input type="password" id="asrKey" value="${esc(c.asr?.key || "")}" placeholder="sk-..." style="flex:1;min-width:160px" spellcheck="false" autocomplete="off">
+          <button class="btn" id="asrEye" type="button">显示</button>
+          <button class="btn" id="asrTest" type="button">测一下能不能通</button>
+        </div>
+        <div class="rowset">
+          <label style="flex:0 0 88px;font-size:12px;color:var(--ink-3)">模型</label>
+          <input type="text" id="asrModel" value="${esc(c.asr?.model || "whisper-1")}" style="flex:0 0 200px">
+          <span class="hint" style="margin:0">多数服务是 <code>whisper-1</code>；本地部署的可能是 <code>Systran/faster-whisper-large-v3</code> 这种。</span>
+        </div>
+        <div class="rowset">
+          <label style="flex:0 0 88px;font-size:12px;color:var(--ink-3)">语言</label>
+          <input type="text" id="asrLang" value="${esc(c.asr?.lang || "zh")}" style="flex:0 0 90px">
+          <span class="hint" style="margin:0">中文填 <code>zh</code>。填错会把中文听成别的语言。</span>
+        </div>
+        <div class="asrstat ${asrReady() ? "ok" : ""}" id="asrStat">
+          ${asrReady()
+            ? "✅ <b>已接通</b> —— 电联那块的「📝 转写这段录音」现在能点了。"
+            : "⛔ <b>未接通</b> —— 现在这台电脑上没有任何转写服务，录音只能自己听、自己打。填好上面两项就通了。"}
+        </div>
+        <div class="aiwarn">
+          <b>⚠️ 填之前先看这三条</b>
+          <ul>
+            <li><b>点「转写」= 把整段录音发出去。</b>那段音频里有孩子和家长的声音，会原样发到上面这个地址。
+              <b>不填地址、不点按钮，就一个字都不会出去。</b></li>
+            <li><b>密钥在浏览器里是明文的</b> —— 没有真正的加密，换台电脑、清一次浏览器数据就没了。
+              别填公司的主密钥，单独开一个能随时吊销的最好。导出的备份 ZIP 里会自动抹掉它。</li>
+            <li><b>「边说边转」和这个不是一回事</b>：那个是浏览器自带的语音识别（走微软的服务），只在录音时现场听，
+              录音文件不会出去。两者的准确率也不一样，别混着说。</li>
+            <li>想完全不外传也行：本机跑一个 whisper.cpp / faster-whisper 的 OpenAI 兼容接口，
+              地址填 <code>http://127.0.0.1:8000/v1/audio/transcriptions</code>，音频不出这台电脑。</li>
+          </ul>
+        </div>
+      </div>
       </div>`;
 
     // 绑定
@@ -9543,6 +10186,46 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       await testDeepSeekKey();
       aiTestBtn.disabled = false;
       aiTestBtn.textContent = old;
+    };
+
+    /* ---- 录音与转写 ---- */
+    const asrEls = { url: $("asrUrl"), key: $("asrKey"), model: $("asrModel"), lang: $("asrLang") };
+    Object.keys(asrEls).forEach((k) => {
+      const el = asrEls[k];
+      if (!el) return;
+      el.onchange = () => {
+        asrCfg()[k] = el.value.trim();
+        save();
+        drawSettings();
+        toast(asrReady() ? "转写接通了 —— 电联那块的转写按钮能点了" : "转写还没接通（地址和密钥都要填）", 6000);
+      };
+    });
+    const asrEye = $("asrEye");
+    if (asrEye && asrEls.key) asrEye.onclick = () => {
+      const show = asrEls.key.type === "password";
+      asrEls.key.type = show ? "text" : "password";
+      asrEye.textContent = show ? "隐藏" : "显示";
+    };
+    const asrTestBtn = $("asrTest");
+    if (asrTestBtn) asrTestBtn.onclick = async () => {
+      // 先把当前输入落盘，否则测的还是上一次的值
+      Object.keys(asrEls).forEach((k) => { if (asrEls[k]) asrCfg()[k] = asrEls[k].value.trim(); });
+      save();
+      drawSettings();
+      const btn = $("asrTest");
+      if (!btn) return;
+      const old = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "测着呢…";
+      const r = await testAsrService();
+      const b2 = $("asrTest");
+      if (b2) { b2.disabled = false; b2.textContent = old; }
+      const stat = $("asrStat");
+      if (stat) {
+        stat.className = "asrstat " + (r.ok ? "ok" : "bad");
+        stat.innerHTML = (r.ok ? "✅ " : "❌ ") + esc(r.msg);
+      }
+      toast(r.msg, r.ok ? 8000 : 12000);
     };
 
     $("setBody").querySelectorAll("[data-cfg]").forEach((el) => el.onchange = () => {
