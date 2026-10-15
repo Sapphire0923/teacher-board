@@ -47,6 +47,32 @@
   --toast-ink: #fff;
 
   --radius: 12px;
+
+  /* ---------- 版式令牌（2026-10-15 界面统一优化） ----------
+   * 页面标题 / 分组标题 / 正文 / 单元格 / 辅助说明各有固定字号，
+   * 下面所有组件只准引用这几个刻度，别再各处写 12.5px、13px、13.5px 混着用。 */
+  --font: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC",
+          "Hiragino Sans GB", "Source Han Sans SC", system-ui, -apple-system, sans-serif;
+  --fs-title: 17px;          /* 页面标题（成绩 / 电联 / 答题卡 / 学员列表） */
+  --fs-head: 14px;           /* 分组标题、卡片标题 */
+  --fs-body: 13.5px;         /* 正文 */
+  --fs-cell: 13px;           /* 表格单元格 */
+  --fs-aux: 12px;            /* 辅助说明 */
+  --fs-mini: 11px;           /* 角标、单位、最小号说明 */
+  --lh: 1.62;                /* 正文行高：中文密排时 1.5 会显得挤 */
+  --lh-cell: 1.5;            /* 单元格行高 */
+
+  --radius-s: 8px;
+  --radius-l: 14px;
+
+  /* 表头底色必须和面板明确分开 —— 之前用 --panel-2（#fafbfc）跟白底几乎一样，
+     表头吸顶滚起来以后根本看不出边界，这正是用户说的「表头与数据行重叠」的观感来源。 */
+  --th-bg: #eef1f6;
+  --th-ink: #46505f;
+  --th-line: #d5dbe4;
+  --row-alt: #fafbfd;        /* 隔行底色：不靠加高行距也能把行分开 */
+  --panel-solid: #ffffff;    /* 数据区永远用不透明底，开着背景图也不透 */
+
   --veil: transparent;       /* 壁纸遮罩色，由 JS 按主题 + 浓度设置 */
   --wall: none;              /* 壁纸图，由 JS 设为 url(data:...) */
 }
@@ -67,6 +93,8 @@
   --accent: #2f9e63;
   --accent-soft: #e3f4ea;
   --tag-bg: #e6f1ea; --tag-ink: #3c5c49;
+  --th-bg: #e8f1ea; --th-ink: #3f5a4a; --th-line: #ccdcd1;
+  --row-alt: #f7fbf8; --panel-solid: #ffffff;
   --shadow: 0 1px 2px rgba(20,50,32,.06), 0 4px 14px rgba(20,50,32,.06);
 }
 
@@ -90,6 +118,8 @@
   --amber: #e0a44a; --amber-soft: #382d1c; --amber-line: #5a4728;
   --green: #4cc38a; --green-soft: #1c3529; --green-line: #2c5340;
   --tag-bg: #2a323a; --tag-ink: #a9b6c4;
+  --th-bg: #2b323a; --th-ink: #b6c1cc; --th-line: #3d4650;
+  --row-alt: #22272d; --panel-solid: #1e2227;
   --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.28);
   --shadow-lg: 0 18px 48px rgba(0,0,0,.5);
   --mask: rgba(0,0,0,.55);
@@ -99,9 +129,11 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
-  font: 14px/1.55 "Segoe UI","Microsoft YaHei",system-ui,sans-serif; -webkit-font-smoothing: antialiased;
+  font: 14px/var(--lh) var(--font); -webkit-font-smoothing: antialiased;
   transition: background-color .2s, color .2s; }
 button, input, textarea, select { font: inherit; color: inherit; }
+/* 数字（分数、日期、人数）统一用等宽数字，上下行对得齐，扫读时不会跳 */
+b, .stat b, td.num { font-variant-numeric: tabular-nums; }
 b { font-weight: 650; }
 
 /* ---------- 壁纸 ----------
@@ -118,13 +150,39 @@ html.wallpaper body {
   background-repeat: no-repeat, no-repeat;
   background-attachment: fixed, fixed;
 }
-/* 有壁纸时面板半透明，图能透出来一点，文字仍然清楚 */
-html.wallpaper { --panel: rgba(255,255,255,.9); --panel-2: rgba(252,253,254,.82);
-  --panel-3: rgba(243,245,248,.82); --panel-4: rgba(248,249,251,.82); }
-html.wallpaper[data-theme="green"] { --panel: rgba(255,255,255,.9); --panel-2: rgba(249,252,250,.82);
-  --panel-3: rgba(234,243,237,.82); --panel-4: rgba(244,249,246,.82); }
-html.wallpaper[data-theme="dark"] { --panel: rgba(30,34,39,.88); --panel-2: rgba(37,43,49,.82);
-  --panel-3: rgba(43,50,57,.82); --panel-4: rgba(39,45,52,.82); }
+/* 有壁纸时面板接近不透明：图只剩一点点存在感，绝不参与数据阅读 */
+html.wallpaper { --panel: rgba(255,255,255,.96); --panel-2: rgba(252,253,254,.94);
+  --panel-3: rgba(243,245,248,.94); --panel-4: rgba(248,249,251,.94); }
+html.wallpaper[data-theme="green"] { --panel: rgba(255,255,255,.96); --panel-2: rgba(249,252,250,.94);
+  --panel-3: rgba(234,243,237,.94); --panel-4: rgba(244,249,246,.94); }
+html.wallpaper[data-theme="dark"] { --panel: rgba(30,34,39,.95); --panel-2: rgba(37,43,49,.94);
+  --panel-3: rgba(43,50,57,.94); --panel-4: rgba(39,45,52,.94); }
+
+/* 数据区一律走不透明底。表格和卡片上放的是姓名、分数、状态 ——
+   底图从字底下透出来就没法读了，所以「可以留背景图」指的是页面留白处，不是数据区。 */
+html.wallpaper header.top,
+html.wallpaper aside.side,
+html.wallpaper aside.detail,
+html.wallpaper table.grid,
+html.wallpaper .wrap-table,
+html.wallpaper .card,
+html.wallpaper .ck-task,
+html.wallpaper .ck-student,
+html.wallpaper .ck-detail-h,
+html.wallpaper .sc-stat,
+html.wallpaper .sc-detail-h,
+html.wallpaper .pap-midbar,
+html.wallpaper .pap-row,
+html.wallpaper .batchcard,
+html.wallpaper .pap-empty,
+html.wallpaper .planrow,
+html.wallpaper .modal { background: var(--panel-solid); }
+
+/* 内容列（标题 + 筛选 + 表格都住在这儿）盖一层半透明白：
+   底图还看得出来，但退到「纹理」的量级，不跟标题和数字抢注意力。
+   小屏下 aside.side 会藏起来，底图就只剩这一层薄纱，所以别盖满。 */
+html.wallpaper section.list { background: rgba(255, 255, 255, .58); }
+html.wallpaper[data-theme="dark"] section.list { background: rgba(18, 21, 25, .62); }
 
 .app { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100vh; }
 
@@ -133,14 +191,14 @@ html.wallpaper[data-theme="dark"] { --panel: rgba(30,34,39,.88); --panel-2: rgba
    这里把间距和按钮内边距统一收紧：宽屏能压成一行，放不下时也只是整齐地折一次
    （第一行品牌+胶囊，第二行工具），不会出现按钮单个掉队的碎行。
    搜索框是唯一可以「让位」的控件，空间不够时先收缩它。 */
-header.top { display: flex; align-items: center; gap: 9px; padding: 8px 12px;
+header.top { display: flex; align-items: center; gap: 9px; padding: 9px 14px;
   background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-.brand { font-size: 16px; font-weight: 650; }
-.brand small { font-weight: 400; color: var(--ink-3); margin-left: 8px; font-size: 12px; }
+.brand { font-size: var(--fs-title); font-weight: 700; letter-spacing: .2px; }
+.brand small { font-weight: 400; color: var(--ink-3); margin-left: 8px; font-size: var(--fs-aux); }
 .stats { display: flex; gap: 6px; flex-wrap: wrap; }
-.stat { display: flex; align-items: baseline; gap: 5px; padding: 3px 9px; border-radius: 999px;
-  background: var(--panel-3); border: 1px solid var(--line); font-size: 11.5px; color: var(--ink-2); }
-.stat b { font-size: 13px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.stat { display: flex; align-items: baseline; gap: 5px; padding: 3px 10px; border-radius: 999px;
+  background: var(--panel-3); border: 1px solid var(--line); font-size: var(--fs-aux); color: var(--ink-2); }
+.stat b { font-size: var(--fs-cell); color: var(--ink); }
 .stat.warn { background: var(--amber-soft); border-color: var(--amber-line); color: var(--amber); }
 .stat.warn b { color: var(--amber); }
 .stat.bad { background: var(--red-soft); border-color: var(--red-line); color: var(--red); }
@@ -149,80 +207,86 @@ header.top { display: flex; align-items: center; gap: 9px; padding: 8px 12px;
 .tools { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
 /* 搜索框是唯一可以「让位」的控件：空间不够时先收缩它，别把整排按钮挤下去 */
 input.search { flex: 0 1 140px; min-width: 104px; padding: 7px 11px; border: 1px solid var(--line);
-  border-radius: 9px; background: var(--panel-2); outline: none; }
+  border-radius: var(--radius-s); background: var(--panel-2); outline: none; font-size: var(--fs-body); }
 input.search:focus { border-color: var(--accent); background: var(--panel); }
 input.search::placeholder { color: var(--ink-3); }
 
-button.btn, a.btn { display: inline-block; padding: 6px 10px; border-radius: 9px; border: 1px solid var(--line);
+/* 按钮统一一档：13px / 圆角 8 / 同一套 padding。
+   之前 .btn 13.5px、.scorebtn 12.5px、.btnmini 12px、.attadd 12px 各写各的，
+   同一行里字大小粗细都不一样，看着就不是一套东西。 */
+button.btn, a.btn { display: inline-block; padding: 6px 11px; border-radius: var(--radius-s); border: 1px solid var(--line);
   background: var(--panel); cursor: pointer; transition: .12s; white-space: nowrap;
-  text-decoration: none; color: inherit; font-size: 13.5px; }
+  text-decoration: none; color: inherit; font-size: var(--fs-cell); font-weight: 500; line-height: 1.5; }
 button.btn:hover, a.btn:hover { border-color: var(--line-strong); background: var(--panel-2); }
-button.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+button.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
 button.btn.primary:hover { filter: brightness(1.08); }
 button.btn.ghost { background: transparent; }
 button.btn.danger { color: var(--red); }
 button.btn:disabled { opacity: .5; cursor: default; }
-.seg { display: flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
-.seg button { padding: 6px 10px; border: 0; background: var(--panel); cursor: pointer; color: var(--ink-2); }
+.seg { display: flex; border: 1px solid var(--line); border-radius: var(--radius-s); overflow: hidden; }
+.seg button { padding: 6px 11px; border: 0; background: var(--panel); cursor: pointer; color: var(--ink-2);
+  font-size: var(--fs-cell); line-height: 1.5; }
 .seg button + button { border-left: 1px solid var(--line); }
 .seg button.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 
 main { display: flex; flex: 1; min-height: 0; }
 
 /* ---------- 侧栏 ---------- */
-aside.side { width: 208px; flex: 0 0 208px; background: var(--panel);
-  border-right: 1px solid var(--line); overflow-y: auto; padding: 14px 10px 40px; }
+aside.side { width: 212px; flex: 0 0 212px; background: var(--panel);
+  border-right: 1px solid var(--line); overflow-y: auto; padding: 14px 9px 40px; }
 /* 侧栏一长条（30 个筛选项），滚下去就不知道自己在哪一组了，所以让分组标题跟着走 */
-.side h3 { position: sticky; top: 0; z-index: 2; background: var(--panel); padding: 7px 8px 5px;
-  margin: 6px 0 2px; font-size: 11px; font-weight: 700; letter-spacing: .8px;
-  color: var(--ink-3); text-transform: uppercase; }
+.side h3 { position: sticky; top: 0; z-index: 2; background: var(--panel); padding: 7px 9px 5px;
+  margin: 7px 0 2px; font-size: var(--fs-aux); font-weight: 700; letter-spacing: .6px;
+  color: var(--ink-3); }
 .side h3:first-child { margin-top: 0; }
+/* 侧栏菜单统一 13.5px / 400，选中才加粗 —— 之前继承 body 的 14px，
+   跟顶栏按钮的 13.5px、标签的 11px 混在一起，同一列字忽大忽小。 */
 .nav { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px;
-  border-radius: 8px; cursor: pointer; color: var(--ink-2); border: 0; background: transparent;
-  width: 100%; text-align: left; }
+  border-radius: var(--radius-s); cursor: pointer; color: var(--ink-2); border: 0; background: transparent;
+  width: 100%; text-align: left; font-size: var(--fs-body); line-height: 1.5; }
 .nav:hover { background: var(--panel-3); }
 .nav.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
-.nav .n { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; padding-left: 8px; }
+.nav .n { font-size: var(--fs-aux); color: var(--ink-3); padding-left: 8px; }
 .nav.on .n { color: var(--accent); }
 .nav .dot { width: 7px; height: 7px; border-radius: 50%; margin-right: 8px; flex: 0 0 7px; }
 
 /* 侧栏可折叠分组标题：可点、带 caret，跟普通 h3 一个位置但能点 */
 .side h3.side-group { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px; }
-.side h3.side-group .caret { font-size: 10px; color: var(--ink-3); }
+.side h3.side-group .caret { font-size: var(--fs-mini); color: var(--ink-3); }
 .side h3.side-group:hover { color: var(--accent); }
 
 /* ---------- 语文打卡页 ---------- */
 .ck-nav { margin: 2px 0; }
 .ck-week { margin-bottom: 18px; }
-.ck-week-h { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 8px;
+.ck-week-h { font-size: var(--fs-cell); font-weight: 700; color: var(--ink); margin-bottom: 8px;
   padding: 6px 2px; border-bottom: 1px solid var(--line); }
 .ck-week-body { display: grid; gap: 9px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
 .ck-task { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 11px 13px; cursor: pointer; box-shadow: var(--shadow); }
 .ck-task:hover { border-color: var(--accent); }
 .ck-task-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-.ck-date { font-weight: 650; font-size: 13px; }
-.ck-qno { font-size: 11px; color: var(--ink-3); }
-.ck-task-title { font-size: 12.5px; color: var(--ink-2); font-weight: 600; }
-.ck-task-src { font-size: 11px; color: var(--ink-3); margin-top: 2px; overflow: hidden;
+.ck-date { font-weight: 650; font-size: var(--fs-cell); }
+.ck-qno { font-size: var(--fs-mini); color: var(--ink-3); }
+.ck-task-title { font-size: var(--fs-cell); color: var(--ink-2); font-weight: 600; }
+.ck-task-src { font-size: var(--fs-mini); color: var(--ink-3); margin-top: 2px; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap; }
-.ck-task-rec { font-size: 11px; color: var(--amber); margin-top: 4px; }
+.ck-task-rec { font-size: var(--fs-mini); color: var(--amber); margin-top: 4px; }
 .ck-prog { height: 5px; background: var(--panel-3); border-radius: 4px; margin-top: 9px; overflow: hidden; }
 .ck-prog-bar { height: 100%; background: var(--accent); border-radius: 4px; transition: width .2s; }
-.ck-task-stat { font-size: 10.5px; color: var(--ink-3); margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.ck-task-stat { font-size: var(--fs-mini); color: var(--ink-3); margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px 10px; }
 .ck-detail-h { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 14px 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
 .ck-detail-title { font-size: 15px; font-weight: 700; }
-.ck-detail-src { font-size: 12px; color: var(--ink-3); margin-top: 4px; }
-.ck-detail-content { font-size: 13px; color: var(--ink-2); margin-top: 8px; white-space: pre-wrap; line-height: 1.6; }
-.ck-detail-rec { font-size: 12.5px; color: var(--amber); margin-top: 8px; font-weight: 600; }
+.ck-detail-src { font-size: var(--fs-aux); color: var(--ink-3); margin-top: 4px; }
+.ck-detail-content { font-size: var(--fs-cell); color: var(--ink-2); margin-top: 8px; white-space: pre-wrap; line-height: 1.6; }
+.ck-detail-rec { font-size: var(--fs-cell); color: var(--amber); margin-top: 8px; font-weight: 600; }
 .ck-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
 .ck-tabs .nav { width: auto; padding: 5px 11px; }
 .ck-list { display: flex; flex-direction: column; gap: 6px; }
 .ck-student { display: flex; align-items: center; gap: 12px; background: var(--panel);
   border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
 .ck-st-name { font-weight: 650; font-size: 13.5px; flex: 0 0 auto; min-width: 64px; }
-.ck-st-meta { font-size: 11.5px; color: var(--ink-3); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ck-st-meta { font-size: var(--fs-aux); color: var(--ink-3); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ck-st-actions { display: flex; gap: 4px; flex-wrap: wrap; }
 .ck-st-actions .chip { cursor: pointer; }
 .ck-st-actions .chip.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
@@ -230,28 +294,37 @@ aside.side { width: 208px; flex: 0 0 208px; background: var(--panel);
 
 /* ---------- 成绩页 ---------- */
 .sc-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-.sc-tabs .nav { width: auto; padding: 6px 12px; border: 1px solid var(--line); border-radius: 8px; }
+.sc-tabs .nav { width: auto; padding: 6px 12px; border: 1px solid var(--line); border-radius: var(--radius-s);
+  font-size: var(--fs-cell); }
 .sc-tabs .nav.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); font-weight: 600; }
-.sc-tabs .nav .a { font-size: 11px; color: var(--ink-3); padding-left: 6px; font-variant-numeric: tabular-nums; }
+.sc-tabs .nav .a { font-size: var(--fs-mini); color: var(--ink-3); padding-left: 6px; font-variant-numeric: tabular-nums; }
 .sc-tabs .nav.on .a { color: var(--accent); opacity: .75; }
-.sc-detail-h { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 12px 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
-.sc-detail-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+/* 成绩单场 / 答题卡总览 的页头。以前它是一张白卡片，成绩页那边却是 .listbar 一行字，
+   两页摆在一起不像同一套看板；现在两者用同一套版式：17px 标题 + 细底线 + 右侧动作。 */
+.sc-detail-h { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: transparent; border: 0; border-radius: 0; box-shadow: none;
+  margin: 0 0 16px; padding: 0 2px 12px; border-bottom: 1px solid var(--line);
+  color: var(--ink-2); font-size: var(--fs-body); }
+.sc-detail-h > b { font-size: var(--fs-title); font-weight: 700; color: var(--ink);
+  letter-spacing: .2px; margin-right: 2px; }
+.sc-detail-title { flex: 1 1 100%; display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; font-size: var(--fs-title); font-weight: 700; color: var(--ink); letter-spacing: .2px; }
 .sc-detail-title .sc-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.sc-detail-src { font-size: 12px; color: var(--ink-3); margin-top: 4px; }
+.sc-detail-title .sc-actions .btn { font-size: var(--fs-aux); font-weight: 500; }
+.sc-detail-src { flex: 1 1 100%; font-size: var(--fs-aux); color: var(--ink-3); margin-top: -4px; }
 
 /* ---------- 成绩统计条（平均分/最高最低/及格率…） ---------- */
-.sc-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-.sc-stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 8px 14px; min-width: 92px; box-shadow: var(--shadow); }
-.sc-stat .k { display: block; font-size: 11px; color: var(--ink-3); margin-bottom: 2px; }
-.sc-stat b { font-size: 17px; color: var(--ink); font-weight: 700; }
-.sc-stat .s { display: block; font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+.sc-stats { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.sc-stat { background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 10px 16px; min-width: 100px; box-shadow: var(--shadow); }
+.sc-stat .k { display: block; font-size: var(--fs-mini); color: var(--ink-3); margin-bottom: 3px; }
+.sc-stat b { font-size: 18px; color: var(--ink); font-weight: 700; }
+.sc-stat .s { display: block; font-size: var(--fs-mini); color: var(--ink-3); margin-top: 3px; }
 
 /* 表格底部的统计行 / 与平均分的差 */
-table.grid tfoot .stat-row td { background: var(--panel-2); font-size: 12px; color: var(--ink-2);
-  border-top: 1px solid var(--line-strong); }
-table.grid tfoot .stat-row td:first-child { font-weight: 600; color: var(--ink); }
+table.grid tfoot .stat-row td { background: var(--panel-3); font-size: var(--fs-aux); color: var(--ink-2);
+  border-top: 2px solid var(--th-line); border-bottom: 0; font-weight: 500; }
+table.grid tfoot .stat-row td:first-child { font-weight: 700; color: var(--ink); }
 table.grid tfoot .stat-row td.avg { color: var(--accent); font-weight: 600; }
 table.grid td.diff.up { color: #1f8a5f; }
 table.grid td.diff.down { color: #c0392b; }
@@ -260,36 +333,44 @@ table.grid td.diff.down { color: #c0392b; }
 .ac-list { position: fixed; z-index: 3000; background: var(--panel);
   border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: var(--shadow-lg);
   max-height: 260px; overflow: auto; padding: 4px; }
-.ac-item { padding: 7px 11px; border-radius: 6px; font-size: 13px; cursor: pointer; color: var(--ink); }
+.ac-item { padding: 7px 11px; border-radius: 6px; font-size: var(--fs-cell); cursor: pointer; color: var(--ink); }
 .ac-item.on, .ac-item:hover { background: var(--accent-soft); color: var(--accent); }
 .ck-copybar { display: flex; gap: 10px; margin-top: 14px; }
 
 /* ---------- 电联记录（学生详情面板里那一小块） ---------- */
 .callhist { display: flex; flex-direction: column; gap: 4px; }
-.callrow { display: flex; align-items: center; gap: 10px; font-size: 12.5px;
+.callrow { display: flex; align-items: center; gap: 10px; font-size: var(--fs-cell);
   padding: 4px 8px; border-radius: 6px; background: var(--panel-2); }
 .callrow .cr-name { font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.callrow .cr-date { color: var(--ink-3); font-size: 11.5px; }
+.callrow .cr-date { color: var(--ink-3); font-size: var(--fs-aux); }
 .callrow .cr-st { font-weight: 600; flex: 0 0 auto; }
 
 /* ---------- 列表区 ---------- */
-section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 15px 18px 60px; }
-.listbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; color: var(--ink-2); font-size: 13px; }
-.listbar b { color: var(--ink); }
-.cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr)); }
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 12px 13px; cursor: pointer; transition: .14s; box-shadow: var(--shadow);
-  border-left: 3px solid var(--line); display: flex; flex-direction: column; gap: 9px; }
+section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 20px 60px; }
+/* 页面标题条：卡片 / 待跟进 / 成绩 / 电联 / 答题卡 共用同一条。
+   标题 17px 加粗 + 一条细底线，右边并排动作按钮（收起顶栏、加考试、新建一轮…）。
+   「三个页面看起来像同一套看板」就是靠这条统一起来的。 */
+.listbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin: 0 0 16px; padding: 0 2px 12px; border-bottom: 1px solid var(--line);
+  color: var(--ink-2); font-size: var(--fs-body); }
+.listbar b { font-size: var(--fs-title); font-weight: 700; color: var(--ink);
+  letter-spacing: .2px; margin-right: 2px; }
+.listbar .cnt { color: var(--ink-3); font-size: var(--fs-body); }
+.cards { display: grid; gap: 13px; grid-template-columns: repeat(auto-fill, minmax(256px, 1fr)); }
+.card { background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 13px 15px; cursor: pointer; transition: .14s; box-shadow: var(--shadow);
+  border-left: 3px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
 .card:hover { transform: translateY(-1px); border-color: var(--line-strong); }
 .card.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 .card .row1 { display: flex; align-items: center; gap: 8px; }
-.card .nm { font-weight: 650; font-size: 15px; }
-.lv { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 6px;
+.card .nm { font-weight: 700; font-size: 15.5px; letter-spacing: .2px; }
+.lv { font-size: var(--fs-mini); font-weight: 700; padding: 2px 7px; border-radius: 6px;
   background: var(--panel-3); color: var(--ink-2); }
 .lv i { font-style: normal; font-size: 9px; opacity: .75; margin-left: 3px; }
 .chips { display: flex; gap: 5px; flex-wrap: wrap; }
-.chip { font-size: 11px; padding: 1.5px 7px; border-radius: 6px; background: var(--panel-3);
-  color: var(--ink-2); border: 1px solid var(--line); }
+/* 标签统一 11px / 500：胶囊、标签、状态都是「次要信息」，不该跟正文抢字号 */
+.chip { font-size: var(--fs-mini); font-weight: 500; line-height: 1.6; padding: 2px 8px;
+  border-radius: 6px; background: var(--panel-3); color: var(--ink-2); border: 1px solid var(--line); }
 .chip.ok { background: var(--green-soft); color: var(--green); border-color: var(--green-line); }
 .chip.no { background: var(--red-soft); color: var(--red); border-color: var(--red-line); }
 .chip.ex { background: var(--amber-soft); color: var(--amber); border-color: var(--amber-line); }
@@ -300,26 +381,33 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 15px 18px 60px;
 
 /* 详情面板里的家长类型选择器 */
 .ptagrow { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 7px; }
-.ptagg { flex: 0 0 54px; font-size: 11px; color: var(--ink-3); padding-top: 5px; text-align: right; }
+.ptagg { flex: 0 0 54px; font-size: var(--fs-mini); color: var(--ink-3); padding-top: 5px; text-align: right; }
 .ptagit { flex: 1; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
-.ptagbtn { font-size: 12px; padding: 3px 9px; border-radius: 7px; cursor: pointer;
+.ptagbtn { font-size: var(--fs-aux); padding: 3px 9px; border-radius: 7px; cursor: pointer;
   background: var(--panel-4); color: var(--ink-2); border: 1px solid var(--line); }
 .ptagbtn:hover { border-color: var(--line-strong); color: var(--ink); }
 .ptagbtn.on { font-weight: 600; }
-.ptaginput { width: 140px; font-size: 12px; padding: 3px 7px; }
+.ptaginput { width: 140px; font-size: var(--fs-aux); padding: 3px 7px; }
 .scores { display: flex; gap: 6px; }
 .sc { flex: 1; text-align: center; padding: 4px 0; border-radius: 7px; background: var(--panel-4); border: 1px solid var(--line); }
-.sc .k { display: block; font-size: 10px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc .k { display: block; font-size: var(--fs-mini); color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sc .v { font-size: 14px; font-weight: 650; font-variant-numeric: tabular-nums; }
 .sc.low { background: var(--red-soft); border-color: var(--red-line); }
 .sc.low .v { color: var(--red); }
 .sc.mid .v { color: var(--amber); }
-.cons { font-size: 12px; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 2;
+.cons { font-size: var(--fs-aux); color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 2;
   -webkit-box-orient: vertical; overflow: hidden; min-height: 32px; }
 .cons.empty { color: var(--ink-3); font-style: italic; }
 
 /* ---------- 表格 ---------- */
-.wrap-table { overflow: auto; max-height: calc(100vh - 190px); border-radius: var(--radius); box-shadow: var(--shadow); }
+.wrap-table { overflow: auto; max-height: calc(100vh - 190px); border-radius: var(--radius);
+  box-shadow: var(--shadow); background: var(--panel-solid); }
+
+/* 列少的表别把列摊到 1600px 上 —— 电联「全部」只有「姓名 + 每轮 + 沟通次数」，
+   成绩「全部」是「姓名 + 每场考试 + 平均」，列一拉宽就是满屏空白（用户反馈）。
+   给整张表一个宽度上限，富余的留白留在表格右边，看起来才像一张表而不是一排空格。 */
+.wrap-table.cap-sm { max-width: 760px; }
+.wrap-table.cap-md { max-width: 1120px; }
 
 /* 成绩页：内容区不再自己滚，让里面那张表格成为唯一的滚动容器 —— 之前
    section.list 和 .wrap-table 各有一条竖滚动条，右边并排出现两条，拉着别扭
@@ -331,38 +419,60 @@ section.list.solo { display: flex; flex-direction: column; padding-top: 10px; pa
 section.list.solo > #stage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 /* 表格铺满剩下的高度自己滚：标题、统计卡、表头都留在原地不动，只有名单在滚。
    人数少时表格盒子也不会缩成一条（有背景，看起来就是一张空白的成绩单）。 */
-section.list.solo .wrap-table { flex: 1 1 auto; min-height: 60px; max-height: none; background: var(--panel); }
+section.list.solo .wrap-table { flex: 1 1 auto; min-height: 60px; max-height: none; background: var(--panel-solid); }
 
 /* 内部滚动条的代价：顶栏、标签行、表头都占着不走，一眼能看见的人就少了
    （2026-10-15 用户反馈「一次性展示出来的学生名单比较少」）。
    所以成绩页/电联页单独用紧凑行高 + 收紧上下留白，把省下来的高度还给名单。
-   只作用于这两页 —— 卡片页、表格页不跟着变。 */
-section.list.solo .listbar { margin-bottom: 8px; }
+   只作用于这两页 —— 卡片页、表格页、答题卡页不跟着变。
+   2026-10-15 第二次调整：字号 12.5→13、横向留白 10→12、行高 1.25→1.35，
+   表格里再密也不让字贴着边框；纵向留白保持 5px，人数不能因此变少。 */
+section.list.solo .listbar { margin-bottom: 8px; padding-bottom: 8px; }
 section.list.solo .sc-tabs { margin-bottom: 8px; }
 section.list.solo .sc-stats { margin-bottom: 8px; }
 section.list.solo table.grid th,
-section.list.solo table.grid td { padding: 5px 10px; font-size: 12.5px; line-height: 1.25; }
+section.list.solo table.grid td { padding: 4px 12px; font-size: var(--fs-cell); line-height: 1.35; }
+section.list.solo table.grid th { padding: 5px 12px; }
 
 /* 「收起顶栏」：把整条工具栏的高度也让给名单（按钮只放在成绩页/电联页）。
    收起后名单按钮还在 listbar 里，随时点得回来，不会把人困住。 */
 body.head-compact header.top { display: none; }
 
-table.grid { width: 100%; border-collapse: collapse; background: var(--panel); }
-table.grid th, table.grid td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; font-size: 13px; white-space: nowrap; }
-table.grid th { background: var(--panel-2); font-weight: 650; color: var(--ink-2); position: sticky; top: 0; z-index: 1; cursor: pointer; user-select: none; }
+table.grid { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--panel-solid); }
+table.grid th, table.grid td { padding: 10px 16px; border-bottom: 1px solid var(--line);
+  text-align: left; font-size: var(--fs-cell); line-height: var(--lh-cell); white-space: nowrap; }
+/* 表头：独立实色底 + 明显的下框线 + 抬到所有单元格之上。
+   以前 th 是 z-index:1、冻结的 td 是 z-index:2 —— 纵向滚动时数据行压在表头上，
+   这就是用户看到的「表头与数据行重叠」。现在 th=4、冻结列=2、冻结表头=6，层级不再反。
+   底色也从 --panel-2（几乎跟白底一样）换成 --th-bg，表头一眼能认出来。 */
+table.grid th { background: var(--th-bg); color: var(--th-ink); font-weight: 650;
+  font-size: 12.5px; letter-spacing: .3px; position: sticky; top: 0; z-index: 4;
+  cursor: pointer; user-select: none; border-bottom: 1px solid var(--th-line); }
 table.grid tbody tr { cursor: pointer; }
-table.grid tbody tr:hover { background: var(--panel-2); }
-table.grid td.num { font-variant-numeric: tabular-nums; text-align: center; }
+/* 隔行底色：不加高行距也能一眼分清哪一格属于哪一行（比单纯加行高省地方） */
+table.grid tbody tr:nth-child(even) { background: var(--row-alt); }
+table.grid tbody tr:hover { background: var(--accent-soft); }
+table.grid td.num { text-align: center; }
 table.grid td.low { color: var(--red); font-weight: 650; }
 /* 表格横向滚动时，姓名列和等级列冻在左边，滚到备注列也不会忘了在看谁。
    第二个冻结列（等级）的 left 用变量控制，渲染后由 JS 量出姓名列宽度写进去，
    不然两列都贴 left:0，等级列会被姓名列整个盖住。 */
-table.grid th.sticky-l, table.grid td.sticky-l { position: sticky; left: 0; z-index: 2; background: var(--panel); }
-table.grid th.sticky-2, table.grid td.sticky-2 { left: var(--ck2, 64px); }
-table.grid th.sticky-l { background: var(--panel-2); z-index: 3; box-shadow: 1px 0 0 var(--line); }
-table.grid td.sticky-l { box-shadow: 1px 0 0 var(--line); }
+table.grid th.sticky-l, table.grid td.sticky-l { position: sticky; left: 0; }
+table.grid td.sticky-l { z-index: 2; background: var(--panel-solid); box-shadow: 1px 0 0 var(--line); }
+table.grid th.sticky-l { z-index: 6; background: var(--th-bg); box-shadow: 1px 0 0 var(--th-line); }
+table.grid td.sticky-2 { left: var(--ck2, 64px); z-index: 2; background: var(--panel-solid); box-shadow: 1px 0 0 var(--line); }
+table.grid th.sticky-2 { left: var(--ck2, 64px); z-index: 6; background: var(--th-bg); box-shadow: 1px 0 0 var(--th-line); }
+/* 冻结列自己带底色，隔行和悬停要跟着行一起变，否则姓名列会永远是一块白 */
+table.grid tbody tr:nth-child(even) td.sticky-l,
+table.grid tbody tr:nth-child(even) td.sticky-2 { background: var(--row-alt); }
+table.grid tbody tr:hover td.sticky-l,
+table.grid tbody tr:hover td.sticky-2 { background: var(--accent-soft); }
+/* 「—」这种空状态要看得懂但别抢眼：满屏的破折号比数据还亮就没法扫读了。
+   （成绩页/电联页是紧凑行高，选择器要压过 section.list.solo 那条） */
+table.grid td.none,
+section.list.solo table.grid td.none { color: var(--ink-3); font-size: var(--fs-aux); }
 /* 表格里自动算出的等级，加个小角标区分「手动指定」 */
-table.grid i.lva { font-style: normal; font-size: 10px; color: var(--ink-3); margin-left: 3px; vertical-align: 1px; }
+table.grid i.lva { font-style: normal; font-size: var(--fs-mini); color: var(--ink-3); margin-left: 3px; vertical-align: 1px; }
 
 /* ---------- 详情 ---------- */
 /* overflow-x:hidden 是兜底：CSS 规范里 overflow-y:auto 会把 overflow-x:visible 变成 auto，
@@ -375,26 +485,26 @@ aside.detail.open { display: block; }
   display: flex; align-items: center; gap: 9px; margin: 0 -17px 4px; padding: 17px 17px 7px;
   box-shadow: 0 1px 0 var(--line); }
 .det-head .nm { font-size: 19px; font-weight: 700; }
-.det-sub { color: var(--ink-3); font-size: 12px; margin-bottom: 13px; }
+.det-sub { color: var(--ink-3); font-size: var(--fs-aux); margin-bottom: 13px; }
 .box { border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; margin-bottom: 11px; }
-.box h4 { margin: 0 0 8px; font-size: 11.5px; color: var(--ink-3); letter-spacing: .5px; text-transform: uppercase; font-weight: 700; }
-.kv { display: flex; gap: 8px; margin-bottom: 5px; font-size: 13px; }
+.box h4 { margin: 0 0 8px; font-size: var(--fs-aux); color: var(--ink-3); letter-spacing: .5px; text-transform: uppercase; font-weight: 700; }
+.kv { display: flex; gap: 8px; margin-bottom: 5px; font-size: var(--fs-cell); }
 .kv .k { color: var(--ink-3); flex: 0 0 60px; }
 textarea.note { width: 100%; min-height: 72px; resize: vertical; border: 1px solid var(--line);
-  border-radius: 8px; padding: 8px 10px; background: var(--panel-2); outline: none; font-size: 13px; }
+  border-radius: 8px; padding: 8px 10px; background: var(--panel-2); outline: none; font-size: var(--fs-cell); }
 textarea.note:focus { border-color: var(--accent); background: var(--panel); }
 .follow { display: flex; align-items: center; gap: 9px; margin-top: 6px; flex-wrap: wrap; }
-.follow .when { font-size: 12px; color: var(--ink-3); }
+.follow .when { font-size: var(--fs-aux); color: var(--ink-3); }
 /* 聊天记录和成绩单是详情面板里最长的两块，各让它们在自己内部滚，
    否则整块面板会被撑到三四个屏幕高，想改下面的备注要一路拉到底。 */
 .chats { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; padding-right: 3px; }
 #dExamList { max-height: 620px; overflow-y: auto; padding-right: 3px; }
 #dExamList:empty { max-height: none; }
 .msg { border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; background: var(--panel-2); }
-.msg .meta { font-size: 11px; color: var(--ink-3); margin-bottom: 3px; display: flex; gap: 8px; }
+.msg .meta { font-size: var(--fs-mini); color: var(--ink-3); margin-bottom: 3px; display: flex; gap: 8px; }
 .msg .meta .sp { color: var(--ink-2); font-weight: 600; }
-.msg .txt { font-size: 13px; white-space: pre-wrap; word-break: break-word; }
-.empty-hint { color: var(--ink-3); font-size: 13px; text-align: center; padding: 22px 0; }
+.msg .txt { font-size: var(--fs-cell); white-space: pre-wrap; word-break: break-word; }
+.empty-hint { color: var(--ink-3); font-size: var(--fs-cell); text-align: center; padding: 22px 0; }
 
 /* ---------- 弹窗 ---------- */
 .mask { position: fixed; inset: 0; background: var(--mask); display: none;
@@ -409,14 +519,14 @@ textarea.note:focus { border-color: var(--accent); background: var(--panel); }
 .modal footer { padding: 12px 18px; border-top: 1px solid var(--line);
   display: flex; gap: 9px; justify-content: flex-end; align-items: center; flex-wrap: wrap; }
 .modal textarea { width: 100%; min-height: 220px; resize: vertical; border: 1px solid var(--line);
-  border-radius: 10px; padding: 11px; font-family: ui-monospace, Consolas, monospace; font-size: 12.5px;
+  border-radius: 10px; padding: 11px; font-family: ui-monospace, Consolas, monospace; font-size: var(--fs-cell);
   background: var(--panel-2); outline: none; }
 .modal textarea:focus { border-color: var(--accent); background: var(--panel); }
-.hint { font-size: 12.5px; color: var(--ink-3); margin: 8px 0 0; line-height: 1.7; }
-.result { font-size: 13px; margin-right: auto; }
+.hint { font-size: var(--fs-cell); color: var(--ink-3); margin: 8px 0 0; line-height: 1.7; }
+.result { font-size: var(--fs-cell); margin-right: auto; }
 .result b { color: var(--green); }
 .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(20px);
-  background: var(--toast-bg); color: var(--toast-ink); padding: 9px 16px; border-radius: 9px; font-size: 13px;
+  background: var(--toast-bg); color: var(--toast-ink); padding: 9px 16px; border-radius: 9px; font-size: var(--fs-cell);
   opacity: 0; pointer-events: none; transition: .2s; z-index: 99; box-shadow: var(--shadow-lg); }
 .toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -432,24 +542,24 @@ textarea.note:focus { border-color: var(--accent); background: var(--panel); }
 .attthumb .noimg { display: flex; align-items: center; justify-content: center; height: 100%;
   font-size: 15px; color: var(--ink-3); }
 .attthumb .kill { position: absolute; top: 0; right: 0; width: 15px; height: 15px; line-height: 13px;
-  text-align: center; font-size: 11px; background: rgba(16,24,40,.6); color: #fff;
+  text-align: center; font-size: var(--fs-mini); background: rgba(16,24,40,.6); color: #fff;
   border-bottom-left-radius: 5px; opacity: 0; transition: .12s; cursor: pointer; z-index: 2; }
 .attthumb:hover .kill { opacity: 1; }
 .attthumb.file { width: auto; max-width: 172px; flex: 0 1 auto; height: 46px;
   display: flex; align-items: center; gap: 6px; padding: 0 8px; cursor: pointer; }
 .attthumb.file .ftype { flex: 0 0 auto; font-size: 9.5px; font-weight: 700; letter-spacing: .3px;
   padding: 2px 4px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
-.attthumb.file .fname { font-size: 11.5px; color: var(--ink-2); overflow: hidden;
+.attthumb.file .fname { font-size: var(--fs-aux); color: var(--ink-2); overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap; }
 .attthumb.file[data-kind="pdf"] .ftype { background: var(--red-soft); color: var(--red); }
 .attthumb.file[data-kind="doc"] .ftype { background: var(--accent-soft); color: var(--accent); }
 .attthumb.file[data-kind="sheet"] .ftype { background: var(--green-soft); color: var(--green); }
 .attthumb.file[data-kind="ppt"] .ftype { background: var(--amber-soft); color: var(--amber); }
-.attadd { padding: 3px 8px; font-size: 12px; border: 1px solid var(--line); border-radius: 6px;
+.attadd { padding: 3px 8px; font-size: var(--fs-aux); border: 1px solid var(--line); border-radius: 6px;
   background: var(--panel); cursor: pointer; color: var(--ink-2); }
 .attadd:hover { border-color: var(--accent); color: var(--accent); }
-.att-meta { font-size: 11px; color: var(--ink-3); margin-left: auto; }
-.att-hint { font-size: 11.5px; color: var(--accent); }
+.att-meta { font-size: var(--fs-mini); color: var(--ink-3); margin-left: auto; }
+.att-hint { font-size: var(--fs-aux); color: var(--accent); }
 .busy { display: inline-block; width: 11px; height: 11px; border: 2px solid var(--line);
   border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; vertical-align: -1px; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -458,7 +568,7 @@ textarea.note:focus { border-color: var(--accent); background: var(--panel); }
 .lightbox { position: fixed; inset: 0; background: rgba(12,16,22,.92); z-index: 80;
   display: none; flex-direction: column; }
 .lightbox.open { display: flex; }
-.lb-bar { display: flex; align-items: center; gap: 9px; padding: 11px 16px; color: #fff; font-size: 13px; }
+.lb-bar { display: flex; align-items: center; gap: 9px; padding: 11px 16px; color: #fff; font-size: var(--fs-cell); }
 .lb-bar .btn { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.22); color: #fff; }
 .lb-bar .btn:hover { background: rgba(255,255,255,.2); }
 .lb-body { flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 0 16px 16px; }
@@ -468,14 +578,14 @@ textarea.note:focus { border-color: var(--accent); background: var(--panel); }
 .lb-file .big { font-size: 15px; font-weight: 700; letter-spacing: 1px; padding: 10px 16px;
   border: 1px solid rgba(255,255,255,.3); border-radius: 10px; display: inline-block; margin-bottom: 16px; }
 .lb-file .nm { color: #fff; font-size: 15px; margin-bottom: 6px; word-break: break-all; }
-.lb-file .sz { font-size: 12.5px; opacity: .7; }
+.lb-file .sz { font-size: var(--fs-cell); opacity: .7; }
 
 /* ---------- 详情：就地编辑 ---------- */
-.scorerow { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.scorerow .k { flex: 0 0 66px; color: var(--ink-3); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scorerow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.scorerow .k { flex: 0 0 70px; color: var(--ink-3); font-size: var(--fs-aux); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .scorerow .btns { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
-.scorebtn { min-width: 30px; padding: 3px 8px; border: 1px solid var(--line); background: var(--panel);
-  border-radius: 7px; cursor: pointer; font-size: 12.5px; color: var(--ink-2); transition: .1s; }
+.scorebtn { min-width: 32px; padding: 4px 9px; border: 1px solid var(--line); background: var(--panel-solid);
+  border-radius: var(--radius-s); cursor: pointer; font-size: var(--fs-cell); color: var(--ink-2); transition: .1s; }
 .scorebtn:hover { border-color: var(--line-strong); background: var(--panel-2); }
 .scorebtn.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
 .scorebtn.clr.on { background: var(--panel-3); border-color: var(--line); color: var(--ink-2); font-weight: 400; }
@@ -485,40 +595,42 @@ textarea.note:focus { border-color: var(--accent); background: var(--panel); }
   border-radius: 8px; background: transparent; flex: 1 1 auto; min-width: 90px; width: auto; }
 .nameinput:hover { border-color: var(--line); background: var(--panel-2); }
 .nameinput:focus { border-color: var(--accent); background: var(--panel); outline: none; }
-select.lvsel { padding: 3px 7px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); font-size: 12.5px; }
+select.lvsel { padding: 4px 8px; border: 1px solid var(--line); border-radius: var(--radius-s);
+  background: var(--panel-solid); font-size: var(--fs-cell); }
 
-textarea.mini { width: 100%; min-height: 54px; resize: vertical; border: 1px solid var(--line);
-  border-radius: 8px; padding: 7px 9px; background: var(--panel-2); outline: none; font-size: 13px; }
+textarea.mini { width: 100%; min-height: 58px; resize: vertical; border: 1px solid var(--line);
+  border-radius: var(--radius-s); padding: 9px 11px; background: var(--panel-2); outline: none;
+  font-size: var(--fs-cell); line-height: var(--lh); }
 textarea.mini:focus { border-color: var(--accent); background: var(--panel); }
 
-select.cellsel { padding: 2px 4px; border: 1px solid transparent; border-radius: 6px;
-  background: transparent; font-size: 13px; cursor: pointer; font-variant-numeric: tabular-nums; }
+select.cellsel { padding: 3px 5px; border: 1px solid transparent; border-radius: 6px;
+  background: transparent; font-size: var(--fs-cell); cursor: pointer; font-variant-numeric: tabular-nums; }
 select.cellsel:hover { border-color: var(--line); background: var(--panel-2); }
 select.cellsel:focus { border-color: var(--accent); background: var(--panel); outline: none; }
-button.cellflag { padding: 2px 9px; min-width: 46px; border: 1px solid var(--line); border-radius: 6px;
-  background: var(--panel); cursor: pointer; font-size: 12.5px; color: var(--ink-3); }
+button.cellflag { padding: 3px 10px; min-width: 48px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--panel-solid); cursor: pointer; font-size: var(--fs-cell); color: var(--ink-3); }
 button.cellflag:hover { border-color: var(--line-strong); background: var(--panel-2); }
 button.cellflag.on { background: var(--green-soft); border-color: var(--green-line); color: var(--green); font-weight: 600; }
-.hint-inline { font-size: 11.5px; color: var(--ink-3); }
+.hint-inline { font-size: var(--fs-aux); color: var(--ink-3); }
 
-.lvauto { font-size: 12.5px; color: var(--ink-3); padding: 3px 8px; border-radius: 7px;
+.lvauto { font-size: var(--fs-cell); color: var(--ink-3); padding: 4px 9px; border-radius: var(--radius-s);
   background: var(--panel-3); border: 1px solid var(--line); }
-.lvauto b { color: var(--ink); font-size: 13px; }
-input.lvmin { width: 52px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 7px;
-  background: var(--panel); text-align: center; outline: none; font-variant-numeric: tabular-nums; }
+.lvauto b { color: var(--ink); font-size: var(--fs-body); }
+input.lvmin { width: 54px; padding: 4px 7px; border: 1px solid var(--line); border-radius: var(--radius-s);
+  background: var(--panel-solid); text-align: center; outline: none; font-variant-numeric: tabular-nums; }
 input.lvmin:focus { border-color: var(--accent); }
 
 /* 跟进项：次数 / 日期 / 文字 */
-.stepbtn { width: 26px; height: 26px; padding: 0; border: 1px solid var(--line); border-radius: 7px;
-  background: var(--panel); cursor: pointer; font-size: 15px; line-height: 1; color: var(--ink-2); }
+.stepbtn { width: 28px; height: 28px; padding: 0; border: 1px solid var(--line); border-radius: var(--radius-s);
+  background: var(--panel-solid); cursor: pointer; font-size: 15px; line-height: 1; color: var(--ink-2); }
 .stepbtn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-input.fnum, input.fdate, input.ftext { border: 1px solid var(--line); border-radius: 7px;
-  padding: 3px 7px; background: var(--panel); font-size: 12.5px; outline: none; }
-input.fnum { width: 52px; text-align: center; font-weight: 650; font-variant-numeric: tabular-nums; }
-input.fdate { width: 134px; }
+input.fnum, input.fdate, input.ftext { border: 1px solid var(--line); border-radius: var(--radius-s);
+  padding: 4px 8px; background: var(--panel-solid); font-size: var(--fs-cell); outline: none; }
+input.fnum { width: 54px; text-align: center; font-weight: 650; font-variant-numeric: tabular-nums; }
+input.fdate { width: 138px; }
 input.ftext { flex: 1; min-width: 0; }
 input.fnum:focus, input.fdate:focus, input.ftext:focus { border-color: var(--accent); }
-.scorerow .unit { font-size: 12px; color: var(--ink-3); }
+.scorerow .unit { font-size: var(--fs-aux); color: var(--ink-3); }
 select.typesel { flex: 1; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px;
   background: var(--panel-2); outline: none; }
 select.typesel:focus { border-color: var(--accent); background: var(--panel); }
@@ -527,34 +639,34 @@ select.typesel:focus { border-color: var(--accent); background: var(--panel); }
 .exam { border: 1px solid var(--line); border-radius: 9px; padding: 7px 9px; margin-bottom: 7px; background: var(--panel-2); }
 .exam .ex1 { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
 .exam .ex1 input { flex: 1; min-width: 0; border: 1px solid transparent; background: transparent;
-  font-size: 13px; padding: 2px 5px; border-radius: 6px; }
+  font-size: var(--fs-cell); padding: 2px 5px; border-radius: 6px; }
 .exam .ex1 input:hover { border-color: var(--line); background: var(--panel); }
 .exam .ex1 input:focus { border-color: var(--accent); background: var(--panel); outline: none; }
-.exam .ex2 { display: flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--ink-3); }
-.exam .ex2 input { border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px; background: var(--panel); font-size: 12.5px; }
+.exam .ex2 { display: flex; align-items: center; gap: 5px; font-size: var(--fs-cell); color: var(--ink-3); }
+.exam .ex2 input { border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px; background: var(--panel); font-size: var(--fs-cell); }
 .exam .ex2 input.exdate { width: 128px; }
 .exam .ex2 input.exscore { width: 60px; font-weight: 650; font-variant-numeric: tabular-nums; }
 .exam .ex2 input.exfull { width: 60px; }
-.exam .x { color: var(--ink-3); cursor: pointer; padding: 0 5px; font-size: 13px; }
+.exam .x { color: var(--ink-3); cursor: pointer; padding: 0 5px; font-size: var(--fs-cell); }
 .exam .x:hover { color: var(--red); }
-.exam-trend { margin-top: 8px; font-size: 12.5px; color: var(--ink-2); }
+.exam-trend { margin-top: 8px; font-size: var(--fs-cell); color: var(--ink-2); }
 .exam-trend .up { color: var(--green); font-weight: 650; }
 .exam-trend .down { color: var(--red); font-weight: 650; }
 
 /* ---------- AI 试卷分析（DeepSeek） ---------- */
 .aibox { margin-top: 8px; border-top: 1px dashed var(--line); padding-top: 8px; }
 .aibox.empty { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-button.aibtn { padding: 4px 10px; font-size: 12.5px; }
+button.aibtn { padding: 4px 10px; font-size: var(--fs-cell); }
 .aibox .aihead { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
-.aibox .aihead b { font-size: 12.5px; color: var(--accent); }
-.aibox .aitext { font-size: 12.5px; line-height: 1.8; color: var(--ink);
+.aibox .aihead b { font-size: var(--fs-cell); color: var(--accent); }
+.aibox .aitext { font-size: var(--fs-cell); line-height: 1.8; color: var(--ink);
   background: var(--accent-soft); border-left: 3px solid var(--accent);
   border-radius: 0 8px 8px 0; padding: 9px 11px; max-height: 430px; overflow-y: auto;
   word-break: break-word; }
 .aibox .aitext b { color: var(--accent); }
-.aibox .aifoot { font-size: 11px; color: var(--ink-3); margin-top: 5px; }
+.aibox .aifoot { font-size: var(--fs-mini); color: var(--ink-3); margin-top: 5px; }
 .aiwarn { background: var(--amber-soft); border: 1px solid var(--amber-line); border-radius: 9px;
-  padding: 9px 12px; font-size: 12.5px; color: var(--ink-2); line-height: 1.75; }
+  padding: 9px 12px; font-size: var(--fs-cell); color: var(--ink-2); line-height: 1.75; }
 .aiwarn b { color: var(--amber); }
 .aiwarn ul { margin: 6px 0 0; padding-left: 18px; }
 .aiwarn li { margin-bottom: 4px; }
@@ -568,27 +680,27 @@ button.aibtn { padding: 4px 10px; font-size: 12.5px; }
 .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
 .drop .big { font-size: 34px; margin-bottom: 8px; }
 .drop .t { font-weight: 650; font-size: 16px; }
-.drop .s { color: var(--ink-3); font-size: 13px; margin-top: 6px; }
-.or { text-align: center; color: var(--ink-3); font-size: 12.5px; margin: 16px 0; }
+.drop .s { color: var(--ink-3); font-size: var(--fs-cell); margin-top: 6px; }
+.or { text-align: center; color: var(--ink-3); font-size: var(--fs-cell); margin: 16px 0; }
 /* 「暂无名单，直接使用」下面那行小字 */
-.onboard .skip-hint { text-align: center; color: var(--ink-3); font-size: 12.5px;
+.onboard .skip-hint { text-align: center; color: var(--ink-3); font-size: var(--fs-cell);
   margin: 7px 0 0; line-height: 1.6; }
 .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
 .tile { border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--panel); }
 .tile h4 { margin: 0 0 6px; font-size: 14px; }
-.tile p { margin: 0; font-size: 12.5px; color: var(--ink-2); }
+.tile p { margin: 0; font-size: var(--fs-cell); color: var(--ink-2); }
 
 .map { display: grid; grid-template-columns: 150px 1fr; gap: 9px 12px; align-items: center; }
-.map label { font-size: 13px; color: var(--ink-2); }
+.map label { font-size: var(--fs-cell); color: var(--ink-2); }
 .map select, .map input[type=text] { width: 100%; padding: 7px 9px; border: 1px solid var(--line);
   border-radius: 8px; background: var(--panel-2); outline: none; }
 .map select:focus, .map input:focus { border-color: var(--accent); background: var(--panel); }
 .preview { overflow: auto; max-height: 260px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
-.preview table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+.preview table { border-collapse: collapse; width: 100%; font-size: var(--fs-cell); }
 .preview th, .preview td { padding: 5px 9px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .preview th { background: var(--panel-2); position: sticky; top: 0; }
 .preview td.hi { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
-.steps { display: flex; gap: 8px; margin-bottom: 14px; font-size: 12.5px; color: var(--ink-3); }
+.steps { display: flex; gap: 8px; margin-bottom: 14px; font-size: var(--fs-cell); color: var(--ink-3); }
 .steps span.on { color: var(--accent); font-weight: 650; }
 
 /* ---------- 设置 ---------- */
@@ -602,7 +714,7 @@ button.aibtn { padding: 4px 10px; font-size: 12.5px; }
 .sect { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 14px; }
 .sect:first-child { border-top: 0; margin-top: 0; padding-top: 0; }
 .sect h4 { margin: 0 0 4px; font-size: 14px; }
-.sect .desc { font-size: 12.5px; color: var(--ink-3); margin: 0 0 10px; }
+.sect .desc { font-size: var(--fs-cell); color: var(--ink-3); margin: 0 0 10px; }
 input[type=range] { accent-color: var(--accent); }
 
 /* 外观选择器 */
@@ -613,7 +725,7 @@ input[type=range] { accent-color: var(--accent); }
 .themecard.on { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .themecard .swatch { height: 46px; display: flex; }
 .themecard .swatch span { flex: 1; }
-.themecard .nm { display: block; padding: 5px 0; font-size: 12px; color: var(--ink-2); }
+.themecard .nm { display: block; padding: 5px 0; font-size: var(--fs-aux); color: var(--ink-2); }
 .themecard.on .nm { color: var(--accent); font-weight: 650; }
 
 .wallpick { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -622,7 +734,7 @@ input[type=range] { accent-color: var(--accent); }
   position: relative; padding: 0; }
 .wallcard:hover { border-color: var(--line-strong); }
 .wallcard.on { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.wallcard .cap { position: absolute; left: 0; right: 0; bottom: 0; font-size: 10.5px;
+.wallcard .cap { position: absolute; left: 0; right: 0; bottom: 0; font-size: var(--fs-mini);
   background: rgba(0,0,0,.55); color: #fff; padding: 1px 0; }
 .wallcard.none { display: flex; align-items: center; justify-content: center; color: var(--ink-3); font-size: 14px; }
 
@@ -639,8 +751,8 @@ input[type=range] { accent-color: var(--accent); }
 /* 打印容器平时不占位、不显示；只有点了「导出 PDF」才填内容并切到打印视图 */
 #printHost { display: none; }
 #printHost h1 { font-size: 19px; margin: 0 0 4px; }
-#printHost .pmeta { font-size: 12px; color: #555; margin-bottom: 10px; }
-#printHost table.ptable { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+#printHost .pmeta { font-size: var(--fs-aux); color: #555; margin-bottom: 10px; }
+#printHost table.ptable { width: 100%; border-collapse: collapse; font-size: var(--fs-cell); }
 #printHost table.ptable th, #printHost table.ptable td { border: 1px solid #999; padding: 5px 9px; text-align: left; }
 #printHost table.ptable th { background: #eee; }
 
@@ -672,16 +784,16 @@ input[type=range] { accent-color: var(--accent); }
 .pap-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px;
   border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .pap-head b { font-size: 14px; }
-.pap-tip { margin: 0; padding: 10px 16px; font-size: 12px; line-height: 1.7;
+.pap-tip { margin: 0; padding: 10px 16px; font-size: var(--fs-aux); line-height: 1.7;
   color: var(--ink-2); background: var(--panel-3); border-bottom: 1px solid var(--line); }
 .pap-tip b { color: var(--red); }
-.pap-mock { margin: 0; padding: 9px 16px; font-size: 12px; line-height: 1.7;
+.pap-mock { margin: 0; padding: 9px 16px; font-size: var(--fs-aux); line-height: 1.7;
   background: var(--amber-soft); color: var(--amber); border-bottom: 1px solid var(--amber-line); }
 .pap-body { flex: 1; min-height: 0; display: flex; gap: 0; overflow: hidden; }
 .pap-left { width: 300px; flex: none; border-right: 1px solid var(--line);
   padding: 12px 14px; overflow: auto; }
 .pap-right { flex: 1; min-width: 0; padding: 12px 16px; overflow: auto; }
-.pap-body h5 { margin: 12px 0 6px; font-size: 12px; color: var(--ink-3); font-weight: 600; }
+.pap-body h5 { margin: 12px 0 6px; font-size: var(--fs-aux); color: var(--ink-3); font-weight: 600; }
 .pap-body h5:first-child { margin-top: 0; }
 .pap-thumbs { display: flex; flex-wrap: wrap; gap: 8px; }
 .pap-thumb { width: 128px; border: 1px solid var(--line); border-radius: 6px;
@@ -689,23 +801,23 @@ input[type=range] { accent-color: var(--accent); }
 .pap-thumb:hover { border-color: var(--accent); }
 .pap-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; flex-wrap: wrap; }
 .pap-ck { flex: none; display: flex; align-items: center; }
-.pap-k { width: 76px; flex: none; font-size: 12.5px; color: var(--ink-2); }
-.pap-v { flex: 1; min-width: 120px; padding: 4px 8px; font-size: 12.5px;
+.pap-k { width: 76px; flex: none; font-size: var(--fs-cell); color: var(--ink-2); }
+.pap-v { flex: 1; min-width: 120px; padding: 4px 8px; font-size: var(--fs-cell);
   border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2, #fff); }
-.pap-ok { margin: 8px 0; padding: 7px 10px; font-size: 12.5px; border-radius: 6px;
+.pap-ok { margin: 8px 0; padding: 7px 10px; font-size: var(--fs-cell); border-radius: 6px;
   background: var(--green-soft); color: var(--green); border: 1px solid var(--green-line); }
-.pap-warn { margin: 8px 0; padding: 8px 10px; font-size: 12.5px; line-height: 1.7;
+.pap-warn { margin: 8px 0; padding: 8px 10px; font-size: var(--fs-cell); line-height: 1.7;
   border-radius: 6px; background: var(--red-soft); color: var(--red); border: 1px solid var(--red-line); }
 .pap-pick { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
-.pap-pick label { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ink-2); }
-.pap-tab { width: 100%; border-collapse: collapse; font-size: 12px; }
+.pap-pick label { display: flex; align-items: center; gap: 5px; font-size: var(--fs-aux); color: var(--ink-2); }
+.pap-tab { width: 100%; border-collapse: collapse; font-size: var(--fs-aux); }
 .pap-tab th, .pap-tab td { border: 1px solid var(--line); padding: 4px 8px; text-align: left; }
 .pap-tab th { background: var(--panel-3); font-weight: 600; color: var(--ink-2); }
-.pap-ansbox { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12.5px; }
+.pap-ansbox { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: var(--fs-cell); }
 .pap-ans { color: var(--ink-2); }
 .pap-ans b { color: var(--ink); }
-.pap-none { color: var(--ink-3); font-size: 12px; }
-.pap-unread { margin: 0; padding-left: 18px; font-size: 12px; color: var(--ink-2); line-height: 1.8; }
+.pap-none { color: var(--ink-3); font-size: var(--fs-aux); }
+.pap-unread { margin: 0; padding-left: 18px; font-size: var(--fs-aux); color: var(--ink-2); line-height: 1.8; }
 .pap-foot { display: flex; align-items: center; gap: 8px; padding: 11px 16px;
   border-top: 1px solid var(--line); background: var(--panel-2, #fff); }
 
@@ -718,10 +830,10 @@ input[type=range] { accent-color: var(--accent); }
 
 /* ---- 到期中的复习计划 ---- */
 .planmid { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 2px 0 9px; }
-.planmid-k { font-size: 12.5px; color: var(--ink-2); }
-.planmid input[type="date"] { padding: 3px 7px; font-size: 12.5px;
+.planmid-k { font-size: var(--fs-cell); color: var(--ink-2); }
+.planmid input[type="date"] { padding: 3px 7px; font-size: var(--fs-cell);
   border: 1px solid var(--line); border-radius: 6px; }
-.planhead { font-size: 12.5px; line-height: 1.7; color: var(--ink); margin-bottom: 8px; }
+.planhead { font-size: var(--fs-cell); line-height: 1.7; color: var(--ink); margin-bottom: 8px; }
 .planhead .hint-inline { display: block; margin-top: 2px; }
 .planlist { display: flex; flex-direction: column; gap: 7px; margin-bottom: 10px; }
 .planrow { display: flex; align-items: flex-start; gap: 8px; padding: 7px 9px;
@@ -729,55 +841,86 @@ input[type=range] { accent-color: var(--accent); }
 .planrow.done { opacity: .58; }
 .planrow.done .plan-content { text-decoration: line-through; }
 .planck { flex: none; padding-top: 1px; }
-.plan-period { flex: none; width: 88px; font-size: 11.5px; color: var(--amber); font-weight: 600; }
+.plan-period { flex: none; width: 88px; font-size: var(--fs-aux); color: var(--amber); font-weight: 600; }
 .plan-main { flex: 1; min-width: 0; }
-.plan-content { font-size: 12.5px; color: var(--ink); line-height: 1.6; }
-.plan-how { font-size: 12px; color: var(--ink-2); line-height: 1.65; margin-top: 2px; }
+.plan-content { font-size: var(--fs-cell); color: var(--ink); line-height: 1.6; }
+.plan-how { font-size: var(--fs-aux); color: var(--ink-2); line-height: 1.65; margin-top: 2px; }
 .plan-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 4px;
-  font-size: 11px; color: var(--ink-3); }
+  font-size: var(--fs-mini); color: var(--ink-3); }
 
 /* ---- 侧栏「答题卡」总览页 ---- */
 .pap-page { padding: 2px 0 24px; }
 .pap-midbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   margin: 9px 0 12px; padding: 9px 12px; background: var(--panel);
   border: 1px solid var(--line); border-radius: var(--radius); }
-.pap-mid-k { font-size: 12.5px; color: var(--ink-2); }
-.pap-midbar input[type="date"] { padding: 3px 7px; font-size: 12.5px;
+.pap-mid-k { font-size: var(--fs-cell); color: var(--ink-2); }
+.pap-midbar input[type="date"] { padding: 3px 7px; font-size: var(--fs-cell);
   border: 1px solid var(--line); border-radius: 6px; }
-.pap-empty { padding: 30px 18px; text-align: center; font-size: 13px; line-height: 2.1;
+.pap-empty { padding: 30px 18px; text-align: center; font-size: var(--fs-cell); line-height: 2.1;
   color: var(--ink-2); background: var(--panel); border: 1px dashed var(--line);
   border-radius: var(--radius); }
-.pap-list { display: flex; flex-direction: column; gap: 6px; }
-.pap-row { display: flex; align-items: center; gap: 9px; padding: 8px 11px;
-  background: var(--panel); border: 1px solid var(--line); border-radius: 7px;
+.pap-list { display: flex; flex-direction: column; gap: 7px; }
+.pap-row { display: flex; align-items: center; gap: 10px; padding: 11px 14px;
+  background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--radius-s);
   cursor: pointer; flex-wrap: wrap; }
 .pap-row:hover { border-color: var(--accent); background: var(--accent-soft); }
-.pap-name { flex: none; width: 84px; font-size: 13px; font-weight: 600; }
-.pap-exam { flex: 1; min-width: 110px; font-size: 12.5px; color: var(--ink-2);
+.pap-name { flex: none; width: 90px; font-size: var(--fs-body); font-weight: 600; }
+.pap-exam { flex: 1; min-width: 120px; font-size: var(--fs-cell); color: var(--ink-2);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pap-date { flex: none; width: 92px; font-size: 11.5px; color: var(--ink-3); }
-.pap-score { flex: none; width: 72px; font-size: 12.5px; color: var(--ink); text-align: right; }
+.pap-date { flex: none; width: 96px; font-size: var(--fs-mini); color: var(--ink-3); }
+.pap-score { flex: none; width: 76px; font-size: var(--fs-cell); color: var(--ink); text-align: right; }
+
+/* ---- 答题卡工作区：第一级「考试批次」卡片 ---- */
+.batch-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.batchcard { background: var(--panel-solid); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 14px 16px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 9px; }
+.batchcard:hover { border-color: var(--accent); box-shadow: 0 2px 10px rgba(47, 111, 235, .1); }
+.bc-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.bc-top b { font-size: var(--fs-head); font-weight: 700; color: var(--ink); }
+.bc-meta { font-size: var(--fs-mini); color: var(--ink-3); }
+.bc-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.bc-bar { height: 6px; border-radius: 4px; background: var(--panel-3); overflow: hidden; }
+.bc-bar i { display: block; height: 100%; background: var(--green); border-radius: 4px; }
+.bc-foot { font-size: var(--fs-mini); color: var(--ink-2); }
+.batch-foot { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+
+/* 第二级「全班名单」：表格里的操作列（按钮得小一号，不然一行挤成两行） */
+.pap-act { display: flex; gap: 6px; flex-wrap: wrap; }
+.pap-act .btn { padding: 3px 9px; font-size: var(--fs-mini); }
+
+/* 答题卡缩略图：详情页里给答题卡单独一条，别跟试卷混在一个池子里 */
+.papcardrow { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-top: 7px; }
+.papcard-k { font-size: var(--fs-mini); color: var(--ink-3); }
+.papcard-t { width: 46px; height: 46px; object-fit: cover; border-radius: 6px;
+  border: 1px solid var(--line); cursor: zoom-in; background: var(--panel-3); }
+.attthumb.papercard { outline: 2px solid var(--accent-soft); outline-offset: -2px; }
+.attthumb .roleb { position: absolute; left: 0; bottom: 0; padding: 0 4px; font-size: 9.5px;
+  font-weight: 700; color: #fff; background: rgba(47, 111, 235, .86); border-top-right-radius: 5px; }
+/* 两个 AI 入口读的不是同一份材料，把差别写在按钮下面，别让人猜 */
+.aiwhich { flex: 1 1 100%; font-size: var(--fs-mini); color: var(--ink-3); line-height: 1.7; }
+.aiwhich b { color: var(--ink-2); }
 
 /* ---- 答题卡方案：手工改 / 历史版本 / 话术 / 导出 ---- */
-.btnmini { font-size: 12px; color: var(--accent); cursor: pointer; padding: 2px 6px;
-  border-radius: 5px; border: 1px solid var(--line); background: var(--panel); }
+.btnmini { font-size: var(--fs-cell); color: var(--accent); cursor: pointer; padding: 3px 10px;
+  border-radius: var(--radius-s); border: 1px solid var(--line); background: var(--panel-solid); }
 .btnmini:hover { border-color: var(--accent); background: var(--accent-soft); }
-.pap-edit { width: 100%; box-sizing: border-box; font: inherit; font-size: 12.5px;
-  line-height: 1.8; color: var(--ink); padding: 8px 10px; border: 1px solid var(--line);
-  border-radius: 7px; background: var(--panel-2, #fff); resize: vertical; }
+.pap-edit { width: 100%; box-sizing: border-box; font: inherit; font-size: var(--fs-cell);
+  line-height: var(--lh); color: var(--ink); padding: 10px 12px; border: 1px solid var(--line);
+  border-radius: var(--radius-s); background: var(--panel-solid); resize: vertical; }
 .pap-edit:focus { outline: none; border-color: var(--accent); }
-.pap-lbl { display: block; font-size: 11px; color: var(--ink-3); margin: 7px 0 3px; }
-.talk-k { font-size: 11.5px; color: var(--accent); font-weight: 600; margin: 8px 0 3px; }
-.talk-box { white-space: pre-wrap; font-size: 12.5px; line-height: 1.85; color: var(--ink);
+.pap-lbl { display: block; font-size: var(--fs-mini); color: var(--ink-3); margin: 9px 0 4px; }
+.talk-k { font-size: var(--fs-aux); color: var(--accent); font-weight: 600; margin: 10px 0 4px; }
+.talk-box { white-space: pre-wrap; font-size: var(--fs-cell); line-height: var(--lh); color: var(--ink);
   background: var(--accent-soft); border-left: 3px solid var(--accent);
-  border-radius: 0 7px 7px 0; padding: 8px 11px; }
-.pap-ver { margin-top: 7px; font-size: 12px; }
-.pap-ver summary { cursor: pointer; color: var(--ink-3); font-size: 11.5px; }
-.pap-verrow { display: flex; align-items: center; gap: 8px; padding: 5px 2px;
+  border-radius: 0 7px 7px 0; padding: 10px 13px; }
+.pap-ver { margin-top: 8px; font-size: var(--fs-aux); }
+.pap-ver summary { cursor: pointer; color: var(--ink-3); font-size: var(--fs-aux); }
+.pap-verrow { display: flex; align-items: center; gap: 8px; padding: 6px 2px;
   border-bottom: 1px dashed var(--line); }
-.plan-in { width: 100%; box-sizing: border-box; font: inherit; font-size: 12.5px;
-  padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px;
-  background: var(--panel-2, #fff); color: var(--ink); }
+.plan-in { width: 100%; box-sizing: border-box; font: inherit; font-size: var(--fs-cell);
+  padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--radius-s);
+  background: var(--panel-solid); color: var(--ink); }
 .plan-in:focus { outline: none; border-color: var(--accent); }
 .planrow.editing { display: block; background: var(--accent-soft); border-color: var(--accent); }
 
@@ -785,6 +928,87 @@ input[type=range] { accent-color: var(--accent); }
   .pap-body { flex-direction: column; overflow: auto; }
   .pap-left { width: auto; border-right: none; border-bottom: 1px solid var(--line); }
   .plan-period { width: auto; }
+}
+
+/* ===== 电联逐次记录：编辑面板 / 录音 / 历史 ===== */
+
+#mCallLog .modal { width: 760px; max-width: calc(100vw - 32px); max-height: calc(100vh - 60px); }
+#mCallLog .body { overflow-y: auto; }
+
+.clg-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
+.clg-row > label { font-size: var(--fs-aux); color: var(--ink-2); font-weight: 500; }
+.clg-row input[type="text"], .clg-row input[type="date"], .clg-row input[type="datetime-local"] {
+  font: inherit; font-size: var(--fs-cell); padding: 6px 9px; border: 1px solid var(--line);
+  border-radius: var(--radius-s); background: var(--panel-solid); color: var(--ink); }
+.clg-lbl { display: block; font-size: var(--fs-aux); color: var(--ink-2); font-weight: 500; margin: 0 0 12px; }
+.clg-lbl textarea, .clg-sec textarea {
+  display: block; width: 100%; box-sizing: border-box; margin-top: 5px; font: inherit;
+  font-size: var(--fs-cell); line-height: var(--lh); padding: 9px 11px; border: 1px solid var(--line);
+  border-radius: var(--radius-s); background: var(--panel-solid); color: var(--ink); resize: vertical; }
+.clg-lbl textarea:focus, .clg-sec textarea:focus { outline: none; border-color: var(--accent); }
+.clg-sec { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 14px; }
+.clg-sec h5 { margin: 0 0 6px; font-size: var(--fs-head); font-weight: 650; color: var(--ink); }
+.clg-sec .h5tag { font-size: var(--fs-mini); font-weight: 400; color: var(--ink-3); margin-left: 8px; }
+
+.recbar { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%) translateY(90px);
+  z-index: 70; display: flex; align-items: center; gap: 10px; padding: 9px 14px;
+  border-radius: 999px; background: var(--toast-bg); color: var(--toast-ink);
+  box-shadow: var(--shadow-lg); font-size: var(--fs-cell); opacity: 0;
+  transition: transform .18s ease, opacity .18s ease; pointer-events: none; }
+.recbar.on { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
+.recbar .dot, .rec-now .dot { width: 9px; height: 9px; border-radius: 50%; background: #e5484d;
+  box-shadow: 0 0 0 0 rgba(229, 72, 77, .7); animation: recpulse 1.4s infinite; flex: none; }
+@keyframes recpulse {
+  0% { box-shadow: 0 0 0 0 rgba(229, 72, 77, .6); }
+  70% { box-shadow: 0 0 0 9px rgba(229, 72, 77, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(229, 72, 77, 0); }
+}
+.rectime { font-variant-numeric: tabular-nums; font-weight: 650; }
+.recsrc { font-size: var(--fs-aux); opacity: .8; }
+
+.rec-now { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 9px 12px;
+  border: 1px solid var(--red-line); background: var(--red-soft); border-radius: var(--radius-s); }
+.recbtns { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.recfile { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 7px 10px;
+  border: 1px solid var(--line); border-radius: var(--radius-s); background: var(--panel-2); }
+.rectag { font-size: var(--fs-mini); font-weight: 600; color: var(--accent);
+  background: var(--accent-soft); border-radius: 5px; padding: 1px 6px; }
+.recname { font-size: var(--fs-cell); color: var(--ink); max-width: 260px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+.recmeta { font-size: var(--fs-mini); color: var(--ink-3); }
+.recaudio { width: 100%; margin: 6px 0; height: 34px; }
+.warnbox { border: 1px solid var(--amber-line); background: var(--amber-soft); color: var(--ink);
+  border-radius: var(--radius-s); padding: 8px 11px; font-size: var(--fs-aux); line-height: var(--lh); }
+.agree { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: var(--fs-cell);
+  color: var(--ink); cursor: pointer; }
+
+.calllast { line-height: 1.35; }
+.calllast .cl-at { font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: var(--fs-cell); }
+.calllast .cl-st { margin-left: 7px; font-weight: 600; }
+.calllast .cl-rec { margin-left: 5px; }
+.calllast .cl-note { color: var(--ink-3); font-size: var(--fs-aux); max-width: 210px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.callhist { display: flex; flex-direction: column; gap: 8px; }
+.ck-st-last { margin-left: 4px; }
+.ck-student { flex-wrap: wrap; }
+.callrow { display: block; border: 1px solid var(--line); border-radius: var(--radius-s); padding: 9px 11px;
+  background: var(--panel-solid); cursor: pointer; }
+.callrow:hover { border-color: var(--accent); background: var(--accent-soft); }
+.callrow .cr-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.callrow .cr-top b { font-variant-numeric: tabular-nums; font-size: var(--fs-cell); }
+.callrow .cr-b { font-size: var(--fs-mini); color: var(--ink-3); }
+.callrow .cr-rec, .callrow .cr-ai { font-size: var(--fs-mini); color: var(--ink-3); }
+.callrow .cr-ai { color: var(--accent); }
+.callrow .cr-note { margin-top: 5px; font-size: var(--fs-cell); color: var(--ink); line-height: var(--lh);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.callrow .cr-next { margin-top: 4px; font-size: var(--fs-aux); color: var(--ink-2); }
+.callrow .cr-more { margin-top: 5px; font-size: var(--fs-mini); color: var(--accent); }
+
+html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid); }
+
+@media (max-width: 820px) {
+  #mCallLog .modal { width: auto; }
 }
 </style>
 </head>
@@ -943,6 +1167,20 @@ input[type=range] { accent-color: var(--accent); }
       <button class="btn primary" id="clBatchSave">写入</button>
     </footer>
   </div>
+</div>
+
+<!-- 电联：一次沟通的完整记录（备注 / 录音 / 转写 / AI 纪要 / 导出） -->
+<div class="mask" id="mCallLog"><div class="modal wide" id="clgBody"></div></div>
+
+<!-- 录音进行中的悬浮条（只要还在录就一直看得到，能随时停） -->
+<div class="recbar" id="recBar">
+  <span class="dot"></span>
+  <b>正在录音</b>
+  <span class="rectime" id="recTime">00:00</span>
+  <span class="recsrc" id="recSrc"></span>
+  <span style="flex:1"></span>
+  <button class="btn" id="recPause">暂停</button>
+  <button class="btn danger" id="recStopBar">停止</button>
 </div>
 
 <!-- 设置 -->
@@ -1671,7 +1909,9 @@ input[type=range] { accent-color: var(--accent); }
     const body = (paras || []).map((x) => {
       const st = STYLE[x.style || "p"] || "Normal";
       const pPr = st === "Normal" ? "" : `<w:pPr><w:pStyle w:val="${st}"/></w:pPr>`;
-      return `<w:p>${pPr}${runsOf(x.text || "")}</w:p>`;
+      // 整批导出时一个人一页：x.page === true 就在这段前面插一个分页符
+      const brk = x.page ? '<w:p><w:r><w:br w:type="page"/></w:r></w:p>' : "";
+      return `${brk}<w:p>${pPr}${runsOf(x.text || "")}</w:p>`;
     }).join("");
 
     const document = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -1839,6 +2079,37 @@ input[type=range] { accent-color: var(--accent); }
 
   /* ------------------------------------------------------------ 存储 */
 
+  /**
+   * 附件分家（老数据一次性迁移）。
+   *
+   * 以前「试卷」和「答题卡」共用 exam.attachments 一个池子 —— 结果「分析试卷」
+   * 会拿答题卡当试卷读，两个按钮看着就在干同一件事。现在给每张图一个 role：
+   *   "exam"  = 试卷（题目卷面）
+   *   "paper" = 答题卡（学生写的那张）
+   *
+   * 老数据没有 role。判定办法：这场考试的图**被识别过**（有 paper.ocr），
+   * 那它们当年就是当答题卡用的 → 认作 paper；其余的图一律是试卷。
+   * 只补 role 字段，不动 id / thumb / 顺序，删不掉任何东西。
+   */
+  function migrateAttRoles(d) {
+    for (const s of d.students || []) {
+      for (const e of s.exams || []) {
+        const list = e.attachments || [];
+        if (!list.length) continue;
+        const hadOcr = !!(e.paper && e.paper.ocr);
+        let tagged = false;
+        for (const a of list) if (a.role) tagged = true;
+        if (tagged) continue;                       // 已经是新数据，别重复迁移
+        if (!hadOcr) {
+          for (const a of list) a.role = "exam";    // 没识别过的图当试卷
+          continue;
+        }
+        // 识别过：图片是答题卡，非图片（PDF 之类）留作试卷
+        for (const a of list) a.role = /^image\//.test(a.type || "") ? "paper" : "exam";
+      }
+    }
+  }
+
   let DB = null;
 
   function load() {
@@ -1854,6 +2125,7 @@ input[type=range] { accent-color: var(--accent); }
         d.daily ||= { date: "", ids: [], done: [] };
         d.checkin ||= { importedAt: "", tasks: [], status: {} };
         d.calls ||= { batches: [], status: {} };
+        migrateAttRoles(d);
         return d;
       }
     } catch (e) { console.warn("读取本地数据失败", e); }
@@ -2216,6 +2488,1069 @@ input[type=range] { accent-color: var(--accent); }
     return { n, last };
   }
 
+  /* ========= 电联逐次记录：备注 / 录音 / 转写 / AI（2026-10-15 加） =========
+   * 一次电联 = 一条独立记录，**永不覆盖旧的**。
+   * 老数据里「一轮 × 一个学生」只有一个状态字符串（DB.calls.status），没有时间、
+   * 没有备注、没有录音。DB.calls.status 原样保留 —— 列表、统计、筛选都还在用它，
+   * 记新记录时同步刷新它，所以新旧两套不会打架。
+   * 老记录（有状态、没有逐次记录）在界面上会显示成一条「换版前的记录」，
+   * 只是显示，不写库、不伪造时间。
+   */
+
+  /** 本地时间戳 YYYY-MM-DDTHH:mm（<input type="datetime-local"> 认这个格式） */
+  function nowStamp() {
+    const d = new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+
+  /** 显示用：2025-10-15T14:30 → 10-15 14:30；只有日期就只显示日期 */
+  function stampShort(at) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(String(at || ""));
+    if (!m) return String(at || "");
+    return `${m[2]}-${m[3]}` + (m[4] ? ` ${m[4]}:${m[5]}` : "");
+  }
+
+  /** 某一轮里某个学生的全部电联记录（新的在前） */
+  function callLogList(bid, sid) {
+    const per = ((DB.calls || {}).logs || {})[bid];
+    const list = per && Array.isArray(per[sid]) ? per[sid].slice() : [];
+    return list.sort((a, b) => String(b.at || "").localeCompare(String(a.at || "")));
+  }
+
+  /** 跨所有轮次，这个学生最近的一条逐次记录 */
+  function callLastLog(sid) {
+    let best = null, where = null;
+    for (const b of DB.calls?.batches || []) {
+      const bid = callBatchId(b);
+      for (const L of callLogList(bid, sid)) {
+        if (!best || String(L.at || "") > String(best.at || "")) { best = L; where = b; }
+      }
+    }
+    return best ? { log: best, batch: where } : null;
+  }
+
+  /** 这个学生一共记过几次逐次记录 */
+  function callLogCount(sid) {
+    let n = 0;
+    for (const b of DB.calls?.batches || []) n += callLogList(callBatchId(b), sid).length;
+    return n;
+  }
+
+  /** 拿到可写的数组（惰性建） */
+  function callLogStore(bid, sid) {
+    DB.calls ||= { batches: [], status: {} };
+    DB.calls.logs ||= {};
+    DB.calls.logs[bid] ||= {};
+    DB.calls.logs[bid][sid] ||= [];
+    return DB.calls.logs[bid][sid];
+  }
+
+  function newCallLog() {
+    return {
+      id: uid(), at: nowStamp(), status: "已沟通",
+      note: "", next: "", nextAt: "",
+      tr: "", trAt: "", trSrc: "",
+      ai: null, aiOld: [], aiAt: "", aiModel: "",
+      rec: null, edited: false,
+    };
+  }
+
+  /** 存一条：id 已有就改那条，没有就新加。存完把列表上的状态刷成最新那条的结果。 */
+  function putCallLog(bid, sid, entry) {
+    const list = callLogStore(bid, sid);
+    const i = list.findIndex((x) => x.id === entry.id);
+    if (i >= 0) list[i] = Object.assign({}, list[i], entry);
+    else list.push(entry);
+    syncCallStatus(bid, sid);
+    save();
+    return entry;
+  }
+
+  function delCallLog(bid, sid, id) {
+    const list = callLogStore(bid, sid);
+    const i = list.findIndex((x) => x.id === id);
+    if (i < 0) return;
+    const gone = list[i];
+    list.splice(i, 1);
+    // 录音本体也一起删，别在 IndexedDB 里留孤儿
+    if (gone.rec && gone.rec.id) FB().del(gone.rec.id).catch(() => {});
+    syncCallStatus(bid, sid);
+    save();
+  }
+
+  /** 列表上那个状态 = 这一轮里最新一条记录的结果 */
+  function syncCallStatus(bid, sid) {
+    DB.calls ||= { batches: [], status: {} };
+    DB.calls.status ||= {};
+    DB.calls.status[bid] ||= {};
+    const list = callLogList(bid, sid);
+    if (list.length) DB.calls.status[bid][sid] = list[0].status || "已沟通";
+    else delete DB.calls.status[bid][sid];
+  }
+
+  /* ---------------- 录音 ----------------
+   * 网页**录不到手机通话双方的声音**。能录的只有两种：
+   *   "mic"    麦克风 —— 你的声音 + 免提外放出来的对方声音（等于拿录音笔录免提）
+   *   "screen" 电脑/标签页的声音 —— 微信、QQ、网络电话在电脑上通话时是干净原声
+   * 界面上必须写清是哪一种，绝不写「电话录音」。
+   */
+  const REC_SRC_NAME = { mic: "麦克风（含免提外放）", screen: "电脑声音（分享时勾了音频）", file: "导入的录音文件" };
+  const REC = {
+    mr: null, stream: null, chunks: [], timer: null, src: "",
+    startedAt: 0, pausedAt: 0, pausedMs: 0, sec: 0,
+    pending: null, pendingUrl: "",       // 刚录完、还没保存的那条
+    sr: null, srOn: false, srBuf: "",
+    sid: "", bid: "", eid: "",           // 当前正在录哪一条
+    starting: false,
+  };
+
+  function recPickMime() {
+    if (typeof MediaRecorder === "undefined") return "";
+    for (const t of ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"]) {
+      try { if (MediaRecorder.isTypeSupported(t)) return t; } catch {}
+    }
+    return "";
+  }
+
+  function recCanRecord() {
+    return typeof MediaRecorder !== "undefined" && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  }
+
+  function recSecNow() {
+    const now = Date.now();
+    return Math.max(0, Math.floor((now - REC.startedAt - REC.pausedMs) / 1000));
+  }
+
+  function recFmt(sec) {
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+  }
+
+  function recBarShow(on) {
+    const el = $("recBar");
+    if (!el) return;
+    el.classList.toggle("on", !!on);
+    if (!on) return;
+    const p = $("recPause");
+    if (p) p.onclick = () => recPauseToggle();
+    const s2 = $("recStopBar");
+    if (s2) s2.onclick = () => recStop();
+  }
+
+  function recTick() {
+    REC.sec = recSecNow();
+    const t = $("recTime");
+    if (t) t.textContent = recFmt(REC.sec);
+  }
+
+  /** 开始录音。src: "mic" | "screen"。用完一定要 recStop() 或 recDrop() 收尾。 */
+  async function recStart(src) {
+    if (REC.starting) return;
+    if (!recCanRecord()) return toast("这个浏览器不支持录音（缺 MediaRecorder 或麦克风接口）", 4000);
+
+    const ok = await recConsent(src);
+    if (!ok) return;
+
+    REC.starting = true;
+    let stream = null;
+    try {
+      if (src === "screen") {
+        if (!navigator.mediaDevices.getDisplayMedia) throw new Error("这个浏览器不支持抓电脑声音");
+        stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        if (!stream.getAudioTracks().length) {
+          stream.getTracks().forEach((t) => t.stop());
+          throw new Error("这次分享没有勾上「分享音频」—— 再点一次，在弹窗里把「分享系统音频」/「分享标签页音频」勾上");
+        }
+      } else {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+    } catch (err) {
+      REC.starting = false;
+      return toast("没能开始录音：" + (err.message || err.name), 6000);
+    }
+
+    const mime = recPickMime();
+    let mr;
+    try { mr = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined); }
+    catch (err) { stream.getTracks().forEach((t) => t.stop()); REC.starting = false; return toast("MediaRecorder 起不来：" + err.message, 5000); }
+
+    REC.mr = mr; REC.stream = stream; REC.chunks = []; REC.src = src;
+    REC.startedAt = Date.now(); REC.pausedAt = 0; REC.pausedMs = 0; REC.sec = 0;
+    REC.sid = view.callEdit?.sid || ""; REC.bid = view.callEdit?.bid || ""; REC.eid = view.callEdit?.id || "";
+
+    mr.ondataavailable = (ev) => { if (ev.data && ev.data.size) REC.chunks.push(ev.data); };
+    mr.onstop = () => { recFinish(); };
+    // 用户从浏览器自己的「停止共享」条上停掉时也要收尾
+    stream.getAudioTracks()[0].onended = () => { if (REC.mr && REC.mr.state !== "inactive") recStop(); };
+    try { mr.start(1000); } catch (err) { REC.starting = false; return toast("录音启动失败：" + err.message, 5000); }
+
+    REC.starting = false;
+    recBarShow(true);
+    const s = $("recSrc"); if (s) s.textContent = REC_SRC_NAME[src] || src;
+    clearInterval(REC.timer);
+    REC.timer = setInterval(recTick, 500);
+    recTick();
+    const pb = $("recPause"); if (pb) pb.textContent = "暂停";
+    renderCallSheet();     // 让弹窗里的录音区切成「正在录」
+    toast("开始录音了 —— 记得先跟对方说一声。随时点上面的「结束并保存」", 4200);
+  }
+
+  function recPauseToggle() {
+    const mr = REC.mr;
+    if (!mr) return;
+    if (mr.state === "recording") {
+      mr.pause();
+      REC.pausedAt = Date.now();
+      const b = $("recPause"); if (b) b.textContent = "继续";
+      renderCallSheet();
+    } else if (mr.state === "paused") {
+      mr.resume();
+      if (REC.pausedAt) REC.pausedMs += Date.now() - REC.pausedAt;
+      REC.pausedAt = 0;
+      const b = $("recPause"); if (b) b.textContent = "暂停";
+      renderCallSheet();
+    }
+  }
+
+  function recStop() {
+    const mr = REC.mr;
+    if (!mr) return;
+    try { if (mr.state !== "inactive") mr.stop(); } catch {}
+  }
+
+  function recFinish() {
+    clearInterval(REC.timer);
+    REC.timer = null;
+    const stream = REC.stream;
+    if (stream) stream.getTracks().forEach((t) => t.stop());
+    REC.stream = null;
+    REC.mr = null;
+    recStopSR();
+    recBarShow(false);
+
+    const mime = (REC.chunks[0] && REC.chunks[0].type) || "audio/webm";
+    const blob = new Blob(REC.chunks, { type: mime });
+    REC.chunks = [];
+    const sec = REC.sec || recSecNow();
+    if (!blob.size) { toast("这段没录到声音（可能是设备被占用或没允许麦克风）", 5000); REC.src = ""; renderCallSheet(); return; }
+
+    if (REC.pendingUrl) URL.revokeObjectURL(REC.pendingUrl);
+    REC.pendingUrl = URL.createObjectURL(blob);
+    const ext = /mp4/.test(mime) ? "m4a" : "webm";
+    const who = ($("clgWho") && $("clgWho").textContent) || "电联";
+    REC.pending = {
+      blob,
+      meta: { name: `${who}-${nowStamp().replace(/[:T]/g, "")}.${ext}`, type: mime, size: blob.size, sec, src: REC.src || "mic", at: nowStamp() },
+    };
+    REC.src = "";
+    renderCallSheet();
+    toast(`录好了：${recFmt(sec)}，${(blob.size / 1048576).toFixed(1)} MB。别忘了保存`, 3600);
+  }
+
+  /** 丢弃当前这段（没保存就丢掉），同时把录音本体从内存里放掉 */
+  function recDropPending() {
+    if (REC.pendingUrl) { URL.revokeObjectURL(REC.pendingUrl); REC.pendingUrl = ""; }
+    REC.pending = null;
+  }
+
+  /** 「已取得对方同意」+ 说明这段到底录的是什么 —— 不勾不让开 */
+  function recConsent(src) {
+    return new Promise((resolve) => {
+      const m = document.createElement("div");
+      m.className = "mask open";
+      m.style.zIndex = "80";
+      m.innerHTML = `<div class="modal" style="width:520px">
+        <header>开始录音前，先看一下</header>
+        <div class="body">
+          <div class="warnbox">这一段录的是：<b>${esc(REC_SRC_NAME[src] || src)}</b></div>
+          <p class="hint" style="margin:10px 0 0;line-height:1.7">
+            ${src === "screen"
+              ? "抓的是这台电脑正在播放的声音（微信 / QQ / 网络电话）。弹窗里要勾上「分享系统音频」或「分享标签页音频」，不然只有画面没有声音。"
+              : "录的是这台电脑的麦克风。手机开免提时，你的声音和对方外放出来的声音都会进去；<b>录不到手机通话线路里的原始音频</b>。"}
+          </p>
+          <p class="hint" style="margin:10px 0 0;line-height:1.7">
+            录音<b>只存在这台电脑的浏览器里</b>，不会自动上传到任何地方。<br>
+            请先征得通话参与者同意再开始 —— 这是法律和做老师的本分，别省这一步。
+          </p>
+          <label class="agree"><input type="checkbox" id="recAgree"> 我已取得对方同意，开始录音</label>
+        </div>
+        <footer>
+          <button class="btn" id="recNo">取消</button>
+          <button class="btn primary" id="recYes" disabled>开始录音</button>
+        </footer>
+      </div>`;
+      document.body.appendChild(m);
+      const cb = m.querySelector("#recAgree");
+      const yes = m.querySelector("#recYes");
+      const close = (v) => { m.remove(); resolve(v); };
+      cb.onchange = () => { yes.disabled = !cb.checked; };
+      yes.onclick = () => close(true);
+      m.querySelector("#recNo").onclick = () => close(false);
+      m.onclick = (ev) => { if (ev.target === m) close(false); };
+    });
+  }
+
+  /* ---- 浏览器实时听写（默认关闭；开了等于把音频送到微软的服务器） ---- */
+  function srCtor() { return window.SpeechRecognition || window.webkitSpeechRecognition || null; }
+
+  function srAskConsent() {
+    return new Promise((resolve) => {
+      const m = document.createElement("div");
+      m.className = "mask open";
+      m.style.zIndex = "80";
+      m.innerHTML = `<div class="modal" style="width:520px">
+        <header>「边说边转」会把声音发到微软</header>
+        <div class="body">
+          <p class="hint" style="margin:0;line-height:1.8">
+            这个功能用的是浏览器自带的语音识别，它<b>不是本地跑的</b> ——
+            你说的话会被送到微软的语音服务去转成文字，转完再回来。<br><br>
+            跟这个看板其它的东西不一样：<b>录音文件本身不会上传</b>，但这一路听写的音频会出去。
+            涉及未成年人隐私，所以默认是关的，用不用你定。
+          </p>
+          <p class="hint" style="margin:10px 0 0;line-height:1.8">
+            不想让声音出去也行：自己把要点打进去，或者事后照着录音手打。
+          </p>
+        </div>
+        <footer>
+          <button class="btn" id="srNo">不用了</button>
+          <button class="btn primary" id="srYes">我知道，开着吧</button>
+        </footer>
+      </div>`;
+      document.body.appendChild(m);
+      const close = (v) => { m.remove(); resolve(v); };
+      m.querySelector("#srNo").onclick = () => close(false);
+      m.querySelector("#srYes").onclick = () => close(true);
+      m.onclick = (ev) => { if (ev.target === m) close(false); };
+    });
+  }
+
+  async function srToggle() {
+    if (REC.srOn) { recStopSR(); renderCallSheet(); toast("听写关了"); return; }
+    const SR = srCtor();
+    if (!SR) return toast("这个浏览器没有语音识别（Edge / Chrome 才有）", 4500);
+    if (!(await srAskConsent())) return;
+    const rec = new SR();
+    rec.lang = "zh-CN";
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.onresult = (ev) => {
+      let fin = "", interim = "";
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        const r = ev.results[i];
+        if (r.isFinal) fin += r[0].transcript;
+        else interim += r[0].transcript;
+      }
+      if (fin) {
+        REC.srBuf += (REC.srBuf && !/[\s。！？，]$/.test(REC.srBuf) ? "" : "") + fin;
+        const ta = $("clgTr");
+        if (ta) { ta.value = (ta.value.replace(/\s*（听写中…[^）]*）\s*$/, "") + (ta.value ? "\n" : "") + fin.trim()).trim(); }
+        markTrDirty(ta);
+      }
+      const hint = $("clgSrhint");
+      if (hint) hint.textContent = interim ? `听写中… ${interim}` : (REC.srOn ? "听着呢，说吧" : "");
+    };
+    rec.onerror = (ev) => { toast("听写出错：" + (ev.error || "未知"), 4000); recStopSR(); renderCallSheet(); };
+    rec.onend = () => { if (REC.srOn) { try { rec.start(); } catch {} } };   // 会自动停，续上
+    REC.sr = rec; REC.srOn = true;
+    try { rec.start(); } catch (err) { REC.srOn = false; REC.sr = null; return toast("听写起不来：" + err.message, 4500); }
+    renderCallSheet();
+  }
+
+  function recStopSR() {
+    REC.srOn = false;
+    const r = REC.sr;
+    REC.sr = null;
+    if (r) { try { r.onend = null; r.stop(); } catch {} }
+  }
+
+  function markTrDirty(ta) {
+    if (!ta) return;
+    const e = view.callDraft;
+    if (e && (e.tr || "") !== ta.value) { e.trDirty = true; }
+  }
+
+  /* ---------------- 一次电联的编辑面板 ---------------- */
+
+  function openCallLog(sid, bid, id) {
+    const s = DB.students.find((x) => x.id === sid);
+    if (!s) return;
+    let entry = null;
+    if (id) entry = callLogList(bid, sid).find((x) => x.id === id) || null;
+    recDropPending();
+    view.callEdit = { sid, bid, id: entry ? entry.id : "" };
+    view.callDraft = entry ? JSON.parse(JSON.stringify(entry)) : newCallLog();
+    view.callDraft.sid = sid;
+    view.callDraft.bid = bid;
+    renderCallSheet();
+    $("mCallLog").classList.add("open");
+  }
+
+  function closeCallLog() {
+    closeCallFallback();
+    if (REC.mr) { if (!confirm("还在录音呢 —— 关掉就把这段丢了，确定？")) return false; recStop(); }
+    if (view.callDirty && !confirm("这次电联还没点「保存」—— 关掉就不留下了，确定？")) return false;
+    recDropPending();
+    recStopSR();
+    const box = $("clgBody");
+    if (box) box.innerHTML = "";
+    const mk = $("mCallLog");
+    if (mk) mk.classList.remove("open");
+    view.callEdit = null;
+    view.callDraft = null;
+    view.callDirty = false;
+    afterCallChange();
+    return true;
+  }
+
+  /** 把输入框里的东西收回 draft（重新渲染前必须先调，不然用户刚打的字会没） */
+  function grabCallFields() {
+    const d = view.callDraft;
+    if (!d) return;
+    const g = (id) => { const el = $(id); return el ? el.value : null; };
+    const at = g("clgAt"); if (at !== null) d.at = at;
+    const note = g("clgNote"); if (note !== null) d.note = note;
+    const next = g("clgNext"); if (next !== null) d.next = next;
+    const nextAt = g("clgNextAt"); if (nextAt !== null) d.nextAt = nextAt;
+    const tr = g("clgTr"); if (tr !== null) d.tr = tr;
+    const ai = g("clgAiTa"); if (ai !== null) { d.ai ||= {}; d.ai.text = ai; }
+  }
+
+  function callSheetStatusChips(st) {
+    return CALL_STATUSES.map((x) => `<button class="chip ${x === st ? "on" : ""}" data-clgst="${esc(x)}">${esc(x)}</button>`).join("");
+  }
+
+  function recBoxHtml() {
+    const d = view.callDraft || {};
+    const on = !!REC.mr;
+    const paused = REC.mr && REC.mr.state === "paused";
+    const p = REC.pending;
+    const saved = d.rec;
+
+    if (on) {
+      return `<div class="rec-now"><span class="dot"></span>
+        <b>${paused ? "已暂停" : "正在录音"}</b>
+        <span class="rectime">${recFmt(REC.sec)}</span>
+        <span class="recsrc">${esc(REC_SRC_NAME[REC.src] || "")}</span>
+        <span style="flex:1"></span>
+        <button class="btn" id="recPauseBtn">${paused ? "继续" : "暂停"}</button>
+        <button class="btn danger" id="recStopBtn">结束并保存到这条</button>
+        <button class="btn" id="recDropBtn">丢弃</button></div>`;
+    }
+
+    const one = (m, tag) => `<span class="recfile"><span class="rectag">${tag}</span>
+      <span class="recname" title="${esc(m.name)}">${esc(m.name)}</span>
+      <span class="recmeta">${recFmt(m.sec || 0)} · ${(m.size / 1048576).toFixed(1)} MB · ${esc(REC_SRC_NAME[m.src] || m.src || "")}</span>
+      <button class="btn btnmini" data-recplay="1">▶ 试听</button>
+      <button class="btn btnmini" data-recget="1">⬇ 存成文件</button>
+      <button class="btn btnmini danger" data-recdel="1">🗑 删掉</button></span>`;
+
+    return `${p ? `<div class="warnbox">刚录好的这一段还没保存 —— 点下面的「保存」才会写进这条记录。</div>
+        <audio class="recaudio" controls src="${esc(REC.pendingUrl)}"></audio>
+        ${one(p.meta, "待保存")}` : ""}
+      ${saved ? `<audio class="recaudio" controls preload="none" data-recpreview="1"></audio>
+        ${one(saved, "已保存")}` : ""}
+      ${!p && !saved ? `<div class="hint" style="margin:0 0 8px">这条还没有录音。</div>` : ""}`;
+  }
+
+  function callSheetHtml(s) {
+    const d = view.callDraft || {};
+    const b = (DB.calls?.batches || []).find((x) => callBatchId(x) === view.callEdit?.bid);
+    const isNew = !view.callEdit?.id;
+    const ai = d.ai && d.ai.text ? d.ai.text : "";
+    const srOk = !!srCtor();
+    const canRec = recCanRecord();
+    const on = !!REC.mr;
+
+    return `<header><span id="clgWho">${esc(s.name)}</span>
+        <span class="hint-inline" style="margin-left:8px">${esc(b ? b.name + " · " + shortDate(b.date) : "（没有轮次）")}</span>
+        <span class="spacer"></span>
+        <span class="hint-inline" id="clgSrhint"></span>
+        <span class="result" id="clgHint">${isNew ? "新的一条" : "改这一条"}</span></header>
+      <div class="body">
+        <div class="clg-row">
+          <label>联系时间</label>
+          <input type="datetime-local" id="clgAt" value="${esc(d.at || nowStamp())}">
+          <label style="margin-left:14px">结果</label>
+          <span class="chips" id="clgSts">${callSheetStatusChips(d.status || "已沟通")}</span>
+        </div>
+
+        <label class="clg-lbl">这次聊了什么<textarea id="clgNote" placeholder="家长说了什么、孩子什么情况、你交代了什么……">${esc(d.note || "")}</textarea></label>
+
+        <div class="clg-row">
+          <label>下一步跟进</label>
+          <input type="text" id="clgNext" style="flex:1" placeholder="例：周五再问一次作业交没交" value="${esc(d.next || "")}">
+          <label style="margin-left:12px">计划哪天联系</label>
+          <input type="date" id="clgNextAt" value="${esc(d.nextAt || "")}">
+        </div>
+
+        <div class="clg-sec"><h5>录音</h5>
+          <div class="hint" style="margin:0 0 8px">
+            网页<b>录不到手机通话双方的声音</b>。麦克风这条录的是「你的声音 + 免提外放出来的对方声音」；
+            电脑声音那条录的是微信 / QQ / 网络电话在电脑上播放的原声。
+          </div>
+          ${recBoxHtml()}
+          ${on ? "" : `<div class="recbtns">
+            <button class="btn" id="recMic" ${canRec ? "" : "disabled"}>🎤 用麦克风录（手机免提）</button>
+            <button class="btn" id="recScr" ${canRec && navigator.mediaDevices.getDisplayMedia ? "" : "disabled"}>🖥 录电脑声音（微信/QQ）</button>
+            <button class="btn" id="recImp">📁 导入已有录音</button>
+            <input type="file" id="recFile" accept="audio/*,.m4a,.amr,.mp3,.wav,.aac,.ogg,.webm" hidden>
+          </div>
+          ${canRec ? "" : `<div class="hint" style="color:var(--red);margin:8px 0 0">这个浏览器不支持录音，只能导入已有文件。</div>`}`}
+        </div>
+
+        <div class="clg-sec"><h5>转写<span class="h5tag">自己打的 / 粘的都行</span></h5>
+          <div class="hint" style="margin:0 0 8px">
+            <b>没有本地自动转写</b> —— 看板不会偷偷把录音传到哪个服务去。
+            你可以自己听录音打要点，或者用下面的听写。
+          </div>
+          <textarea id="clgTr" rows="6" placeholder="把通话内容记在这里。听不清的地方写「（听不清 03:12）」，别猜。">${esc(d.tr || "")}</textarea>
+          <div class="recbtns" style="margin-top:8px">
+            <button class="btn ${REC.srOn ? "primary" : ""}" id="srBtn" ${srOk ? "" : "disabled"}>🎧 边说边转${REC.srOn ? "（开着）" : "（默认关）"}</button>
+            <span class="hint" style="margin:0">${srOk ? "用浏览器自带听写，<b>音频会发到微软的服务器</b>，点的时候会再问一次" : "这个浏览器没有语音识别"}</span>
+          </div>
+        </div>
+
+        <div class="clg-sec"><h5>AI 纪要<span class="h5tag">只根据上面的转写写，不听录音</span></h5>
+          ${aiKey() ? "" : `<div class="warnbox">还没填 API key（设置 → AI 分析），AI 纪要现在用不了。上面手打的备注不受影响。</div>`}
+          <div class="recbtns" style="margin:0 0 8px">
+            <button class="btn primary" id="clgAi" ${d.tr ? "" : "disabled"}>🤖 根据转写生成纪要</button>
+            ${d.aiOld && d.aiOld.length ? `<span class="hint" style="margin:0">历史版本 ${d.aiOld.length} 个（重新生成会先存进去）</span>` : ""}
+            ${d.ai && d.ai.edited ? `<span class="tag">你改过</span>` : ""}
+          </div>
+          ${ai ? `<textarea id="clgAiTa" rows="9">${esc(ai)}</textarea>
+            <div class="recbtns" style="margin-top:8px">
+              <button class="btn btnmini" data-aicopy="1">📋 复制纪要</button>
+              ${d.aiOld && d.aiOld.length ? `<button class="btn btnmini" data-aiview="1">看看旧版</button>` : ""}
+              <span class="hint" style="margin:0">${esc(d.aiModel || "")}${d.aiAt ? " · " + esc(stampShort(d.aiAt)) : ""} —— 手改过就不会被重新生成覆盖（旧版会存进历史）</span>
+            </div>` : `<div class="hint" style="margin:0">还没有 AI 纪要。</div>`}
+        </div>
+
+        <div class="clg-sec"><h5>导出<span class="h5tag">注明学员、日期、轮次</span></h5>
+          <div class="recbtns">
+            <button class="btn" id="clgExpDoc">⬇ 导出这名学员在本轮的全部记录（Word）</button>
+            <button class="btn" id="clgExpZip">⬇ 连录音一起打包（ZIP）</button>
+          </div>
+          <div class="hint" style="margin:8px 0 0">ZIP 里是一份 Word + 这段学员在本轮的全部录音文件。</div>
+        </div>
+
+        <div class="hint" id="clgAllHint" style="margin:0"></div>
+      </div>
+      <footer>
+        <button class="btn danger" id="clgDel" style="margin-right:auto" ${isNew ? "disabled" : ""}>🗑 删掉这次记录</button>
+        <button class="btn" id="clgCancel">取消</button>
+        <button class="btn primary" id="clgSave">保存</button>
+      </footer>`;
+  }
+
+  /* ---------------- 编辑面板：渲染 / 绑定 / 保存 ---------------- */
+
+  function closeCallFallback() {
+    const ov = $("clgCopyOv");
+    if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+  }
+
+  const clgSleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /** MediaRecorder 的 onstop 是异步的，等它收完尾 */
+  function recWaitDone(ms) {
+    return new Promise((resolve) => {
+      const t0 = Date.now();
+      const tick = () => {
+        if (!REC.mr || Date.now() - t0 > (ms || 3000)) return resolve();
+        setTimeout(tick, 120);
+      };
+      tick();
+    });
+  }
+
+  /** 记完一次电联后，把可能受影响的地方都刷一遍（只刷当前真的在显示的那块） */
+  function afterCallChange() {
+    try { if (view.mode === "call") renderCallPage(); } catch (e) {}
+    try { renderStats(); } catch (e) {}
+    try { renderSide(); } catch (e) {}
+    try { if (view.selected) renderDetail(); } catch (e) {}
+  }
+
+  /** 面板重画。会先 grabCallFields()，所以调用前不用自己收 */
+  function renderCallSheet() {
+    const s = DB.students.find((x) => x.id === (((view.callEdit || {}).sid) || ""));
+    const box = $("clgBody");
+    if (!s || !box) return;
+    box.innerHTML = callSheetHtml(s);
+    bindCallSheet(s);
+  }
+
+  function bindCallSheet(s) {
+    const d = view.callDraft;
+    if (!d) return;
+    const body = $("clgBody");
+    const one = (id, fn) => { const el = $(id); if (el) el.onclick = fn; };
+
+    const sts = $("clgSts");
+    if (sts) sts.onclick = (ev) => {
+      const b = ev.target.closest("[data-clgst]");
+      if (!b) return;
+      grabCallFields();
+      d.status = b.dataset.clgst;
+      d.edited = true;
+      view.callDirty = true;
+      renderCallSheet();
+    };
+
+    const touch = (id, pick) => {
+      const el = $(id);
+      if (!el) return;
+      el.addEventListener("input", () => {
+        if (pick) pick(el.value);
+        d.edited = true;
+        view.callDirty = true;
+      });
+    };
+    touch("clgAt", (v) => { d.at = v; });
+    touch("clgNote", (v) => { d.note = v; });
+    touch("clgNext", (v) => { d.next = v; });
+    touch("clgNextAt", (v) => { d.nextAt = v; });
+    touch("clgTr", (v) => { d.tr = v; d.trAt = d.trAt || nowStamp(); d.trSrc = "手打"; markTrDirty($("clgTr")); });
+    touch("clgAiTa", (v) => { d.ai ||= {}; d.ai.text = v; d.ai.edited = true; });
+
+    one("clgSave", () => saveCallSheet(s));
+    one("clgCancel", () => closeCallLog());
+    one("clgDel", () => {
+      const ed = view.callEdit || {};
+      if (!ed.id) return;
+      if (!confirm("这次电联记录连录音一起删掉？删了就找不回来了。")) return;
+      delCallLog(ed.bid, ed.sid, ed.id);
+      view.callDirty = false;
+      closeCallLog();
+      afterCallChange();
+      toast("删掉了这次电联记录");
+    });
+
+    one("recMic", () => recStart("mic"));
+    one("recScr", () => recStart("screen"));
+    one("recImp", () => { const f = $("recFile"); if (f) f.click(); });
+    const rf = $("recFile");
+    if (rf) rf.onchange = () => { const f = rf.files && rf.files[0]; rf.value = ""; if (f) importRecFile(f); };
+    one("recPauseBtn", recPauseToggle);
+    one("recStopBtn", recStop);
+    one("recDropBtn", () => {
+      if (!confirm("丢掉这段还没保存的录音？")) return;
+      recDropPending();
+      renderCallSheet();
+      toast("丢掉了");
+    });
+
+    if (body) body.onclick = (ev) => {
+      const t = ev.target;
+      if (t.closest("[data-recplay]")) return recPlay();
+      if (t.closest("[data-recget]")) return recSaveFile();
+      if (t.closest("[data-recdel]")) return recDelete();
+      if (t.closest("[data-aicopy]")) return copyCallAi();
+      if (t.closest("[data-aiview]")) return showCallAiOld();
+    };
+
+    const pv = body && body.querySelector("[data-recpreview]");
+    if (pv) pv.addEventListener("play", () => loadRecPreview(pv), { once: true });
+
+    one("srBtn", srToggle);
+    one("clgAi", () => runCallAi(s));
+    one("clgExpDoc", () => exportCallDoc(s, false));
+    one("clgExpZip", () => exportCallDoc(s, true));
+
+    const hint = $("clgAllHint");
+    if (hint) hint.textContent = `这个学生一共记过 ${callLogCount(s.id)} 次电联。`;
+  }
+
+  async function saveCallSheet(s) {
+    grabCallFields();
+    const d = view.callDraft, ed = view.callEdit;
+    if (!d || !ed) return;
+    const btn = $("clgSave");
+    if (btn) { btn.disabled = true; btn.textContent = "保存中…"; }
+
+    if (REC.mr) { recStop(); await recWaitDone(3000); }
+
+    if (REC.pending) {
+      d.rec = Object.assign({}, REC.pending.meta);
+      if (!d.rec.id) d.rec.id = "rec-" + d.id + "-" + uid();
+      try {
+        await FB().put(d.rec.id, { blob: REC.pending.blob, name: d.rec.name, type: d.rec.type });
+      } catch (err) {
+        if (btn) { btn.disabled = false; btn.textContent = "保存"; }
+        toast("录音没能存进浏览器（" + (err.message || err) + "）—— 先点「⬇ 存成文件」留一份，别关页面", 9000);
+        return;
+      }
+    }
+
+    d.edited = true;
+    if (!d.trAt && d.tr) d.trAt = nowStamp();
+    putCallLog(ed.bid, ed.sid, d);
+    ed.id = d.id;
+    recDropPending();
+    view.callDirty = false;
+    if (btn) { btn.disabled = false; btn.textContent = "保存"; }
+    renderCallSheet();
+    toast(d.rec ? "存好了这次电联和录音 —— 还能接着改" : "存好了这次电联 —— 还能接着改", 3200);
+  }
+
+  /* ---------------- 录音：取回 / 试听 / 存盘 / 删除 ---------------- */
+
+  async function recBlobOf(meta) {
+    if (REC.pending && (!meta || !meta.id || meta.id === (REC.pending.meta || {}).id)) return REC.pending.blob;
+    if (!meta || !meta.id) return null;
+    try {
+      const r = await FB().get(meta.id);
+      return r && r.blob ? r.blob : null;
+    } catch (e) { return null; }
+  }
+
+  async function loadRecPreview(el) {
+    const d = view.callDraft || {};
+    const b = await recBlobOf(d.rec);
+    if (!b) { toast("录音文件找不到了 —— 可能在别的电脑上，或浏览器数据被清过", 6000); return; }
+    el.src = URL.createObjectURL(b);
+    el.play().catch(() => {});
+  }
+
+  async function recPlay() {
+    const d = view.callDraft || {};
+    const el = $("clgBody") && $("clgBody").querySelector(".recaudio");
+    if (!el) return;
+    const b = await recBlobOf(REC.pending ? REC.pending.meta : d.rec);
+    if (!b) return toast("录音文件找不到了", 5000);
+    if (el.src && /^blob:/.test(el.src)) URL.revokeObjectURL(el.src);
+    el.src = URL.createObjectURL(b);
+    el.play().catch(() => {});
+  }
+
+  async function recSaveFile() {
+    const d = view.callDraft || {};
+    const meta = REC.pending ? REC.pending.meta : d.rec;
+    const b = await recBlobOf(meta);
+    if (!b) return toast("录音文件找不到了", 5000);
+    downloadBlob((meta && meta.name) || "电联录音.webm", b);
+  }
+
+  async function recDelete() {
+    const d = view.callDraft || {};
+    if (REC.pending) { recDropPending(); renderCallSheet(); return toast("丢掉这段还没保存的录音"); }
+    if (!d.rec) return;
+    if (!confirm("删掉这条电联的录音？删了就找不回来了。")) return;
+    if (d.rec.id) { try { await FB().del(d.rec.id); } catch (e) {} }
+    d.rec = null;
+    d.edited = true;
+    const ed = view.callEdit || {};
+    if (ed.id) putCallLog(ed.bid, ed.sid, d);
+    view.callDirty = true;
+    renderCallSheet();
+    toast("录音删了");
+  }
+
+  async function importRecFile(file) {
+    if (!file) return;
+    if (!/^audio\//.test(file.type || "") && !/\.(m4a|amr|mp3|wav|aac|ogg|webm|mp4)$/i.test(file.name || "")) {
+      return toast("这看着不是音频 —— m4a / mp3 / amr / wav / webm 都行", 5000);
+    }
+    const sec = await audioDuration(file);
+    if (REC.pendingUrl) URL.revokeObjectURL(REC.pendingUrl);
+    REC.pendingUrl = URL.createObjectURL(file);
+    REC.pending = {
+      blob: file,
+      meta: { name: file.name || "导入的录音", type: file.type || "audio/mpeg", size: file.size, sec: sec || 0, src: "file", at: nowStamp() },
+    };
+    renderCallSheet();
+    toast("录音导进来了 —— 记得点「保存」，不然关掉就没了", 4200);
+  }
+
+  /** 读音频时长。读不出来就返回 0（界面上只显示大小，不编时长） */
+  function audioDuration(blob) {
+    return new Promise((resolve) => {
+      let url = "";
+      try { url = URL.createObjectURL(blob); } catch (e) { return resolve(0); }
+      const a = document.createElement("audio");
+      let done = false;
+      const fin = (v) => {
+        if (done) return;
+        done = true;
+        try { URL.revokeObjectURL(url); } catch (e) {}
+        resolve(v || 0);
+      };
+      const t = setTimeout(() => fin(0), 5000);
+      a.preload = "metadata";
+      a.onloadedmetadata = () => { clearTimeout(t); fin(isFinite(a.duration) ? Math.round(a.duration) : 0); };
+      a.onerror = () => { clearTimeout(t); fin(0); };
+      a.src = url;
+    });
+  }
+
+  /* ---------------- AI 纪要（只吃转写文字，不听录音） ---------------- */
+
+  const CALL_AI_SYS = [
+    "你是一位初中语文老师的助理，帮他把一次家长电话沟通的内容整理成纪要。",
+    "只根据老师给的转写和备注写，不要脑补、不要加转写里没有的信息。",
+    "分四段写，每段一个小标题：",
+    "【这次说了什么】两三句话概括，谁打的、为了什么事、结果如何。",
+    "【家长/学生提出的问题】逐条列，家长原话里的诉求别改意思；没有就写「这次没提到」。",
+    "【已经说定的】逐条列约定事项（谁在什么时候做什么）；没有就写「这次没定具体的」。",
+    "【下一步】建议老师接下来做什么、什么时候再看一眼；可以给一两句开口话术。",
+    "转写里标了「听不清」的地方，不要猜内容；如果关键信息缺失，在末尾用一行「待确认：」列出来。",
+    "用平实的口语写，不要用「赋能」「闭环」这类词。",
+  ].join("\n");
+
+  function callAiPrompt(d, s) {
+    const P = [];
+    P.push(`学生：${s.name || "（未填姓名）"}`);
+    P.push(`联系时间：${stampShort(d.at)}　结果：${d.status || ""}`);
+    if (d.next || d.nextAt) P.push(`老师记的下一步：${d.next || "—"}${d.nextAt ? "（" + d.nextAt + "）" : ""}`);
+    P.push("");
+    P.push("老师手记的备注：");
+    P.push(d.note ? d.note : "（没写）");
+    P.push("");
+    P.push("通话转写：");
+    P.push(d.tr ? d.tr : "（没有转写）");
+    return P.join("\n");
+  }
+
+  async function dsText(sys, user) {
+    const key = aiKey();
+    if (!key) throw new Error("还没填 API key —— 去「设置 → AI 分析」填一个");
+    let r;
+    try {
+      r = await fetch(DS_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+        body: JSON.stringify({
+          model: aiModel(),
+          messages: [{ role: "system", content: sys }, { role: "user", content: user }],
+          thinking: { type: "disabled" },
+          max_tokens: 4000,
+          stream: false,
+        }),
+      });
+    } catch (err) {
+      throw new Error("连不上 DeepSeek（" + (err.message || err.name) + "）");
+    }
+    let j = null;
+    try { j = await r.json(); } catch (e) {}
+    if (!r.ok) {
+      const m = (j && j.error && j.error.message) || ("HTTP " + r.status);
+      if (r.status === 401) throw new Error("API key 不对（401）");
+      if (r.status === 402) throw new Error("账户余额不够了（402）");
+      if (r.status === 429) throw new Error("请求太频繁（429），等一下再试");
+      throw new Error(m);
+    }
+    const txt = String((j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || "").trim();
+    if (!txt) throw new Error("DeepSeek 返回了空内容，等一下再试");
+    return { text: txt, model: aiModel(), at: nowStamp() };
+  }
+
+  async function runCallAi(s) {
+    grabCallFields();
+    const d = view.callDraft;
+    if (!d) return;
+    if (!d.tr && !d.note) return toast("先写点备注或者转写 —— AI 只根据文字写，不会听录音", 5000);
+    const btn = $("clgAi");
+    if (btn) { btn.disabled = true; btn.textContent = "写纪要中…"; }
+    try {
+      const old = d.ai && d.ai.text ? { text: d.ai.text, at: d.ai.at || "", model: d.ai.model || "", edited: !!d.ai.edited } : null;
+      const r = await dsText(CALL_AI_SYS, callAiPrompt(d, s));
+      if (old) { d.aiOld ||= []; d.aiOld.unshift(old); d.aiOld = d.aiOld.slice(0, 5); }
+      d.ai = { text: r.text, model: r.model, at: r.at, edited: false };
+      d.edited = true;
+      view.callDirty = true;
+      renderCallSheet();
+      toast("纪要写好了 —— 不对就自己改，改完再点保存", 3600);
+    } catch (err) {
+      toast(String(err.message || err), 8000);
+      if (btn) { btn.disabled = false; btn.textContent = "🤖 根据转写生成纪要"; }
+    }
+  }
+
+  function copyTextToClipboard(text) {
+    const t = String(text || "");
+    if (!t) return toast("没有可复制的内容");
+    const done = () => toast("复制好了");
+    const fallback = () => {
+      closeCallFallback();
+      const ov = document.createElement("div");
+      ov.className = "mask open";
+      ov.id = "clgCopyOv";
+      ov.style.zIndex = "90";
+      ov.innerHTML = `<div class="modal" style="width:560px">
+        <header>手动复制<span class="spacer"></span><button class="btn" id="clgCopyX">关闭</button></header>
+        <div class="body"><p class="hint" style="margin-top:0">浏览器不让自动复制 —— 下面这段已经全选好了，按 Ctrl+C 就行。</p>
+        <textarea id="clgCopyTa" rows="12" style="width:100%"></textarea></div>
+        <footer><button class="btn primary" id="clgCopyOk">好了</button></footer></div>`;
+      document.body.appendChild(ov);
+      const ta = ov.querySelector("#clgCopyTa");
+      ta.value = t;
+      ta.focus();
+      ta.select();
+      ov.querySelector("#clgCopyX").onclick = closeCallFallback;
+      ov.querySelector("#clgCopyOk").onclick = closeCallFallback;
+      ov.onclick = (ev) => { if (ev.target === ov) closeCallFallback(); };
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(done, fallback);
+    } else fallback();
+  }
+
+  function copyCallAi() {
+    grabCallFields();
+    const d = view.callDraft || {};
+    copyTextToClipboard((d.ai && d.ai.text) || "");
+  }
+
+  function showCallAiOld() {
+    grabCallFields();
+    const d = view.callDraft || {};
+    const old = (d.aiOld || []).filter((x) => x && x.text);
+    if (!old.length) return toast("还没有旧版本");
+    const ov = document.createElement("div");
+    ov.className = "mask open";
+    ov.style.zIndex = "90";
+    ov.innerHTML = `<div class="modal" style="width:640px">
+      <header>旧版纪要（${old.length} 个）<span class="spacer"></span><button class="btn" id="clgOldX">关闭</button></header>
+      <div class="body">${old.map((x) => `<div class="clg-sec"><h5>${esc(stampShort(x.at) || "早期")}${x.edited ? '<span class="h5tag">你改过</span>' : ""}</h5>
+        <div class="talk-box">${mdLite(x.text)}</div></div>`).join("")}</div>
+      <footer><button class="btn" id="clgOldBack">恢复这一版</button><button class="btn primary" id="clgOldX2">关闭</button></footer></div>`;
+    document.body.appendChild(ov);
+    const close = () => { if (ov.parentNode) ov.parentNode.removeChild(ov); };
+    ov.querySelector("#clgOldX").onclick = close;
+    ov.querySelector("#clgOldX2").onclick = close;
+    ov.onclick = (ev) => { if (ev.target === ov) close(); };
+    ov.querySelector("#clgOldBack").onclick = () => {
+      const cur = d.ai && d.ai.text ? { text: d.ai.text, at: d.ai.at || "", model: d.ai.model || "", edited: !!d.ai.edited } : null;
+      const first = old[0];
+      if (cur) { d.aiOld ||= []; d.aiOld.unshift(cur); d.aiOld = d.aiOld.slice(0, 5); }
+      const i = (d.aiOld || []).indexOf(first);
+      if (i >= 0) d.aiOld.splice(i, 1);
+      d.ai = { text: first.text, at: first.at, model: first.model, edited: true };
+      d.edited = true;
+      view.callDirty = true;
+      close();
+      renderCallSheet();
+      toast("换回那一版了 —— 别忘了点保存");
+    };
+  }
+
+  /* ---------------- 导出（Word / 连录音打包） ---------------- */
+
+  function callDocName(s, b) {
+    const clean = (x) => String(x || "").replace(/[\\/:*?"<>|]/g, "_");
+    return `${clean(s.name)}-${clean(b ? b.name : "电联")}-电联记录.docx`;
+  }
+
+  function callLogParas(s, b, logs) {
+    const P = [];
+    const anyRec = logs.filter((L) => L.rec).length;
+    P.push({ text: `${s.name || "（未填姓名）"} · ${b ? b.name : "电联"} · 电联记录`, style: "title" });
+    P.push({ text: `轮次日期：${b && b.date ? shortDate(b.date) : "—"}　记录条数：${logs.length} 条　导出时间：${tsTxt(new Date().toISOString())}`, style: "note" });
+    P.push({ text: "下面的备注和转写都是老师自己记的内容。AI 纪要是模型根据转写写的，可能有出入，以老师备注为准。", style: "note" });
+    if (anyRec) P.push({ text: `有录音的记录 ${anyRec} 条。录音文件存在浏览器里，不在本文档里；这份文档只注明录音的文件名和时长。`, style: "note" });
+
+    if (!logs.length) {
+      P.push({ text: "这一轮还没有逐次记录。", style: "p" });
+      return P;
+    }
+
+    P.push({ text: "一、逐次记录（从早到晚）", style: "h1" });
+    logs.forEach((L, i) => {
+      P.push({ text: `${i + 1}. ${stampShort(L.at) || "时间没填"}　结果：${L.status || "—"}`, style: "p" });
+      P.push({ text: `这次聊了什么：${L.note ? L.note : "（没写）"}`, style: "li" });
+      if (L.next || L.nextAt) {
+        P.push({ text: `下一步：${L.next || "—"}${L.nextAt ? "（计划 " + L.nextAt + "）" : ""}`, style: "li" });
+      }
+      if (L.rec) {
+        P.push({ text: `录音：${L.rec.name || "—"}　时长 ${L.rec.sec ? recFmt(L.rec.sec) : "没读到"}　来源：${REC_SRC_NAME[L.rec.src] || L.rec.src || "—"}`, style: "li" });
+      }
+      P.push({ text: `转写（${L.trSrc || "手打"}${L.trAt ? " " + stampShort(L.trAt) : ""}）：`, style: "li" });
+      if (L.tr) String(L.tr).split("\n").forEach((line) => P.push({ text: line, style: "p" }));
+      else P.push({ text: "（没有转写）", style: "p" });
+      if (L.ai && L.ai.text) {
+        P.push({ text: `AI 纪要${L.ai.model ? "（" + L.ai.model + "）" : ""}${L.ai.edited ? " —— 老师改过" : ""}：`, style: "li" });
+        String(L.ai.text).split("\n").forEach((line) => P.push({ text: line, style: "p" }));
+      }
+    });
+    return P;
+  }
+
+  async function exportCallDoc(s, withZip) {
+    grabCallFields();
+    const ed = view.callEdit || {};
+    const bid = ed.bid || (view.callBatch || "");
+    const b = (DB.calls?.batches || []).find((x) => callBatchId(x) === bid) || null;
+    const logs = callLogList(bid, s.id).slice().sort((a, c) => String(a.at || "").localeCompare(String(c.at || "")));
+    if (!logs.length) return toast("这个学生在这一轮还没有记录，没什么可导出的", 5000);
+
+    try {
+      const doc = FB().makeDocx(callLogParas(s, b, logs), {});
+      if (!withZip) {
+        downloadBlob(callDocName(s, b), doc);
+        return toast("导出好了", 3000);
+      }
+      const entries = [{ name: callDocName(s, b), data: new Uint8Array(await doc.arrayBuffer()) }];
+      let miss = 0;
+      for (let i = 0; i < logs.length; i++) {
+        const L = logs[i];
+        if (!L.rec || !L.rec.id) continue;
+        let blob = null;
+        try { blob = await FB().get(L.rec.id); } catch (e) {}
+        if (!blob || !blob.blob) { miss++; continue; }
+        const safe = String(L.rec.name || ("录音" + (i + 1) + ".webm")).replace(/[\\/:*?"<>|]/g, "_");
+        entries.push({ name: `录音/${String(i + 1).padStart(2, "0")}-${stampShort(L.at).replace(/[: ]/g, "-")}-${safe}`, data: new Uint8Array(await blob.blob.arrayBuffer()) });
+      }
+      const zipName = callDocName(s, b).replace(/\.docx$/, "") + ".zip";
+      downloadBlob(zipName, FB().makeZip(entries));
+      toast(miss ? `打包好了 —— 有 ${miss} 条录音在这台电脑上找不到了，没打进去` : "打包好了", miss ? 7000 : 3000);
+    } catch (err) {
+      toast("导出失败：" + (err.message || err), 7000);
+    }
+  }
+
+  /* ---------------- 列表 / 详情里怎么显示 ---------------- */
+
+  /** 电联页「最近一次」列：时间 + 结果 + 备注头一句 */
+  function callLastCellHtml(s) {
+    const r = callLastLog(s.id);
+    if (!r) return `<span class="none">—</span>`;
+    const L = r.log;
+    const brief = String(L.note || "").replace(/\s+/g, " ").slice(0, 18);
+    return `<div class="calllast" title="${esc(stampShort(L.at) + " " + (L.status || "") + " " + String(L.note || ""))}">
+      <span class="cl-at">${esc(stampShort(L.at))}</span>
+      <span class="cl-st" style="color:${callStatusColor(L.status)}">${esc(L.status || "")}</span>
+      ${L.rec ? `<span class="cl-rec" title="有录音">🎙</span>` : ""}
+      <div class="cl-note">${esc(brief || "（没写备注）")}${brief.length >= 18 ? "…" : ""}</div>
+    </div>`;
+  }
+
+  /** 某学生在这一轮的全部逐次记录（点开一条看全部） */
+  function callHistHtml(s) {
+    const rows = [];
+    for (const b of DB.calls?.batches || []) {
+      const bid = callBatchId(b);
+      for (const L of callLogList(bid, s.id)) rows.push({ b, bid, L });
+    }
+    rows.sort((a, c) => String(c.L.at || "").localeCompare(String(a.L.at || "")));
+    if (!rows.length) {
+      return `<div class="empty-hint">还没记过电联。点上面的「＋ 记一次电联」开始。</div>`;
+    }
+    return `<div class="callhist">${rows.map(({ b, L }) => `
+      <div class="callrow" data-clgedit="${esc(L.id)}" data-clgb="${esc(callBatchId(b))}">
+        <div class="cr-top">
+          <b>${esc(stampShort(L.at))}</b>
+          <span class="tag" style="color:${callStatusColor(L.status)}">${esc(L.status || "—")}</span>
+          <span class="cr-b">${esc(b.name)}</span>
+          <span class="spacer"></span>
+          ${L.rec ? `<span class="cr-rec" title="有录音">🎙 ${L.rec.sec ? recFmt(L.rec.sec) : ""}</span>` : ""}
+          ${L.ai && L.ai.text ? `<span class="cr-ai">AI 纪要</span>` : ""}
+        </div>
+        ${L.note ? `<div class="cr-note">${esc(L.note)}</div>` : ""}
+        ${L.next || L.nextAt ? `<div class="cr-next">下一步：${esc(L.next || "—")}${L.nextAt ? "（" + esc(L.nextAt) + "）" : ""}</div>` : ""}
+        <div class="cr-more">点开看转写和录音 →</div>
+      </div>`).join("")}</div>`;
+  }
   /* ---- 等级：自动 or 手动 ------------------------------------------------
    * 规则是「三项评分之和 ≥ 该等级的最低分」。阈值挂在 levels 上（l.min），
    * 这样增删等级时阈值跟着走，不会留下指向已删等级的孤儿规则。
@@ -2406,12 +3741,14 @@ input[type=range] { accent-color: var(--accent); }
   function attStripHtml(e) {
     const list = e.attachments || [];
     const total = list.reduce((a, x) => a + (x.size || 0), 0);
-    return `<div class="attstrip" tabindex="0" data-eid="${e.id}" title="点这里，然后按 Ctrl+V 粘贴截图；也可以拖文件进来">
+    return `<div class="attstrip" tabindex="0" data-eid="${e.id}" data-attrole="exam" title="点这里，然后按 Ctrl+V 粘贴试卷截图；也可以拖文件进来">
       ${list.map((a) => {
         const kind = kindOf(a);
+        const isPaper = a.role === "paper";
         if (kind === "image" && a.thumb) {
-          return `<div class="attthumb" data-att="${a.id}" data-eid="${e.id}" title="${esc(a.name || "")}">
+          return `<div class="attthumb ${isPaper ? "papercard" : ""}" data-att="${a.id}" data-eid="${e.id}" title="${esc(a.name || "")}${isPaper ? "（答题卡）" : "（试卷）"}">
             <img src="${a.thumb}" alt="">
+            ${isPaper ? `<span class="roleb">卡</span>` : ""}
             <span class="kill" data-attdel="${a.id}" data-eid="${e.id}" title="删掉">✕</span>
           </div>`;
         }
@@ -2422,10 +3759,10 @@ input[type=range] { accent-color: var(--accent); }
           <span class="kill" data-attdel="${a.id}" data-eid="${e.id}" title="删掉">✕</span>
         </div>`;
       }).join("")}
-      <button class="attadd" data-attpick="${e.id}">＋ 上传文件</button>
+      <button class="attadd" data-attpick="${e.id}" data-attrole="exam">＋ 传试卷</button>
       ${list.length
         ? `<span class="att-meta">${list.length} 个 · ${fmtSize(total)}</span>`
-        : `<span class="att-hint">点这里后按 Ctrl+V 截图，或点「上传文件」选 PDF / 图片</span>`}
+        : `<span class="att-hint">点这里后按 Ctrl+V 截图，或点「传试卷」选 PDF / 图片</span>`}
     </div>`;
   }
 
@@ -2433,9 +3770,10 @@ input[type=range] { accent-color: var(--accent); }
 
   let armedExam = null;   // 当前"接管粘贴"的那次考试
   let pickFor = null;     // 「＋ 选图」按钮点的是谁
+  let pickRole = "exam";  // 这次选的文件算试卷还是答题卡
   let lbUrl = null;
 
-  async function addAttachments(files, eid) {
+  async function addAttachments(files, eid, role) {
     const ex = findExam(eid);
     if (!ex) return;
     const usable = files.filter((f) => f && f.size > 0);
@@ -2462,6 +3800,8 @@ input[type=range] { accent-color: var(--accent); }
           id,
           name: f.name || (/^image\//.test(type) ? "粘贴的图片.jpg" : "附件"),
           type, size: blob.size, w, h, thumb, addedAt: Date.now(),
+          // 这张图是「试卷」还是「答题卡」—— 两个 AI 入口各读各的，别再串味
+          role: role === "paper" ? "paper" : "exam",
         });
         ok++;
       } catch (err) { console.warn(err); fail++; }
@@ -2541,6 +3881,8 @@ input[type=range] { accent-color: var(--accent); }
     listMode: "cards",
     // 答题卡核对页：{ sid, eid }（null = 没打开）
     paperOpen: null,
+    paperBatch: null,     // 答题卡工作区：当前打开的考试批次（null = 批次列表）
+    paperFilter: "all",   // 批次里按状态筛名单
     // 方案里正在被手工编辑的那一块：{eid, part:"ana"|"talk"} / 计划第几条 planEdit
     paperEdit: null,
     planEdit: null,
@@ -3304,12 +4646,12 @@ input[type=range] { accent-color: var(--accent); }
       <span style="display:flex;align-items:center;min-width:0"><span class="dot" style="background:#c47f17"></span><span>电联</span></span>
       <span class="n">${callBatches}</span></button>`;
 
-    // 答题卡入口（常驻）：交答题卡 → 识别 → 核对 → 按板块分析 → 排到期中计划
-    const pQ = paperQueue();
-    const pPending = pQ.filter((x) => x.st === "todo" || x.st === "review").length;
+    // 答题卡入口（常驻）：一次考试一个批次 → 进批次看全班名单
+    const pB = examBatches();
+    const pPending = pB.reduce((a, b) => a + b.todo, 0);
     html += `<button class="nav ck-nav ${view.mode === "paper" ? "on" : ""}" data-paper="1">
       <span style="display:flex;align-items:center;min-width:0"><span class="dot" style="background:#8b5cf6"></span><span>答题卡</span></span>
-      <span class="n">${pPending ? pPending : pQ.length}</span></button>`;
+      <span class="n">${pPending ? pPending : pB.length}</span></button>`;
 
     if (hasLevels()) {
       html += `<h3>等级</h3>` + DB.config.levels.map((l) =>
@@ -3932,7 +5274,7 @@ input[type=range] { accent-color: var(--accent); }
     if (!key) throw new Error("还没填 API key —— 去「设置 → AI 分析」填一个（platform.deepseek.com 里申请）");
 
     const atts = e.attachments || [];
-    const imgAtts = atts.filter(isImageAtt);
+    const imgAtts = examCards(e);
     const pdfs = atts.filter((a) => !isImageAtt(a) && /pdf/i.test(a.type || a.name || ""));
 
     if (!imgAtts.length && pdfs.length) {
@@ -4063,28 +5405,31 @@ input[type=range] { accent-color: var(--accent); }
 
   /** 一次考试下面那一条：没分析过就给按钮，分析过就展示结果 */
   function aiBlockHtml(s, e) {
+    const EXAM_ANA_TIP = "读的是你传在这次考试下面的<b>试卷</b>照片，找这次卷子的失分点；"
+      + "跟下面的「分析答题卡板块」不是一回事 —— 那个读的是学生的答题卡。";
     if (e.ai && e.ai.text) {
       const when = String(e.ai.at || "").slice(0, 16).replace("T", " ");
       return `<div class="aibox">
         <div class="aihead">
-          <b>🤖 DeepSeek 分析</b>
-          <span class="hint-inline">${esc(e.ai.model || "")}${when ? " · " + esc(when) : ""}${e.ai.imgs ? " · " + e.ai.imgs + " 张图" : ""}</span>
+          <b>🔍 试卷分析</b>
+          <span class="hint-inline">${esc(e.ai.model || "")}${when ? " · " + esc(when) : ""}${e.ai.imgs ? " · " + e.ai.imgs + " 张试卷图" : ""}</span>
           <span style="flex:1"></span>
-          <button class="btn ghost aibtn" data-ai="${e.id}">重新分析</button>
+          <button class="btn ghost aibtn" data-ai="${e.id}">重新分析试卷</button>
           <span class="x" data-aidel="${e.id}" title="删掉这段分析">✕</span>
         </div>
         <div class="aitext">${mdLite(e.ai.text)}</div>
         <div class="aifoot">分析是 AI 给的，只能当参考 —— 它对不对你比我清楚，不合适就删掉。</div>
       </div>`;
     }
-    const imgs = (e.attachments || []).filter(isImageAtt).length;
+    const imgs = examImgCount(e);
     const pdfs = (e.attachments || []).filter((a) => !isImageAtt(a) && /pdf/i.test(a.type || a.name || "")).length;
     const hint = imgs ? `带 ${imgs} 张试卷图`
       : pdfs ? "只传了 PDF —— 得先把页面截成图片"
-      : "还没传试卷图";
+      : "还没传试卷图（答题卡不算）";
     return `<div class="aibox empty">
-      <button class="btn aibtn" data-ai="${e.id}">🤖 用 DeepSeek 分析这份卷子</button>
+      <button class="btn aibtn" data-ai="${e.id}">🔍 分析试卷（找失分点）</button>
       <span class="hint-inline">${hint}${aiKey() ? "" : " · 还没填 API key"}</span>
+      <div class="aiwhich">${EXAM_ANA_TIP}</div>
     </div>`;
   }
 
@@ -4110,7 +5455,13 @@ input[type=range] { accent-color: var(--accent); }
   ];
 
   /** 答题卡 = 这次考试下面传的图片，最多 6 张（跟已有的试卷分析口径一致） */
-  const paperCards = (e) => (e.attachments || []).filter(isImageAtt).slice(0, 6);
+  /** 试卷图（题目卷面）—— 「分析试卷」读的就是这些 */
+  const examCards = (e) => (e.attachments || []).filter((a) => isImageAtt(a) && (a.role || "exam") === "exam").slice(0, 6);
+  /** 答题卡图（学生写的那张）—— 「识别答题卡」「分析板块」读的就是这些 */
+  const paperCards = (e) => (e.attachments || []).filter((a) => isImageAtt(a) && a.role === "paper").slice(0, 6);
+  /* 显示张数用这两个（paperCards / examCards 为了识别只取前 6 张，拿来报数会少报） */
+  const examImgCount = (e) => (e.attachments || []).filter((a) => isImageAtt(a) && (a.role || "exam") === "exam").length;
+  const paperImgCount = (e) => (e.attachments || []).filter((a) => isImageAtt(a) && a.role === "paper").length;
   const paperHas = (e) => !!(e.paper && e.paper.ocr);
   const paperDone = (e) => !!(e.paper && e.paper.status === "confirmed");
   const isMockPaper = (e) => !!(e.paper && e.paper.mock);
@@ -4752,7 +6103,15 @@ input[type=range] { accent-color: var(--accent); }
 
   /* ---- 详情页里的两块 UI ------------------------------------------- */
 
-  /** 考试卡片下面那一条：答题卡识别入口 + 分析结果 */
+  /**
+   * 考试卡片下面那一条：答题卡识别入口 + 分析结果。
+   *
+   * 「试卷」和「答题卡」是两份材料：上传口分开（试卷走上面的附件条，答题卡走
+   * 这里的「📷 传答题卡图片」），两个 AI 入口也分开 ——
+   *   🔍 分析试卷   → 读试卷图，找这次卷子的失分点（在考试块里）
+   *   🧩 分析答题卡 → 读识别结果，逐板块说事实/推测/材料不足（在这里）
+   * 以前它们共用一个图片池，看着就像两个按钮干同一件事，现在各读各的。
+   */
   function paperBlockHtml(s, e) {
     const cards = paperCards(e);
     const has = paperHas(e);
@@ -4766,7 +6125,7 @@ input[type=range] { accent-color: var(--accent); }
       bar = `<span class="chip ok">✅ 答题卡已核对</span>
         <span class="chip ${st.c}">${st.t}</span>
         <button class="btn ghost" data-paprev="${e.id}">看识别结果</button>
-        <button class="btn aibtn" data-papana="${e.id}">🤖 按板块分析</button>
+        <button class="btn aibtn" data-papana="${e.id}" title="读的是这张答题卡的识别结果，逐板块说事实/推测/材料不足">🧩 分析答题卡板块</button>
         <button class="btn ghost" data-paprec="${e.id}">重新识别</button>
         ${cards.length ? "" : `<span class="hint-inline">图片已经不在了 —— 方案还留着；要重新识别得先重新传图</span>`}`;
       extra = paperSolutionHtml(s, e);
@@ -4774,15 +6133,21 @@ input[type=range] { accent-color: var(--accent); }
       bar = `<button class="btn primary" data-paprev="${e.id}">📋 继续核对（还没确认）</button>
         <span class="hint-inline">识别于 ${esc(String(e.paper.at || "").slice(0, 16).replace("T", " "))}${isMockPaper(e) ? " · <b>演示数据</b>" : ""}</span>`;
     } else if (cards.length) {
-      bar = `<button class="btn" data-paprec="${e.id}">🔍 识别答题卡（${cards.length} 张）</button>
+      bar = `<button class="btn" data-paprec="${e.id}">🔍 识别答题卡（${paperImgCount(e)} 张）</button>
         <span class="hint-inline">${aiKey() ? "读完先进核对页，没确认不会动成绩" : "还没填 API key —— 点了走演示数据"}</span>`;
     } else {
-      bar = `<button class="btn" data-attpick="${e.id}">📷 传答题卡图片</button>
-        <span class="chip ex">材料不足</span>
+      bar = `<button class="btn" data-attpick="${e.id}" data-attrole="paper">📷 传答题卡图片</button>
+        <span class="chip ex">答题卡未上传</span>
         ${st.k === "none" ? `<span class="chip ex">成绩未填写</span>` : ""}
-        <span class="hint-inline">没传答题卡就出不了板块分析 —— 传了（可以多张）先给你核对，确认了才写进去</span>`;
+        <span class="hint-inline">没传答题卡就出不了板块分析 —— 传了（可以多张）先给你核对，确认了才写进去</span>
+        ${examImgCount(e) ? `<span class="hint-inline">上面那条附件是<b>试卷</b> —— 答题卡得用左边这个按钮单独传</span>` : ""}`;
     }
-    return `<div class="papareabar">${bar}</div>${extra}`;
+    const cardStrip = cards.length
+      ? `<div class="papcardrow"><span class="papcard-k">答题卡 ${paperImgCount(e)} 张</span>
+          ${cards.map((a) => `<img class="papcard-t" data-papimg="${esc(a.id)}" src="${esc(a.thumb || "")}" alt="${esc(a.name || "")}" title="${esc(a.name || "")}">`).join("")}
+        </div>`
+      : "";
+    return `<div class="papareabar">${bar}</div>${cardStrip}${extra}`;
   }
 
   /**
@@ -5044,6 +6409,65 @@ input[type=range] { accent-color: var(--accent); }
     }
   }
 
+  /* ---- 按批次导出：批次的名单 + 每个已核对学生的整份方案，一人一页 ---- */
+
+  function batchFileName(b, ext) {
+    return `${b.name || "考试"}-答题卡汇总.${ext}`.replace(/[\\/:*?"<>|]/g, "_");
+  }
+
+  function batchDocParas(b) {
+    const P = [];
+    const rows = DB.students.map((s) => {
+      const e = batchExamOf(s, b.name);
+      return { s, e, st: e ? paperState(e) : "none" };
+    });
+    const cnt = {};
+    for (const k of PAPER_ORDER) cnt[k] = 0;
+    for (const r of rows) cnt[r.st]++;
+    P.push({ text: `${b.name || "（未填考试名称）"} · 全班答题卡汇总`, style: "title" });
+    P.push({
+      text: `考试日期：${b.date || "待确认"}　满分：${typeof b.full === "number" ? b.full : "待确认"}　全班：${DB.students.length} 人`,
+      style: "note",
+    });
+    P.push({
+      text: `已核对 ${b.done} 人｜已分析 ${cnt.analyzed}｜待核对 ${cnt.review}｜待识别 ${cnt.todo}｜未上传 ${cnt.none}`,
+      style: "note",
+    });
+    P.push({ text: `汇总由学员看板生成于 ${tsTxt(new Date().toISOString())}；AI 内容仅供参考，请老师过目后再对外使用。`, style: "note" });
+
+    P.push({ text: "一、名单与进度", style: "h1" });
+    rows.forEach(({ s, e, st }) => {
+      const sc = e && hasScore(e) ? `${e.score}${typeof e.full === "number" ? "/" + e.full : ""}` : "成绩未填写";
+      P.push({ text: `**${s.name || "（未填姓名）"}**　${PAPER_ST[st].t}　成绩 ${sc}${planOf(s) ? "　已排复习计划" : ""}`, style: "li" });
+    });
+
+    const ready = rows.filter(({ e }) => e && paperDone(e));
+    P.push({ text: "二、逐人方案", style: "h1" });
+    if (!ready.length) {
+      P.push({ text: "这一批还没有人核对确认过答题卡，所以没有可导出的方案。", style: "p" });
+      return P;
+    }
+    P.push({ text: `下面 ${ready.length} 人，一人一页；没核对确认的不写进去。`, style: "note" });
+    ready.forEach(({ s, e }) => {
+      P.push({ text: "", style: "note", page: true });
+      paperDocParas(s, e).forEach((x) => P.push(x));
+    });
+    return P;
+  }
+
+  function exportBatchDocx(b) {
+    if (!b || !b.done) return toast("这一批还没有人核对确认过答题卡 —— 没确认的不能导出", 7000);
+    try {
+      const blob = FB().makeDocx(batchDocParas(b), {});
+      const nm = batchFileName(b, "docx");
+      downloadBlob(nm, blob);
+      toast(`导出好了：${nm}（${b.done} 人）`, 6000);
+    } catch (err) {
+      console.error(err);
+      toast("导出失败：" + err.message, 7000);
+    }
+  }
+
   async function copyPaperText(s, e) {
     if (!paperDone(e)) return toast("这张答题卡还没核对确认 —— 没确认前不能复制出去", 7000);
     const text = paperPlainText(s, e);
@@ -5099,31 +6523,83 @@ input[type=range] { accent-color: var(--accent); }
   }
 
   const PAPER_ST = {
-    todo: { t: "待识别", c: "ex" },
+    none: { t: "未上传", c: "ex" },
+    todo: { t: "待识别", c: "warn" },
     review: { t: "待核对", c: "warn" },
     confirmed: { t: "已核对", c: "ok" },
     analyzed: { t: "已分析", c: "ok" },
   };
+  const PAPER_ORDER = ["none", "todo", "review", "confirmed", "analyzed"];
 
-  /** 全班所有沾了答题卡的考试；「要赶紧办的」排前面 */
-  function paperQueue() {
-    const out = [];
+  /* ---- 答题卡工作区：批次 → 名单（两级） --------------------------------
+   * 老师的心智是「一次考试一个批次」：第一次月考、第二次月考、期中……
+   * 一个批次只建一次，批次里的名单是对**全班**负责的 —— 谁传了、谁没传，
+   * 一眼看完，不用一个个学生点进去找。
+   *
+   * 批次的钥匙就是考试名（跟成绩页共用一套名字）；老数据没写考试名的，
+   * 用日期兜底成「2025-10-11 未命名考试」，不会跟别的场次混在一起。
+   */
+
+  /** 一条考试记录属于哪个批次 */
+  function batchKeyOf(e) {
+    const n = String((e && e.name) || "").trim();
+    if (n) return n;
+    const d = String((e && e.date) || "").trim();
+    return d ? `${d} 未命名考试` : "未命名考试";
+  }
+
+  /** 某个学生在某个批次里的那条考试记录（没有就返回 null） */
+  function batchExamOf(s, key) {
+    const hits = (s.exams || []).filter((x) => batchKeyOf(x) === key);
+    if (!hits.length) return null;
+    // 同名的可能不止一条（成绩表里一条、后来传答题卡又建了一条）。
+    // 优先挑真传过答题卡的那条 —— 否则「已分析」会挂在一个空壳记录上，
+    // 老师点进去发现方案不在，看着像丢了。
+    return hits.find((x) => x.paper) || hits.find((x) => hasScore(x)) || hits[0];
+  }
+
+  /** 某个学生在某个批次里的状态：没这条记录 = 未上传 */
+  function batchStateOf(s, key) {
+    const e = batchExamOf(s, key);
+    return e ? paperState(e) : "none";
+  }
+
+  /** 全班所有批次（配置里的考试名 ∪ 成绩里出现过的名字），每个批次带全班状态计数 */
+  function examBatches() {
+    const map = new Map();
+    const touch = (name) => {
+      if (!map.has(name)) map.set(name, { name, date: "", full: null, n: 0, cnt: {} });
+      return map.get(name);
+    };
+    for (const n of examNameList()) touch(n);
     for (const s of DB.students) {
       for (const e of (s.exams || [])) {
-        const st = paperState(e);
-        if (st === "none") continue;
-        out.push({ s, e, st });
+        const b = touch(batchKeyOf(e));
+        b.n++;
+        if (!b.date && e.date) b.date = e.date;
+        if (b.full == null && typeof e.full === "number") b.full = e.full;
       }
     }
-    const rank = { todo: 0, review: 1, confirmed: 2, analyzed: 3 };
-    out.sort((a, b) => (rank[a.st] - rank[b.st])
-      || String(b.e.date || "").localeCompare(String(a.e.date || "")));
+    const out = [...map.values()];
+    for (const b of out) {
+      for (const k of PAPER_ORDER) b.cnt[k] = 0;
+      for (const s of DB.students) b.cnt[batchStateOf(s, b.name)]++;
+      b.done = b.cnt.confirmed + b.cnt.analyzed;
+      b.todo = b.cnt.todo + b.cnt.review;
+    }
+    // 有日期的按日期倒序（新的在前），没日期的排后面、保持用户建名的顺序
+    const order = examNameList();
+    out.sort((a, b) => String(b.date || "").localeCompare(String(a.date || ""))
+      || (order.indexOf(a.name) - order.indexOf(b.name)));
     return out;
   }
 
   function enterPaper() {
     view.mode = "paper";
     view.selected = null;
+    // 侧栏点「答题卡」= 回工作区根（批次列表）。停在某个批次里再点侧栏，
+    // 期望的是「回总览」，不是「又进那个批次」——要回批次就点那张卡。
+    view.paperBatch = null;
     syncSeg();
     render();
   }
@@ -5138,53 +6614,152 @@ input[type=range] { accent-color: var(--accent); }
     </div>`;
   }
 
+  /** 这场考试是谁的（答题卡工作区里是跨学生的，得反查） */
+  function studentOfExam(eid) {
+    for (const s of DB.students) {
+      if ((s.exams || []).some((e) => e.id === eid)) return s;
+    }
+    return null;
+  }
+
+  /** 这个学生在批次里还没有考试记录时，现建一条（传图得先有个挂靠的地方） */
+  function ensureBatchExam(s, b) {
+    const had = batchExamOf(s, b.name);
+    if (had) return had;
+    const e = {
+      id: uid(), name: b.name, date: b.date || "",
+      full: typeof b.full === "number" ? b.full : undefined,
+      attachments: [], paper: null,
+    };
+    s.exams = s.exams || [];
+    s.exams.push(e);
+    save();
+    return e;
+  }
+
+  /** 打开文件选择器，选完按 role 挂到这场考试上 */
+  function pickAttachments(eid, role) {
+    pickFor = eid; armedExam = eid; pickRole = role || "exam";
+    const inp = $("attFile");
+    if (!inp) { toast("附件入口还没就绪，刷新一下再试"); return; }
+    inp.value = "";
+    inp.click();
+  }
+
   function renderPaperPage() {
     const stage = $("stage");
     if (!stage) return;
-    const q = paperQueue();
-    const n = { todo: 0, review: 0, confirmed: 0, analyzed: 0 };
-    for (const x of q) n[x.st] = (n[x.st] || 0) + 1;
-    const plans = DB.students.filter((s) => planOf(s)).length;
-    // 「材料不足」= 这个学生一场沾了答题卡的考试都没有 —— 明确列出来，别让空着的地方看着像有结论
-    const noPaper = DB.students.filter((s) => !(s.exams || []).some((e) => paperState(e) !== "none")).length;
+    const batches = examBatches();
+    const cur = view.paperBatch ? batches.find((b) => b.name === view.paperBatch) : null;
+    // 批次被删掉/改名了，自动退回批次列表
+    if (view.paperBatch && !cur) view.paperBatch = null;
+    if (cur) { renderPaperRoster(cur); bindPaperPage(); return; }
 
+    const all = DB.students.length;
+    const done = batches.reduce((a, b) => a + b.done, 0);
+    const pend = batches.reduce((a, b) => a + b.todo, 0);
     const head = `<div class="sc-detail-h"><b>答题卡</b>
-      <span class="hint-inline">${q.length
-        ? `共 ${q.length} 场 · 待识别 ${n.todo} · 待核对 ${n.review} · 已核对 ${n.confirmed + n.analyzed} · 已排计划 ${plans} 人`
-          + (noPaper ? ` · <b>材料不足 ${noPaper} 人</b>（没有答题卡，出不了板块分析）` : "")
-        : "交上来 → 识别 → 核对 → 按板块分析 → 排到期中"}</span></div>`;
-
-    if (!q.length) {
-      stage.innerHTML = `<div class="pap-page">${head}${paperMidBar()}
-        <div class="pap-empty">
-          还没有任何答题卡。<br>
-          进某个学生 → 拉到「考试成绩」→ 在那次考试下面点 <b>📷 传答题卡图片</b>，
-          然后点「识别答题卡」；识别完会进核对页，<b>核对确认前不会动成绩</b>。<br>
-          <span class="hint-inline">核对确认之后，才能点「按板块分析」和排复习计划。</span>
-        </div></div>`;
-      bindPaperPage();
-      return;
-    }
+      <span class="hint-inline">${batches.length
+        ? `${batches.length} 个考试批次 · 全班 ${all} 人 · 已核对 ${done} 份 · 待办 ${pend} 份`
+        : "一次考试一个批次 —— 先建批次，再往里传答题卡"}</span></div>`;
 
     stage.innerHTML = `<div class="pap-page">${head}${paperMidBar()}
-      <div class="pap-list">${q.map(({ s, e, st }) => {
-        const meta = PAPER_ST[st] || { t: st, c: "" };
-        const an = e.paper && e.paper.analysis;
-        return `<div class="pap-row" data-papgo="${esc(s.id)}" data-papex="${esc(e.id)}" title="点开这个学生的详情">
-          <span class="pap-name">${esc(s.name)}</span>
-          <span class="pap-exam">${esc(e.name || "未命名考试")}</span>
-          <span class="pap-date">${esc(e.date || "")}</span>
-          <span class="pap-score">${hasScore(e) ? esc(String(e.score)) + (typeof e.full === "number" ? "/" + e.full : "") : ""}</span>
-          ${hasScore(e) ? "" : `<span class="chip ex">成绩未填写</span>`}
-          <span class="chip ${meta.c}">${meta.t}</span>
-          ${isMockPaper(e) ? `<span class="chip ex">演示</span>` : ""}
-          ${an && an.text && st !== "analyzed" ? `<span class="chip ok">已分析</span>` : ""}
-          ${planOf(s) ? `<span class="chip ok">有计划</span>` : ""}
-        </div>`;
-      }).join("")}</div>
-      <p class="hint" style="margin:8px 2px 0">点任意一行直接进这个学生的详情，答题卡就在那场考试下面。</p>
+      ${batches.length
+        ? `<div class="batch-list">${batches.map(batchCardHtml).join("")}</div>
+           <div class="batch-foot"><button class="btn" id="papNew">＋ 新建考试批次</button>
+             <span class="hint-inline">批次名跟成绩页共用一套 —— 这里建的，成绩页那边也能按它统计</span></div>`
+        : `<div class="pap-empty">
+             还没有考试批次。<br>
+             先建一个（名字跟成绩页共用，比如「第一次月考」），
+             建完进批次就能看到<b>全班名单</b>：谁传了、谁待核对、谁还没交。<br>
+             <span class="hint-inline">传图、识别、核对、板块分析都在批次里逐个学生做；核对确认前不会动成绩。</span>
+           </div>
+           <div class="batch-foot"><button class="btn primary" id="papNew">＋ 新建考试批次</button></div>`}
     </div>`;
     bindPaperPage();
+  }
+
+  /** 一个批次卡片：日期、满分、全班进度条、五种状态各几人 */
+  function batchCardHtml(b) {
+    const all = DB.students.length || 1;
+    const pct = Math.round((b.done / all) * 100);
+    const chips = [
+      b.cnt.analyzed ? `<span class="chip ok">已分析 ${b.cnt.analyzed}</span>` : "",
+      b.cnt.confirmed ? `<span class="chip ok">已核对 ${b.cnt.confirmed}</span>` : "",
+      b.cnt.review ? `<span class="chip warn">待核对 ${b.cnt.review}</span>` : "",
+      b.cnt.todo ? `<span class="chip warn">待识别 ${b.cnt.todo}</span>` : "",
+      `<span class="chip ex">未上传 ${b.cnt.none}</span>`,
+    ].filter(Boolean).join("");
+    const meta = [b.date || "没写日期", typeof b.full === "number" ? "满分 " + b.full : ""]
+      .filter(Boolean).join(" · ");
+    return `<div class="batchcard" data-batch="${esc(b.name)}" title="点开这个批次，看全班名单">
+      <div class="bc-top"><b>${esc(b.name)}</b><span class="bc-meta">${esc(meta)}</span></div>
+      <div class="bc-chips">${chips}</div>
+      <div class="bc-bar"><i style="width:${pct}%"></i></div>
+      <div class="bc-foot">已核对 ${b.done} / ${all} 人（${pct}%）${b.n ? ` · 成绩表里 ${b.n} 条记录` : " · 成绩表里还没有这场"}</div>
+    </div>`;
+  }
+
+  /** 第二级：一个批次的**全班名单** —— 谁传了、谁待核对、谁还没交 */
+  function renderPaperRoster(b) {
+    const stage = $("stage");
+    const filt = view.paperFilter || "all";
+    const cnt = {};
+    for (const k of PAPER_ORDER) cnt[k] = 0;
+    const rows = DB.students.map((s) => {
+      const e = batchExamOf(s, b.name);
+      const st = e ? paperState(e) : "none";
+      cnt[st]++;
+      return { s, e, st };
+    });
+    const show = filt === "all" ? rows : rows.filter((r) => r.st === filt);
+    const tabs = [["all", `全部 ${rows.length}`]]
+      .concat(PAPER_ORDER.map((k) => [k, `${PAPER_ST[k].t} ${cnt[k]}`]));
+
+    const head = `<div class="sc-detail-h">
+      <b>答题卡</b>
+      <span class="hint-inline">${esc(b.name)} · ${esc(b.date || "没写日期")}${typeof b.full === "number" ? " · 满分 " + b.full : ""}
+        · 已核对 ${b.done} / ${DB.students.length} 人</span>
+      <span class="sc-actions"><button class="btn" id="papExport"
+        title="这一批所有已核对学生的方案，一人一页">⬇ 导出这一批（Word）</button>
+        <button class="btn ghost" id="papBack">← 全部批次</button></span></div>`;
+
+    stage.innerHTML = `<div class="pap-page">${head}
+      <div class="sc-tabs">${tabs.map(([k, t]) =>
+        `<button class="seg ${filt === k ? "on" : ""}" data-pfilt="${k}">${esc(t)}</button>`).join("")}</div>
+      ${show.length ? `<div class="wrap-table cap-md"><table class="grid">
+        <thead><tr>
+          <th class="sticky-l">姓名</th><th>状态</th><th>成绩</th><th>答题卡</th><th>板块分析</th><th>下一步</th>
+        </tr></thead>
+        <tbody>${show.map(({ s, e, st }) => {
+          const n = e ? paperImgCount(e) : 0;
+          const cardCell = n ? n + " 张"
+            : (e && paperState(e) !== "none" ? `<span class="none" title="图片已经不在了，方案还在">图已删</span>` : `<span class="none">—</span>`);
+          const an = e && e.paper && e.paper.analysis;
+          const sc = e && hasScore(e)
+            ? esc(String(e.score)) + (typeof e.full === "number" ? "/" + e.full : "")
+            : `<span class="none">—</span>`;
+          let act;
+          if (!e) act = `<button class="btn ghost" data-papup="${esc(s.id)}">📷 传答题卡</button>`;
+          else if (!paperHas(e)) act = `<button class="btn ghost" data-papup="${esc(s.id)}">📷 传答题卡</button>`;
+          else if (!paperDone(e)) act = `<button class="btn primary" data-paprev="${esc(e.id)}">📋 继续核对</button>`;
+          else if (!an) act = `<button class="btn aibtn" data-papana="${esc(e.id)}">🧩 分析答题卡</button>`;
+          else act = `<button class="btn ghost" data-papgo="${esc(s.id)}" data-papex="${esc(e.id)}">看方案</button>`;
+          const extra = (e && !paperDone(e) && paperHas(e)) || (e && paperDone(e) && !an)
+            ? "" : (e && n ? `<button class="btn ghost" data-paprec="${esc(e.id)}">🔍 重新识别</button>` : "");
+          return `<tr data-prow="${esc(s.id)}" data-papex="${e ? esc(e.id) : ""}" title="点开这个学生的详情">
+            <td class="sticky-l">${esc(s.name)}</td>
+            <td><span class="chip ${PAPER_ST[st].c}">${PAPER_ST[st].t}</span></td>
+            <td class="num">${sc}</td>
+            <td class="num">${cardCell}</td>
+            <td>${an ? "有" : `<span class="none">—</span>`}</td>
+            <td class="pap-act">${act}${extra}</td>
+          </tr>`;
+        }).join("")}</tbody>
+      </table></div>`
+      : `<div class="pap-empty">这个筛选下没有人。</div>`}
+      <p class="hint" style="margin:8px 2px 0">点任意一行进这个学生的详情；传图、识别、核对都在那条考试记录下面。</p>
+    </div>`;
   }
 
   function bindPaperPage() {
@@ -5197,9 +6772,91 @@ input[type=range] { accent-color: var(--accent); }
       save(); renderStage();
       toast(midEl.value ? "期中考试日期记下了" : "期中日期清空了");
     };
-    stage.querySelectorAll("[data-papgo]").forEach((row) => row.onclick = () => {
-      view.selected = row.dataset.papgo;
+
+    // 进批次 / 退出批次
+    stage.querySelectorAll("[data-batch]").forEach((el) => el.onclick = () => {
+      view.paperBatch = el.dataset.batch;
+      view.paperFilter = "all";
+      renderStage();
+    });
+    const back = $("papBack");
+    if (back) back.onclick = () => { view.paperBatch = null; view.paperFilter = "all"; renderStage(); };
+    const exp = $("papExport");
+    if (exp) exp.onclick = () => {
+      const b = examBatches().find((x) => x.name === view.paperBatch);
+      if (b) exportBatchDocx(b);
+    };
+
+    // 状态筛选
+    stage.querySelectorAll("[data-pfilt]").forEach((el) => el.onclick = () => {
+      view.paperFilter = el.dataset.pfilt;
+      renderStage();
+    });
+
+    // 新建批次：名字复用成绩页那一套，重名不重复建
+    const nw = $("papNew");
+    if (nw) nw.onclick = () => {
+      const v = (prompt("新建考试批次 —— 写考试名（比如「第一次月考」）\n\n"
+        + "跟成绩页共用一套名字，重名就直接进那个批次。", "") || "").trim();
+      if (!v) return;
+      const has = examBatches().some((b) => b.name === v);
+      if (!has) {
+        DB.config.examNames = DB.config.examNames || [];
+        if (!DB.config.examNames.includes(v)) DB.config.examNames.push(v);
+        save();
+      }
+      view.paperBatch = v;
+      view.paperFilter = "all";
+      renderStage();
+      toast(has ? `已经有「${v}」这个批次了，直接进去` : `建好了「${v}」`);
+    };
+
+    // 点一行 → 进学生详情，并把那场考试滚到眼前
+    stage.querySelectorAll("[data-prow]").forEach((row) => row.onclick = (ev) => {
+      if (ev.target.closest("button")) return;   // 行内的按钮自己管自己
+      view.selected = row.dataset.prow;
       view.scrollExam = row.dataset.papex || null;
+      renderDetail();
+    });
+
+    // 传图 → 没有考试记录就先建一条（批次里点「传答题卡」不该被"先去成绩页加考试"挡住）
+    stage.querySelectorAll("[data-papup]").forEach((el) => el.onclick = (ev) => {
+      ev.stopPropagation();
+      const s = DB.students.find((x) => x.id === el.dataset.papup);
+      const b = examBatches().find((x) => x.name === view.paperBatch);
+      if (!s || !b) return;
+      const e = ensureBatchExam(s, b);
+      pickAttachments(e.id, "paper");
+      toast(`选了图就挂到「${s.name} · ${b.name}」下面`, 5000);
+    });
+
+    // 识别 / 继续核对 / 板块分析（跟详情页同一批动作，这里跨学生，得反查是谁）
+    stage.querySelectorAll("[data-paprec]").forEach((el) => el.onclick = (ev) => {
+      ev.stopPropagation();
+      const ex = findExam(el.dataset.paprec);
+      const s = ex ? studentOfExam(ex.id) : null;
+      if (!ex || !s) return toast("找不到那场考试了");
+      if (!aiKey()) toast("没填 API key —— 先用演示数据走一遍流程", 6000);
+      recognizePaper(s, ex, el);
+    });
+    stage.querySelectorAll("[data-paprev]").forEach((el) => el.onclick = (ev) => {
+      ev.stopPropagation();
+      const ex = findExam(el.dataset.paprev);
+      const s = ex ? studentOfExam(ex.id) : null;
+      if (ex && s && paperHas(ex)) openPaperReview(s.id, ex.id);
+    });
+    stage.querySelectorAll("[data-papana]").forEach((el) => el.onclick = (ev) => {
+      ev.stopPropagation();
+      const ex = findExam(el.dataset.papana);
+      const s = ex ? studentOfExam(ex.id) : null;
+      if (!ex || !s) return toast("找不到那场考试了");
+      if (!aiKey()) return toast("还没填 API key —— 去「设置 → AI 分析」填一个", 6500);
+      runPaperAnalysis(s, ex, el);
+    });
+    stage.querySelectorAll("[data-papgo]").forEach((el) => el.onclick = (ev) => {
+      ev.stopPropagation();
+      view.selected = el.dataset.papgo;
+      view.scrollExam = el.dataset.papex || null;
       renderDetail();
     });
   }
@@ -5289,14 +6946,13 @@ input[type=range] { accent-color: var(--accent); }
           <span class="when">${s.followUp?.done && s.followUp.at ? "上次：" + esc(s.followUp.at) : "还没标记"}</span>
         </div></div>
 
-      ${(DB.calls?.batches || []).length ? `<div class="box"><h4>电联记录（聊上 ${callCountOf(s.id).n} 次）</h4>
-        <div class="callhist">${(DB.calls.batches || []).map((b) => {
-          const st = callStatusOf(callBatchId(b), s.id);
-          return `<div class="callrow"><span class="cr-name">${esc(b.name)}</span>
-            <span class="cr-date">${esc(shortDate(b.date))}</span>
-            <span class="cr-st" style="color:${callStatusColor(st)}">${esc(st)}</span></div>`;
-        }).join("")}</div>
-        <p class="hint" style="margin:8px 0 0">要改结果，去侧栏「电联」里点那一轮。</p></div>` : ""}
+      <div class="box"><h4>电联记录（聊上 ${callCountOf(s.id).n} 次${callLogCount(s.id) ? " · 逐次记录 " + callLogCount(s.id) + " 条" : ""}）</h4>
+        <div class="rowset" style="margin:0 0 10px">
+          <button class="btn primary" id="dAddCall">＋ 记一次电联</button>
+          ${callLogCount(s.id) ? `<button class="btn" id="dCallExport">⬇ 导出记录（Word）</button>` : ""}
+        </div>
+        <div id="dCallHist">${callHistHtml(s)}</div>
+        <p class="hint" style="margin:8px 0 0">一次电联 = 一条独立记录，新记录不会盖掉旧的。备注、录音、转写都只存在这台电脑的浏览器里。</p></div>
 
       <div class="box"><h4>我的备注</h4>
         <textarea class="note" id="dNote" placeholder="这节课他怎么样？下次要注意什么？">${esc(s.note || "")}</textarea></div>
@@ -5483,6 +7139,28 @@ input[type=range] { accent-color: var(--accent); }
       const done = !s.followUp?.done;
       s.followUp = { done, at: done ? new Date().toLocaleString("zh-CN", { hour12: false }) : null };
       commit(done ? "已标记跟进" : "已取消跟进");
+    };
+
+    /* ---- 电联逐次记录 ---- */
+    const callBidFor = () => {
+      DB.calls ||= { batches: [], status: {} };
+      DB.calls.batches ||= [];
+      if (view.callBatch) return view.callBatch;
+      if (!DB.calls.batches.length) {
+        DB.calls.batches.push({ id: uid(), name: "第一轮电联", date: todayStr() });
+        save();
+      }
+      return callBatchId(DB.calls.batches[0]);
+    };
+    const dAddCall = $("dAddCall");
+    if (dAddCall) dAddCall.onclick = () => openCallLog(s.id, callBidFor(), "");
+    const dCallExp = $("dCallExport");
+    if (dCallExp) dCallExp.onclick = () => { view.callBatch = callBidFor(); exportCallDoc(s, false); };
+    const dCallHist = $("dCallHist");
+    if (dCallHist) dCallHist.onclick = (ev) => {
+      const row = ev.target.closest("[data-clgedit]");
+      if (!row) return;
+      openCallLog(s.id, row.dataset.clgb, row.dataset.clgedit);
     };
 
     /* ---- 成绩流水 ---- */
@@ -5736,7 +7414,7 @@ input[type=range] { accent-color: var(--accent); }
       strip.ondragleave = () => strip.classList.remove("over");
       strip.ondrop = (ev) => {
         ev.preventDefault(); strip.classList.remove("over");
-        addAttachments([...ev.dataTransfer.files], eid);
+        addAttachments([...ev.dataTransfer.files], eid, strip.dataset.attrole || "exam");
       };
     });
 
@@ -5744,6 +7422,7 @@ input[type=range] { accent-color: var(--accent); }
       ev.stopPropagation();
       pickFor = b.dataset.attpick;
       armedExam = pickFor;
+      pickRole = b.dataset.attrole || "exam";
       const inp = $("attFile");
       inp.value = "";
       inp.click();
@@ -6819,7 +8498,7 @@ input[type=range] { accent-color: var(--accent); }
           sts.map((st) => `<td class="${cls || ""}">${esc(fn(st))}</td>`).join("")}</tr>`;
       stage.innerHTML = `
         <div class="sc-tabs">${tabs}</div>
-        <div class="wrap-table"><table class="grid"><thead><tr>
+        <div class="wrap-table cap-md"><table class="grid"><thead><tr>
           <th class="sticky-l">姓名</th>${names.map((nm) => `<th>${esc(nm)}</th>`).join("")}<th>平均</th></tr></thead>
           <tbody>${scored.map((s) => {
             const vals = names.map((nm) => {
@@ -6832,7 +8511,7 @@ input[type=range] { accent-color: var(--accent); }
             <td class="sticky-l"><b>${esc(s.name)}</b></td>
             ${vals.map((v) => v
               ? `<td><b>${v.e.score}</b>${typeof v.e.full === "number" ? "/" + v.e.full : ""}</td>`
-              : `<td>—</td>`).join("")}
+              : `<td class="none">—</td>`).join("")}
             <td><b>${fmtScore(mineAvg)}</b></td>
           </tr>`; }).join("")}</tbody>
           <tfoot>
@@ -6874,13 +8553,13 @@ input[type=range] { accent-color: var(--accent); }
           <div class="sc-detail-src">${recs.length} 人已录 ${date ? "· " + esc(date) : ""} · 满分 ${full}</div>
         </div>
         ${statsHtml}
-        <div class="wrap-table"><table class="grid"><thead><tr>
-          <th class="sticky-l">名次</th><th class="sticky-l">姓名</th><th>分数</th><th>得分率</th><th>与平均分</th></tr></thead>
+        <div class="wrap-table cap-sm"><table class="grid"><thead><tr>
+          <th class="sticky-l">名次</th><th class="sticky-l sticky-2">姓名</th><th>分数</th><th>得分率</th><th>与平均分</th></tr></thead>
           <tbody>${recs.map((r, i) => {
             const diff = st.avg === null ? null : r.score - st.avg;
             return `<tr data-id="${r.sid}">
             <td class="sticky-l">${i + 1}</td>
-            <td class="sticky-l"><b>${esc(r.sname)}</b></td>
+            <td class="sticky-l sticky-2"><b>${esc(r.sname)}</b></td>
             <td><b>${r.score}</b>${typeof r.full === "number" ? "/" + r.full : ""}</td>
             <td>${typeof r.full === "number" && r.full ? Math.round(r.score / r.full * 100) + "%" : "—"}</td>
             <td class="diff ${diff === null ? "" : (diff >= 0 ? "up" : "down")}">${
@@ -6897,6 +8576,15 @@ input[type=range] { accent-color: var(--accent); }
           <div class="sc-detail-src">还没有人录分数 · 满分 ${full}</div>
         </div>
         <div class="empty-hint">这场考试还没有人录分数，点右上角「导入成绩」</div>`;
+    }
+
+    // 冻结列：量出「名次」列的实际宽度写进 --ck2，让「姓名」贴在它右边。
+    // 这两列以前都写 left:0（都叫 sticky-l），窗口一窄横向滚动时姓名会整个盖住名次 ——
+    // 「表头 / 冻结列互相重叠」的另一种形态。现在名次 = sticky-l，姓名 = sticky-l sticky-2。
+    {
+      const t = stage.querySelector(".cap-sm table.grid");
+      const first = t && t.querySelector("tbody tr td");
+      if (t) t.style.setProperty("--ck2", (first ? first.offsetWidth : 56) + "px");
     }
 
     // 标签切换
@@ -7045,17 +8733,19 @@ input[type=range] { accent-color: var(--accent); }
           batches.map((b) => `<td>${esc(fn(callBatchStats(callBatchId(b))))}</td>`).join("")}</tr>`;
       stage.innerHTML = `
         <div class="sc-tabs">${tabs}</div>
-        <div class="wrap-table"><table class="grid"><thead><tr>
-          <th class="sticky-l">姓名</th>${batches.map((b) => `<th>${esc(b.name)}</th>`).join("")}<th>沟通次数</th></tr></thead>
+        <div class="wrap-table cap-md"><table class="grid"><thead><tr>
+          <th class="sticky-l">姓名</th>${batches.map((b) => `<th>${esc(b.name)}</th>`).join("")}<th>沟通次数</th><th>最近一次</th></tr></thead>
           <tbody>${anyone.map((s) => {
             const cc = callCountOf(s.id);
             return `<tr data-id="${s.id}">
             <td class="sticky-l"><b>${esc(s.name)}</b></td>
             ${batches.map((b) => {
               const st = callStatusOf(callBatchId(b), s.id);
-              return `<td style="color:${callStatusColor(st)}" title="${esc(st)}">${esc(CALL_SHORT[st] || st)}</td>`;
+              // 没打过的人写「—」：低调但看得懂。「—」满屏的时候比真实数据还亮就没法扫读了
+              return `<td class="${st === "未联系" ? "none" : ""}" style="color:${callStatusColor(st)}" title="${esc(st)}">${esc(CALL_SHORT[st] || st)}</td>`;
             }).join("")}
-            <td><b>${cc.n || "—"}</b></td>
+            <td>${cc.n ? `<b>${cc.n}</b>` : `<span class="none">—</span>`}</td>
+            <td>${callLastCellHtml(s)}</td>
           </tr>`; }).join("")}</tbody>
           <tfoot>
             ${statRow("沟通上", (st) => st["已沟通"])}
@@ -7110,7 +8800,10 @@ input[type=range] { accent-color: var(--accent); }
             return `<div class="ck-student">
               <span class="ck-st-name">${esc(s.name)}</span>
               <span class="ck-st-meta">${cc.n > 1 ? `已聊 ${cc.n} 次 · ` : ""}${s.cons ? "⚠ " + esc(s.cons) : ""}</span>
-              <span class="ck-st-actions">${CALL_STATUSES.map((ss) =>
+              <span class="ck-st-last">${callLastCellHtml(s)}</span>
+              <span class="ck-st-actions">
+                <button class="btn btnmini" data-clgnew="1" data-sid="${s.id}">✎ 记一次</button>
+                ${CALL_STATUSES.map((ss) =>
                 `<button class="chip ${ss === view.callStatus ? "on" : ""}" data-cset="${esc(ss)}" data-sid="${s.id}" ${ss === view.callStatus ? "disabled" : ""}>${esc(ss)}</button>`).join("")}
               </span>
             </div>`; }).join("")
@@ -7133,6 +8826,13 @@ input[type=range] { accent-color: var(--accent); }
     bindHeadCompact("clCompact");
 
     if (!cur) return;
+
+    // 「✎ 记一次」：直接开这一轮里这个学生的记录面板
+    stage.querySelectorAll("[data-clgnew]").forEach((b) => b.onclick = (ev) => {
+      ev.stopPropagation();
+      view.callBatch = curId;
+      openCallLog(b.dataset.sid, curId, "");
+    });
 
     stage.querySelectorAll("[data-cst]").forEach((b) => b.onclick = () => {
       view.callStatus = b.dataset.cst; renderStage();
@@ -7533,8 +9233,25 @@ input[type=range] { accent-color: var(--accent); }
     // 缩略图直接用内存里那份 dataURL，不在 HTML 里再抄一遍（否则每张多 90KB）
     $("setBody").querySelectorAll("[data-thumb]").forEach((el) => {
       const which = el.dataset.thumb;
+      // 「自动」以前取的就是当前主题那张图 —— 浅色主题下它和「天空草地」是同一张，
+      // 深色主题下又和「星空」是同一张，看着像重复的卡片（用户反馈）。
+      // 现在改成左右拼接：左半边是浅色主题的图、右半边是深色主题的图，配「跟随主题」小字。
+      if (which === "auto") {
+        const lt = builtinWall("light", "light");
+        const dk = builtinWall("dark", "dark");
+        if (lt && dk) el.style.backgroundImage = `url("${lt}"), url("${dk}")`;
+        else if (lt || dk) el.style.backgroundImage = `url("${lt || dk}")`;
+        el.style.backgroundSize = "50% 100%, 50% 100%";
+        el.style.backgroundPosition = "left center, right center";
+        el.style.backgroundRepeat = "no-repeat, no-repeat";
+        el.innerHTML = `<span class="cap">跟随主题</span>`;
+        return;
+      }
       const url = which === "custom" ? customWallUrl : builtinWall(c.theme || "light", which);
       if (url) el.style.backgroundImage = `url("${url}")`;
+      // 缩略图只有 96x58，光看图分不清哪张是哪张，加一行小字
+      const CAP = { light: "天空草地", dark: "星空", custom: "我的图" };
+      if (CAP[which]) el.innerHTML = `<span class="cap">${CAP[which]}</span>`;
     });
 
     $("setBody").querySelectorAll("[data-theme]").forEach((el) => el.onclick = () => {
@@ -7761,7 +9478,7 @@ input[type=range] { accent-color: var(--accent); }
         const files = [...inp.files];
         const eid = pickFor;
         inp.value = "";
-        if (eid && files.length) addAttachments(files, eid);
+        if (eid && files.length) addAttachments(files, eid, pickRole);
       };
       document.body.appendChild(inp);
 
@@ -7782,6 +9499,7 @@ input[type=range] { accent-color: var(--accent); }
         if (!$("detail") || !$("detail").classList.contains("open")) return;
         const strip = ae && ae.closest ? ae.closest(".attstrip") : null;
         let eid = strip ? strip.dataset.eid : armedExam;
+        let role = strip ? (strip.dataset.attrole || "exam") : (pickRole || "exam");
         if (!eid) {
           const s = DB.students.find((x) => x.id === view.selected);
           const exs = s?.exams || [];
@@ -7792,7 +9510,7 @@ input[type=range] { accent-color: var(--accent); }
           .filter((i) => i.kind === "file").map((i) => i.getAsFile()).filter(Boolean);
         if (!files.length) { toast("剪贴板里没有图片"); return; }
         ev.preventDefault();
-        addAttachments(files, eid);
+        addAttachments(files, eid, role);
       });
     }
     const qp = $("quickParse"); if (qp) qp.onclick = quickParse;
