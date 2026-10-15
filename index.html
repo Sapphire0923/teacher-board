@@ -4709,7 +4709,7 @@ input[type=range] { accent-color: var(--accent); }
           <span class="pap-score">${hasScore(e) ? esc(String(e.score)) + (typeof e.full === "number" ? "/" + e.full : "") : ""}</span>
           <span class="chip ${meta.c}">${meta.t}</span>
           ${isMockPaper(e) ? `<span class="chip ex">演示</span>` : ""}
-          ${an && an.text ? `<span class="chip ok">已分析</span>` : ""}
+          ${an && an.text && st !== "analyzed" ? `<span class="chip ok">已分析</span>` : ""}
           ${planOf(s) ? `<span class="chip ok">有计划</span>` : ""}
         </div>`;
       }).join("")}</div>
