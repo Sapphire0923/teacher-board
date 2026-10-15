@@ -31,8 +31,12 @@
   --ink-2: #5b6472;
   --ink-3: #8d97a6;
 
-  --accent: #2f6feb;
-  --accent-soft: #eaf1ff;
+  /* 主色：温和的墨绿/灰绿（2026-10-16 按用户选定的「混搭」方案从蓝 #2f6feb 换过来）。
+     原来是蓝 #2f6feb —— 用户要的是「温和的墨绿/灰绿做主线」，
+     所以默认主题这一层就得是墨绿，光改 [data-theme="green"] 那一块是没用的：
+     老师默认用的就是浅色主题。 */
+  --accent: #3f6f5a;
+  --accent-soft: #e7f0ea;
   --accent-ink: #ffffff;
   /* 第二强调色：暖橘。只用于「要动手的」和「要盯的」——
      主要操作按钮、今天要跟进、录音中、AI 角标。
@@ -2255,7 +2259,12 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       className: "",
       /* ---- 外观：主题 / 主色 / 背景图（都不影响数据） ---- */
       theme: "light",
-      accent: "#2f6feb",
+      /* 主色默认改成温和的墨绿/灰绿（2026-10-16 混搭方案）。
+         注意：这个值会**存进 localStorage**，改它不足以让老用户变过来 ——
+         老库里存着旧的蓝色 #2f6feb，会由 applyTheme() 内联覆盖掉 CSS。
+         所以还配了一条迁移（见 migrateAccentToGreen），把「用户从没自己挑过色」
+         的老库跟着一起换新默认；自己挑过色的一律不动。 */
+      accent: "#3f6f5a",
       // 背景图默认关：界面突然变样对同事是惊吓，想要的人自己去设置里开
       wallpaper: { src: "none", dim: 74 },
       /* ---- DeepSeek 试卷分析（唯一联网的地方）----
@@ -4921,6 +4930,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
 
   function render() {
     fillLevelMins();   // 每次渲染前补齐等级门槛，新增/导入的等级才不会永远评不上
+    if (migrateAccentToGreen()) save();   // 混搭改版的配色迁移，只换从没自己挑过色的库
     applyTheme();
     document.title = (DB.config.className ? DB.config.className + " · " : "") + DB.config.title;
     // 没名单就强制回引导页 —— 除非用户自己点了「暂无名单，直接使用」（见 defaultConfig 的 noRoster）
@@ -4930,22 +4940,37 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
 
   function hexSoft(hex, dark) {
     const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || "");
-    if (!m) return dark ? "rgba(76,141,255,.18)" : "#eaf1ff";
+    if (!m) return dark ? "rgba(76,141,255,.18)" : "#e7f0ea";
     const [r, g, b] = [1, 2, 3].map((i) => parseInt(m[i], 16));
-    // 浅色主题把主色往白里调成淡底；深色主题往深灰里调，否则淡色块在黑底上会刺眼
+    // 浅色主题把主色往白里调成淡底；深色主题往深灰里调，否则淡色块在黑底上会刺眼。
+    // 2026-10-16：浅色的兑白比例从 .92 收到 .88 —— 墨绿兑到 .92 就发灰发白，
+    // 淡底的绿味全没了，选中态看着像「没上色」。收到 .88 后绿色还在，又不刺眼。
     const mix = dark
       ? (c) => Math.round(30 + (c - 30) * 0.22)
-      : (c) => Math.round(c + (255 - c) * 0.92);
+      : (c) => Math.round(c + (255 - c) * 0.88);
     return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
   }
 
   /* ---- 主题与背景图 ---------------------------------------------------- */
 
   const THEMES = [
-    { key: "light", label: "浅色", accent: "#2f6feb", swatch: ["#f5f6f8", "#ffffff", "#2f6feb"] },
-    { key: "green", label: "浅绿", accent: "#2f9e63", swatch: ["#f0f6f1", "#ffffff", "#2f9e63"] },
+    { key: "light", label: "浅色", accent: "#3f6f5a", swatch: ["#f5f6f8", "#ffffff", "#3f6f5a"] },
+    { key: "green", label: "浅绿", accent: "#2c7d5a", swatch: ["#f0f6f1", "#ffffff", "#2c7d5a"] },
     { key: "dark", label: "深色", accent: "#4c8dff", swatch: ["#14171a", "#1e2227", "#4c8dff"] },
   ];
+
+  /* 2026-10-16 混搭改版：主色从蓝 #2f6feb 换成墨绿 #3f6f5a。
+     麻烦在于 accent 是**存库**的：老用户库里写着旧的蓝，applyTheme() 会内联覆盖 CSS，
+     光改默认值他们永远看不到新配色。这里做一次性迁移 —— 只换「还停在旧默认色」的库，
+     他自己在设置里挑过的颜色一个都不碰。 */
+  const OLD_ACCENTS = ["#2f6feb", "#eaf1ff"];
+  function migrateAccentToGreen() {
+    const c = DB.config;
+    if (!c || typeof c.accent !== "string") return false;
+    if (!OLD_ACCENTS.includes(c.accent.toLowerCase())) return false;
+    c.accent = "#3f6f5a";
+    return true;
+  }
 
   const WALL_KEY = "wallpaper/custom";
   let customWallUrl = null;      // 自定义背景图的 objectURL
@@ -4988,8 +5013,11 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     const w = c.wallpaper || {};
 
     root.dataset.theme = theme;
-    root.style.setProperty("--accent", c.accent || "#2f6feb");
-    root.style.setProperty("--accent-soft", hexSoft(c.accent || "#2f6feb", theme === "dark"));
+    // 兜底值也必须跟着主色走：c.accent 为空（没存过色）时落到墨绿。
+    // 2026-10-16：原来写死蓝 #2f6feb —— 截图脚本 seed 的 accent 一旦是空串就会被它兜回首色，
+    // 看着像「改了 CSS 却没生效」。
+    root.style.setProperty("--accent", c.accent || "#3f6f5a");
+    root.style.setProperty("--accent-soft", hexSoft(c.accent || "#3f6f5a", theme === "dark"));
 
     const url = wallpaperUrl(theme, w);
     const on = !!url;
