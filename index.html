@@ -183,6 +183,11 @@ html.wallpaper .modal { background: var(--panel-solid); }
    小屏下 aside.side 会藏起来，底图就只剩这一层薄纱，所以别盖满。 */
 html.wallpaper section.list { background: rgba(255, 255, 255, .58); }
 html.wallpaper[data-theme="dark"] section.list { background: rgba(18, 21, 25, .62); }
+/* 成绩页（solo 页）例外：数据区一律实底。原来它也跟着半透明，表格右边那截
+   留白直接把底图透出来，又空又花，分数反而不是视觉重点了（2026-10-15 用户反馈）。
+   底图只留在页面最外圈的留白处，不让它进表格和统计卡。 */
+html.wallpaper section.list.solo,
+html.wallpaper[data-theme="dark"] section.list.solo { background: var(--panel-solid); }
 
 .app { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100vh; }
 
@@ -409,17 +414,36 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 20px 60px;
 .wrap-table.cap-sm { max-width: 760px; }
 .wrap-table.cap-md { max-width: 1120px; }
 
-/* 成绩页：内容区不再自己滚，让里面那张表格成为唯一的滚动容器 —— 之前
-   section.list 和 .wrap-table 各有一条竖滚动条，右边并排出现两条，拉着别扭
-   （2026-10-14 用户反馈）。solo 由 JS 按 mode 加减，只作用于成绩页；
-   卡片/表格页照旧（那边 wrap-table 的 max-height 正好填满，不会多出一条）。 */
-/* 保留 overflow-y:auto —— 正常情况内容正好铺满、不会出条；万一窗口特别矮
-   （标签行 + 统计卡 + 表格最小高度挤不下），宁可多出一条兜底也不要被裁掉看不全。 */
-section.list.solo { display: flex; flex-direction: column; padding-top: 10px; padding-bottom: 10px; }
-section.list.solo > #stage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-/* 表格铺满剩下的高度自己滚：标题、统计卡、表头都留在原地不动，只有名单在滚。
-   人数少时表格盒子也不会缩成一条（有背景，看起来就是一张空白的成绩单）。 */
-section.list.solo .wrap-table { flex: 1 1 auto; min-height: 60px; max-height: none; background: var(--panel-solid); }
+/* ---------- 成绩页：把宽度用满 ----------
+ * 2026-10-15 用户反馈「成绩表格只占主区域左侧一部分，右侧留下大片空白」。
+ * 根因就是上面那两条上限（单场 760 / 全部 1120）——立规矩时的理由是「列少别摊太开」，
+ * 但成绩页列并不少（名次/姓名/分数/得分率/与平均分，跨考试还要加每场一列），
+ * 砍宽度只会把数据挤在左边。所以成绩页不再用 cap-*，宽度铺满导航以外的全部区域。
+ *
+ * 宽度怎么分：交给「列宽分工」，而不是把每列等分拉长 ——
+ *   .col-num  width:1%     数字列收缩到刚好装下内容（1% 是「按内容收缩」的常用写法）
+ *   .col-grow width:100%   姓名列吃掉全部富余宽度
+ * 效果是宽屏上「姓名舒展、数字紧凑」，列真放不下时才横向滚（名次+姓名照旧冻住）。
+ * 只挂在 #stage.sc-wide 上，卡片页 / 表格页 / 电联页不受影响。 */
+#stage.sc-wide table.grid th.col-num { width: 1%; }
+#stage.sc-wide table.grid th.col-grow { width: 100%; }
+
+/* 成绩页改「页面级滚动」（2026-10-15 用户第二次反馈滚动问题）：
+ * 上一版让表格当唯一滚动容器 —— 好处是表头固定，代价是「页面一条、表格里一条」
+ * 的观感，表格还被锁在一个固定高度的框里。
+ * 现在改成：卷动的是 #stage 自己，表格不再自己滚。
+ *   section.list  → overflow:hidden    外层绝不出现滚动条
+ *   #stage        → overflow:auto      纵横向都只有这一个滚动容器
+ *   .wrap-table   → overflow:visible   只是表格的壳，不参与滚动
+ * 这样 th 的 position:sticky(top:0) 相对 #stage 吸顶，冻结列相对同一个容器冻结，
+ * 横向滚动也归它管 —— 一个容器同时管住吸顶、冻结列和横向滚动，不会互相打架。
+ * solo 由 JS 按 mode 加减，只作用于成绩页 / 电联「全部」；卡片、表格页照旧。 */
+section.list.solo { display: flex; flex-direction: column; overflow: hidden;
+  padding-top: 10px; padding-bottom: 10px; }
+section.list.solo > #stage { flex: 1; min-height: 0; display: block; overflow: auto; }
+/* 表格壳不裁剪、不限高：高度由内容撑，滚动交给 #stage。
+   底下一律垫实色 —— 人数少时它也是一块完整的成绩单，不会透出底图。 */
+section.list.solo .wrap-table { max-height: none; overflow: visible; background: var(--panel-solid); }
 
 /* 内部滚动条的代价：顶栏、标签行、表头都占着不走，一眼能看见的人就少了
    （2026-10-15 用户反馈「一次性展示出来的学生名单比较少」）。
@@ -433,6 +457,47 @@ section.list.solo .sc-stats { margin-bottom: 8px; }
 section.list.solo table.grid th,
 section.list.solo table.grid td { padding: 4px 12px; font-size: var(--fs-cell); line-height: 1.35; }
 section.list.solo table.grid th { padding: 5px 12px; }
+
+/* ---- 成绩页的「扫读」与「灵活查看」（2026-10-15 用户反馈：
+        数字都左对齐、一列数字比大小得一个个读；列多了没法自己选；人多了没法翻页）----
+   ① 数字列右对齐 + 等宽数字：位数对齐，比大小一眼看齐。文字列（姓名、板块得分）仍左对齐。
+   ② 表头可点排序，当前排序列给个小箭头。
+   ③ 工具条（搜姓名 + 列开关）和表尾（共几人 + 每页几人 + 翻页）都跟表格同宽。 */
+#stage.sc-wide table.grid th.col-num,
+#stage.sc-wide table.grid td[data-col="score"],
+#stage.sc-wide table.grid td[data-col="rate"],
+#stage.sc-wide table.grid td[data-col="diff"],
+#stage.sc-wide table.grid td[data-col="prev"] { text-align: right; font-variant-numeric: tabular-nums; }
+#stage.sc-wide table.grid th[data-sortby]:hover { color: var(--accent); }
+#stage.sc-wide table.grid .sc-ar { font-size: 10px; padding-left: 4px; color: var(--accent); }
+#stage.sc-wide table.grid th.col-sect,
+#stage.sc-wide table.grid td.col-sect { text-align: left; color: var(--ink-2); font-size: var(--fs-aux); }
+
+.sc-tools { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; }
+.sc-q { width: 200px; padding: 5px 10px; border: 1px solid var(--line); border-radius: var(--radius-s);
+  background: var(--panel-solid); color: var(--ink); font-size: var(--fs-cell); }
+.sc-q:focus { outline: none; border-color: var(--accent); }
+.sc-hit { font-size: var(--fs-mini); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.sc-colwrap { position: relative; }
+.sc-colpick { display: none; position: absolute; right: 0; top: 112%; z-index: 30;
+  background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--radius-s);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .16); padding: 8px 12px; min-width: 172px; }
+.sc-colpick.on { display: block; }
+.sc-colpick label { display: flex; align-items: center; gap: 7px; padding: 4px 2px;
+  font-size: var(--fs-cell); color: var(--ink); cursor: pointer; white-space: nowrap; }
+.sc-colpick label.off { color: var(--ink-3); cursor: not-allowed; }
+.sc-colhint { display: block; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line);
+  font-size: var(--fs-mini); color: var(--ink-3); line-height: 1.5; max-width: 196px; white-space: normal; }
+
+.sc-foot { display: flex; align-items: center; gap: 10px; padding: 8px 2px 2px;
+  font-size: var(--fs-mini); color: var(--ink-3); }
+.sc-foot .sc-count b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.sc-foot .btnmini { padding: 2px 9px; font-size: var(--fs-mini); border: 1px solid var(--line); border-radius: var(--radius-s); }
+.sc-foot .btnmini.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); font-weight: 600; }
+.sc-foot .btnmini[disabled] { opacity: .4; cursor: default; }
+.sc-foot .btnmini[disabled]:hover { border-color: var(--line); background: transparent; }
+.sc-per, .sc-pager { display: flex; gap: 4px; align-items: center; }
+table.grid td.sc-nohit { color: var(--ink-3); text-align: center; padding: 18px 0; cursor: default; }
 
 /* 「收起顶栏」：把整条工具栏的高度也让给名单（按钮只放在成绩页/电联页）。
    收起后名单按钮还在 listbar 里，随时点得回来，不会把人困住。 */
@@ -4494,6 +4559,9 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     sideCollapsed: { follow: false, tag: true, ptag: true },
     // 成绩侧栏：当前选中的考试名（null = 全部）
     scoreExam: null,
+    // 成绩页的临时视图状态：搜索词 / 排序键 / 方向 / 第几页 / 输入框是否还该拿着焦点
+    //（列开关和每页人数是长期偏好，存在 config.scv 里，不在这儿）
+    scQ: "", scSort: "", scDir: 1, scPage: 1, scQFocus: false,
     // 电联侧栏：选中的批次 id（null = 全部）/ 当前结果筛选
     callBatch: null, callStatus: "未联系",
     // 成绩页/电联页可以「收起顶栏」，把工具栏那一条高度也让给名单
@@ -5457,6 +5525,14 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     if (sec) sec.classList.toggle("solo", !!on);
   }
 
+  // 成绩页专用：给 #stage 挂 sc-wide，作为「成绩页专属样式」的挂钩。
+  // 这个标记让宽度分配、数字对齐、背景实底这些改动能精确落在成绩页，
+  // 不波及卡片页 / 表格页 / 电联页（2026-10-15 用户反馈成绩页宽度浪费）。
+  function setStageWide(on) {
+    const st = $("stage");
+    if (st) st.classList.toggle("sc-wide", !!on);
+  }
+
   /** 记住「列表模式」（卡片/表格/待跟进）：从打卡/成绩/电联页回来时要用 */
   function setListMode(m) {
     if (m === "cards" || m === "table" || m === "follow") view.listMode = m;
@@ -5488,6 +5564,8 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     // 电联页只有「全部」那张跨批次表是，单轮视图是普通列表，得让内容区自己滚）。
     const solo = view.mode === "score" || (view.mode === "call" && !view.callBatch);
     setListSolo(solo);
+    // 成绩页专属样式的挂钩（宽度分配、数字对齐、数据区实底都挂在 .sc-wide 上）
+    setStageWide(view.mode === "score");
     // 「收起顶栏」只在 solo 页生效；一旦离开（点侧栏、回卡片页），顶栏必须自己回来，
     // 否则用户会被困在一个没有工具栏的页面上。
     document.body.classList.toggle("head-compact", solo && !!view.headCompact);
@@ -9204,6 +9282,61 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     : (Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : v.toFixed(1));
   const fmtPct = (v) => (v === null || v === undefined || !isFinite(v)) ? "—" : Math.round(v * 100) + "%";
 
+  /** 某个学生在某场考试里的原始考试对象（要在里面翻答题卡识别结果） */
+  function examOf(sid, examName) {
+    const s = DB.students.find((x) => x.id === sid);
+    if (!s) return null;
+    return (s.exams || []).find((x) => (x.name || "").trim() === examName && hasScore(x)) || null;
+  }
+
+  /**
+   * 某生在考场上被识别出来的「板块得分」（答题卡识别结果 e.paper.ocr.sections）。
+   *
+   * 这是**答卷上真读出来的**分，不是拿总分估的 —— 老师只给总分、没传答题卡的，
+   * 这里就返回 null；成绩页据此把整列藏起来（用户要求：没有数据时不要推测生成）。
+   * 返回 null 的第二种情况：section 全都没有分数（识别出来但没读到一个数）。
+   */
+  function studentSections(sid, examName) {
+    const e = examOf(sid, examName);
+    const secs = e && e.paper && e.paper.ocr && e.paper.ocr.sections;
+    if (!Array.isArray(secs) || !secs.length) return null;
+    return secs.some((x) => typeof x.score === "number") ? secs : null;
+  }
+
+  /**
+   * 该生在这场考试**之前**最近一场有分数的考试（用来算「较上次」）。
+   *
+   * 判定完全靠日期：当前这场没日期、或者剩下的考试里没有比它更早的，就返回 null。
+   * 判不出来宁可不显示 —— 不能拿「考试名的先后」「列表顺序」去猜哪场是上一次。
+   */
+  function prevExamOf(sid, examName) {
+    const s = DB.students.find((x) => x.id === sid);
+    if (!s) return null;
+    const cur = examOf(sid, examName);
+    const curDate = cur ? String(cur.date || "") : "";
+    if (!curDate) return null;
+    const older = (s.exams || []).filter((x) => hasScore(x)
+      && (x.name || "").trim() !== examName
+      && String(x.date || "") && String(x.date) < curDate);
+    if (!older.length) return null;
+    older.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    return older[0];
+  }
+
+  /** 板块得分的紧凑写法：12/18 · 20/24 · —（没读到分的板块写「—」，不编数） */
+  function secsText(secs) {
+    if (!secs) return "—";
+    return secs.map((x) => `${typeof x.score === "number" ? x.score : "—"}/${x.full}`).join(" · ");
+  }
+  /** 鼠标停在板块格上时看到的全称（哪个板块对哪一段） */
+  function secsTitle(secs) {
+    if (!secs) return "";
+    return secs.map((x) => `${x.no || ""}${x.name ? " " + x.name : ""} ${secsShort(x)}`).join("\n");
+  }
+  function secsShort(x) {
+    return `${typeof x.score === "number" ? x.score : "—"}/${x.full}`;
+  }
+
   /** 某场考试的导出用行：名次 + 姓名 + 分数 + 得分率。打印和 Excel 共用一份数据 */
   function scoreRowsFor(name) {
     const recs = examRecords(name);
@@ -9221,31 +9354,132 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     return String(s || "").replace(/[\\/:*?"<>|]/g, "-").trim() || "名单";
   }
 
+  /* ---------------- 成绩页的「查看设置」 ----------------
+   * 老师的要求：列多的表要能自己选显示哪些列、能翻页、能排序、能搜人，
+   * 而且导出的东西必须跟眼前看到的一致。
+   * 列开关和每页人数存在 config 里（下次打开还是这样）；
+   * 搜索词和排序是临时的，换一场考试就清掉 —— 免得出现「怎么少了两个人」查不出来。
+   */
+  const SC_OPT_COLS = [
+    { k: "score", label: "分数", sort: true },
+    { k: "rate", label: "得分率", sort: true },
+    { k: "diff", label: "与平均分", sort: true },
+    { k: "sec", label: "板块得分" },
+    { k: "prev", label: "较上次", sort: true },
+  ];
+
+  function scv() {
+    const c = DB.config;
+    if (!c.scv || typeof c.scv !== "object") c.scv = {};
+    const v = c.scv;
+    if (!v.cols || typeof v.cols !== "object") v.cols = {};
+    for (const o of SC_OPT_COLS) if (typeof v.cols[o.k] !== "boolean") v.cols[o.k] = true;
+    if (v.page !== 20 && v.page !== 50 && v.page !== 0) v.page = 20;
+    return v;
+  }
+
+  /** 本场考试的列清单（固定列 + 已开且真有数据的列） */
+  function scoreCols(name) {
+    const C = scv().cols;
+    const showSec = examRecords(name).some((r) => studentSections(r.sid, name));
+    const showPrev = examRecords(name).some((r) => prevExamOf(r.sid, name));
+    return [
+      { k: "rank", label: "名次", cls: "sticky-l col-num", always: true },
+      { k: "name", label: "姓名", cls: "sticky-l sticky-2 col-grow", always: true },
+      ...SC_OPT_COLS.filter((o) => C[o.k]
+        && (o.k !== "sec" || showSec) && (o.k !== "prev" || showPrev)).map((o) => ({
+        k: o.k, label: o.label, sort: o.sort,
+        cls: o.k === "sec" ? "col-sect" : "col-num",
+      })),
+    ];
+  }
+
+  /**
+   * 成绩页当前该显示什么：搜索 → 排序 → 分页。
+   * 名次是**这场考试里的真实名次**，不会因为搜索/翻页而重新编号。
+   */
+  function scoreView(name) {
+    const recs = examRecords(name);
+    const full = examFull(name);
+    const st = examStats(name);
+    let rows = recs.map((r, i) => {
+      const prev = prevExamOf(r.sid, name);
+      return {
+        sid: r.sid, rank: i + 1, name: r.sname, score: r.score,
+        full: typeof r.full === "number" ? r.full : full,
+        rate: typeof r.full === "number" && r.full ? Math.round(r.score / r.full * 100) : null,
+        diff: st.avg === null ? null : r.score - st.avg,
+        secs: studentSections(r.sid, name),
+        prev, d2: prev ? r.score - prev.score : null,
+      };
+    });
+    const total = rows.length;
+    const q = String(view.scQ || "").trim();
+    if (q) rows = rows.filter((x) => x.name.indexOf(q) >= 0);
+    const sk = view.scSort;
+    const keyOf = {
+      rank: (x) => x.rank, score: (x) => x.score, rate: (x) => x.rate,
+      diff: (x) => x.diff, prev: (x) => x.d2,
+    }[sk];
+    if (keyOf) {
+      const dir = view.scDir === -1 ? -1 : 1;
+      rows = [...rows].sort((a, b) => {
+        const va = keyOf(a), vb = keyOf(b);
+        // 没有值的（没有上一场 / 没有满分）永远沉到底，不管升序降序
+        if (va === null && vb === null) return 0;
+        if (va === null) return 1;
+        if (vb === null) return -1;
+        return (va - vb) * dir || a.rank - b.rank;
+      });
+    }
+    const per = scv().page;                       // 0 = 全部
+    const pages = per ? Math.max(1, Math.ceil(rows.length / per)) : 1;
+    const page = Math.min(Math.max(1, view.scPage || 1), pages);
+    const shown = per ? rows.slice((page - 1) * per, (page - 1) * per + per) : rows;
+    return { rows, shown, total, hit: rows.length, pages, page, per, q, full, st };
+  }
+
   /** 导出这场考试的名单为 .xlsx（老师可直接在 Excel 里排序、打印） */
   function exportScoreXlsx(name) {
     const c = DB.config;
-    const full = examFull(name);
-    const rows = scoreRowsFor(name);
-    if (!rows.length) { toast("这场考试还没有人录分数"); return; }
-    const head = ["名次", "姓名", "分数", "满分", "得分率"];
-    const body = rows.map((r) => [r.rank, r.name, r.score, full, r.rate]);
-    const st = examStats(name);
-    // 末尾附一行统计，老师看排名表时不用再自己算
+    const V = scoreView(name);
+    const cols = scoreCols(name);
+    if (!V.total) { toast("这场考试还没有人录分数"); return; }
+    if (!V.rows.length) { toast("当前搜索条件下一个人都没有"); return; }
+    const st = V.st;
+    const head = cols.map((x) => x.label);
+    const cellOf = (x, k) => {
+      if (k === "rank") return x.rank;
+      if (k === "name") return x.name;
+      if (k === "score") return x.score;
+      if (k === "rate") return x.rate === null ? "" : x.rate + "%";
+      if (k === "diff") return x.diff === null ? "" : Number(fmtScore(x.diff));
+      if (k === "sec") return secsText(x.secs);
+      if (k === "prev") return x.d2 === null ? "" : Number(fmtScore(x.d2));
+      return "";
+    };
+    // 导出的是「当前筛选后、当前排好序」的全部行（不分页）—— 跟眼前看到的规则一致
+    const body = V.rows.map((x) => cols.map((k) => cellOf(x, k.k)));
+    // 末尾附一段统计和筛选说明，老师对着 Excel 也知道这张表是怎么来的
     body.push([]);
-    body.push(["参考人数", rows.length]);
+    body.push(["参考人数", V.total]);
     if (st.avg !== null) body.push(["平均分", Number(fmtScore(st.avg))]);
     if (st.max !== null) body.push(["最高分", st.max]);
     if (st.min !== null) body.push(["最低分", st.min]);
+    if (st.mid !== null) body.push(["中位数", Number(fmtScore(st.mid))]);
     if (st.passRate !== null) body.push(["及格率", fmtPct(st.passRate)]);
     if (st.goodRate !== null) body.push(["优秀率", fmtPct(st.goodRate)]);
-
+    if (V.q) body.push(["本次导出已按姓名筛选", V.q + `（${V.hit}/${V.total} 人）`]);
+    if (view.scSort) body.push(["排序", (cols.find((x) => x.k === view.scSort)?.label || view.scSort)
+      + (view.scDir === -1 ? " 降序" : " 升序")]);
+    const wide = (k) => (k === "name" ? 14 : k === "sec" ? 18 : k === "rank" ? 6 : 9);
     const blob = FB().makeXlsx([{
       name: safeFileName(name),
-      widths: [6, 14, 8, 8, 9],
+      widths: cols.map((x) => wide(x.k)),
       rows: [head, ...body],
     }]);
     downloadBlob(`${safeFileName(c.className || "学员")}_${safeFileName(name)}.xlsx`, blob);
-    toast("已导出 Excel");
+    toast(`已导出 Excel（${V.rows.length} 行${view.scSort ? " · 按当前排序" : ""}）`);
   }
 
   /**
@@ -9256,20 +9490,30 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
    * 这样中文不用内嵌字体，文件也不虚。
    */
   function printScore(name) {
-    const rows = scoreRowsFor(name);
-    if (!rows.length) { toast("这场考试还没有人录分数"); return; }
+    const V = scoreView(name);
+    if (!V.total) { toast("这场考试还没有人录分数"); return; }
+    if (!V.rows.length) { toast("当前搜索条件下一个人都没有"); return; }
     const c = DB.config;
-    const full = examFull(name);
+    const cols = scoreCols(name);
+    const st = V.st;
+    const cellOf = (x, k) => {
+      if (k === "rank") return String(x.rank);
+      if (k === "name") return esc(x.name);
+      if (k === "score") return `${x.score}${typeof x.full === "number" ? "/" + x.full : ""}`;
+      if (k === "rate") return x.rate === null ? "—" : x.rate + "%";
+      if (k === "diff") return x.diff === null ? "—" : (x.diff >= 0 ? "+" : "−") + fmtScore(Math.abs(x.diff));
+      if (k === "sec") return esc(secsText(x.secs));
+      if (k === "prev") return x.d2 === null ? "—" : (x.d2 >= 0 ? "+" : "−") + fmtScore(Math.abs(x.d2));
+      return "";
+    };
     const host = $("printHost");
     if (!host) { window.print(); return; }
     host.innerHTML = `
       <h1>${esc(c.className || "学员")} · ${esc(name)}</h1>
-      <div class="pmeta">共 ${rows.length} 人 · 满分 ${full} · 打印日期 ${esc(todayStr())}</div>
+      <div class="pmeta">共 ${V.rows.length} 人${V.q ? `（按姓名筛选「${esc(V.q)}」，全班 ${V.total} 人）` : ""} · 满分 ${V.full}${st.avg !== null ? ` · 平均 ${fmtScore(st.avg)}` : ""}${st.mid !== null ? ` · 中位数 ${fmtScore(st.mid)}` : ""} · 打印日期 ${esc(todayStr())}</div>
       <table class="ptable">
-        <thead><tr><th>名次</th><th>姓名</th><th>分数</th><th>得分率</th></tr></thead>
-        <tbody>${rows.map((r) => `<tr>
-          <td>${r.rank}</td><td>${esc(r.name)}</td><td>${r.score}/${full}</td><td>${esc(r.rate)}</td>
-        </tr>`).join("")}</tbody>
+        <thead><tr>${cols.map((x) => `<th>${esc(x.label)}</th>`).join("")}</tr></thead>
+        <tbody>${V.rows.map((x) => `<tr>${cols.map((k) => `<td>${cellOf(x, k.k)}</td>`).join("")}</tr>`).join("")}</tbody>
       </table>`;
     document.body.classList.add("printing");
     const done = () => {
@@ -9326,7 +9570,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
           sts.map((st) => `<td class="${cls || ""}">${esc(fn(st))}</td>`).join("")}</tr>`;
       stage.innerHTML = `
         <div class="sc-tabs">${tabs}</div>
-        <div class="wrap-table cap-md"><table class="grid"><thead><tr>
+        <div class="wrap-table"><table class="grid"><thead><tr>
           <th class="sticky-l">姓名</th>${names.map((nm) => `<th>${esc(nm)}</th>`).join("")}<th>平均</th></tr></thead>
           <tbody>${scored.map((s) => {
             const vals = names.map((nm) => {
@@ -9343,19 +9587,49 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
             <td><b>${fmtScore(mineAvg)}</b></td>
           </tr>`; }).join("")}</tbody>
           <tfoot>
+            ${statRow("参考人数", (st) => (st.n ? st.n + " 人" : "—"))}
             ${statRow("班级平均", (st) => fmtScore(st.avg), "avg")}
             ${statRow("最高分", (st) => fmtScore(st.max))}
             ${statRow("最低分", (st) => fmtScore(st.min))}
+            ${statRow("中位数", (st) => fmtScore(st.mid))}
             ${statRow("及格率", (st) => fmtPct(st.passRate))}
             ${statRow("优秀率", (st) => fmtPct(st.goodRate))}
           </tfoot></table></div>`;
       if (!scored.length) stage.innerHTML = `<div class="sc-tabs">${tabs}</div><div class="empty-hint">还没有任何人记过成绩</div>`;
     } else {
-      // 单场考试：按分数降序，带名次、满分、日期 + 成绩单上常见的统计
+      // 单场考试：默认按分数降序，表头可点着换列重排；带名次 + 成绩单上常见的统计
       const recs = examRecords(cur);
       const full = examFull(cur);
       const date = recs[0]?.date || "";
       const st = examStats(cur);
+      const V = scoreView(cur);
+      const cols = scoreCols(cur);
+      const C0 = scv().cols;
+      // 「板块得分」和「较上次」两列有数据才出现：
+      //   整场没人传答题卡 → 不显示板块得分；没人有可比的上一场 → 不显示较上次。
+      // 宁可不显示这一列，也不拿总分去估、不拿考试名先后去猜哪场是上一次。
+      const hasSec = recs.some((r) => studentSections(r.sid, cur));
+      const hasPrev = recs.some((r) => prevExamOf(r.sid, cur));
+      const cell = (x, k) => {
+        if (k === "rank") return `<td class="sticky-l" data-col="rank">${x.rank}</td>`;
+        if (k === "name") return `<td class="sticky-l sticky-2" data-col="name"><b>${esc(x.name)}</b></td>`;
+        if (k === "score") return `<td data-col="score"><b>${x.score}</b>${typeof x.full === "number" ? "/" + x.full : ""}</td>`;
+        if (k === "rate") return `<td data-col="rate">${x.rate === null ? "—" : x.rate + "%"}</td>`;
+        if (k === "diff") return `<td class="diff ${x.diff === null ? "" : (x.diff >= 0 ? "up" : "down")}" data-col="diff">${
+          x.diff === null ? "—" : (x.diff >= 0 ? "+" : "−") + fmtScore(Math.abs(x.diff))}</td>`;
+        if (k === "sec") return `<td class="col-sect" data-col="sec" title="${esc(secsTitle(x.secs))}">${esc(secsText(x.secs))}</td>`;
+        if (k === "prev") return `<td class="diff ${x.d2 === null ? "" : (x.d2 >= 0 ? "up" : "down")}" data-col="prev" title="${
+          esc(x.prev ? `上次「${x.prev.name}」${x.prev.score} 分` : "没有可比的上一场")}">${
+          x.d2 === null ? "—" : (x.d2 >= 0 ? "+" : "−") + fmtScore(Math.abs(x.d2))}</td>`;
+        return "";
+      };
+      const perBtns = [20, 50, 0].map((n) => `<button class="btnmini${V.per === n ? " on" : ""}" data-scper="${n}">${n || "全部"}</button>`).join("");
+      const pager = V.pages > 1 ? `<span class="sc-pager"><button class="btnmini" data-scgo="${V.page - 1}"${
+        V.page <= 1 ? " disabled" : ""}>‹</button>${
+        Array.from({ length: V.pages }, (_, i) => i + 1).map((n) => `<button class="btnmini${n === V.page ? " on" : ""}" data-scgo="${n}">${n}</button>`).join("")
+      }<button class="btnmini" data-scgo="${V.page + 1}"${V.page >= V.pages ? " disabled" : ""}>›</button></span>` : "";
+      const foot = `<div class="sc-foot"><span class="sc-count">共 <b>${V.hit}</b> 人${
+        V.q ? `（全班 ${V.total} 人）` : ""}</span><span class="sc-per">每页 ${perBtns}</span><span style="flex:1"></span>${pager}</div>`;
       const statCell = (label, val, sub) =>
         `<div class="sc-stat"><span class="k">${esc(label)}</span><b>${esc(val)}</b>${sub ? `<span class="s">${esc(sub)}</span>` : ""}</div>`;
       const statsHtml = st.n ? `<div class="sc-stats">
@@ -9381,18 +9655,30 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
           <div class="sc-detail-src">${recs.length} 人已录 ${date ? "· " + esc(date) : ""} · 满分 ${full}</div>
         </div>
         ${statsHtml}
-        <div class="wrap-table cap-sm"><table class="grid"><thead><tr>
-          <th class="sticky-l">名次</th><th class="sticky-l sticky-2">姓名</th><th>分数</th><th>得分率</th><th>与平均分</th></tr></thead>
-          <tbody>${recs.map((r, i) => {
-            const diff = st.avg === null ? null : r.score - st.avg;
-            return `<tr data-id="${r.sid}">
-            <td class="sticky-l">${i + 1}</td>
-            <td class="sticky-l sticky-2"><b>${esc(r.sname)}</b></td>
-            <td><b>${r.score}</b>${typeof r.full === "number" ? "/" + r.full : ""}</td>
-            <td>${typeof r.full === "number" && r.full ? Math.round(r.score / r.full * 100) + "%" : "—"}</td>
-            <td class="diff ${diff === null ? "" : (diff >= 0 ? "up" : "down")}">${
-              diff === null ? "—" : (diff >= 0 ? "+" : "−") + fmtScore(Math.abs(diff))}</td>
-          </tr>`; }).join("")}</tbody></table></div>`;
+        <div class="sc-tools">
+          <input class="sc-q" id="scQ" placeholder="搜姓名…" autocomplete="off" value="${esc(V.q)}">
+          <span class="sc-hit">${V.q ? `筛出 ${V.hit} / ${V.total} 人` : ""}</span>
+          <span style="flex:1"></span>
+          <span class="sc-colwrap">
+            <button class="btn ghost" id="scColBtn">列 ▾</button>
+            <span class="sc-colpick${view.scColOpen ? " on" : ""}" id="scColPick">
+              ${SC_OPT_COLS.map((o) => {
+                const has = o.k === "sec" ? hasSec : o.k === "prev" ? hasPrev : true;
+                const why = o.k === "sec" ? "这场考试还没有人传过答题卡，暂时没有板块分" : "还没有可比的上一场考试";
+                return `<label class="${has ? "" : "off"}"${has ? "" : ` title="${why}"`}><input type="checkbox" data-sccol="${o.k}"${
+                  C0[o.k] ? " checked" : ""}${has ? "" : " disabled"}>${esc(o.label)}</label>`;
+              }).join("")}
+              <span class="sc-colhint">板块得分来自「答题卡与识别结果」里核对过的板块分，没核对过就不显示</span>
+            </span>
+          </span>
+        </div>
+        <div class="wrap-table"><table class="grid"><thead><tr>${cols.map((x) => `<th class="${x.cls}" data-col="${x.k}"${
+          x.sort ? ` data-sortby="${x.k}" title="点一下按这列排"` : ""}>${esc(x.label)}${
+          view.scSort === x.k ? `<span class="sc-ar">${view.scDir === -1 ? "▼" : "▲"}</span>` : ""}</th>`).join("")}</tr></thead>
+          <tbody>${V.shown.length ? V.shown.map((x) => `<tr data-id="${x.sid}">${cols.map((k) => cell(x, k.k)).join("")}</tr>`).join("")
+            : `<tr><td class="sc-nohit" colspan="${cols.length}">没有名字含「${esc(V.q)}」的人</td></tr>`}</tbody>
+        </table></div>
+        ${foot}`;
       if (!recs.length) stage.innerHTML = `<div class="sc-tabs">${tabs}</div>
         <div class="sc-detail-h">
           <div class="sc-detail-title"><span>${esc(cur)}</span>
@@ -9410,20 +9696,78 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     // 这两列以前都写 left:0（都叫 sticky-l），窗口一窄横向滚动时姓名会整个盖住名次 ——
     // 「表头 / 冻结列互相重叠」的另一种形态。现在名次 = sticky-l，姓名 = sticky-l sticky-2。
     {
-      const t = stage.querySelector(".cap-sm table.grid");
+      const t = stage.querySelector("table.grid");
       const first = t && t.querySelector("tbody tr td");
       if (t) t.style.setProperty("--ck2", (first ? first.offsetWidth : 56) + "px");
     }
 
-    // 标签切换
+    // 标签切换：换一场考试就把搜索和排序清掉（它们只对上一场有意义），
+    // 列开关和每页人数是长期偏好，留着。
     stage.querySelectorAll("[data-exam]").forEach((b) => b.onclick = () => {
       view.scoreExam = b.dataset.exam || null;
+      view.scQ = ""; view.scSort = ""; view.scDir = 1; view.scPage = 1;
       renderStage();
     });
     // 表格行点击 → 打开学生详情
     stage.querySelectorAll("tbody tr[data-id]").forEach((tr) => tr.onclick = () => {
       view.selected = tr.dataset.id;
       renderDetail();
+    });
+    // 搜姓名：只筛表格，不动名次编号（名次是这场考试里的真实名次）
+    const qEl = $("scQ");
+    if (qEl) {
+      qEl.oninput = () => {
+        view.scQ = qEl.value; view.scPage = 1; view.scQFocus = true;
+        renderStage();
+      };
+      qEl.onblur = () => { view.scQFocus = false; };
+      if (view.scQFocus) {
+        qEl.focus();
+        try { qEl.setSelectionRange(qEl.value.length, qEl.value.length); } catch { /* 某些浏览器不支持，忽略 */ }
+      }
+    }
+    // 表头点击排序：再点同一列就反向
+    stage.querySelectorAll("[data-sortby]").forEach((th) => th.onclick = () => {
+      const k = th.dataset.sortby;
+      if (view.scSort === k) view.scDir = view.scDir === -1 ? 1 : -1;
+      else { view.scSort = k; view.scDir = 1; }
+      view.scPage = 1;
+      renderStage();
+    });
+    // 列显示开关：点「列 ▾」开关面板，点面板外面关掉
+    if (!window.__scColDoc) {
+      window.__scColDoc = 1;
+      document.addEventListener("click", (e) => {
+        const inside = e.target && e.target.closest && e.target.closest(".sc-colwrap");
+        if (!inside && view.scColOpen) {
+          view.scColOpen = false;
+          const p = $("scColPick"); if (p) p.classList.remove("on");
+        }
+      });
+    }
+    const cb = $("scColBtn");
+    if (cb) {
+      cb.onclick = (e) => {
+        e.stopPropagation();
+        view.scColOpen = !view.scColOpen;
+        const p = $("scColPick"); if (p) p.classList.toggle("on", view.scColOpen);
+      };
+    }
+    stage.querySelectorAll("[data-sccol]").forEach((x) => x.onchange = () => {
+      scv().cols[x.dataset.sccol] = !!x.checked;
+      save();
+      renderStage();
+    });
+    // 每页几人 / 翻页
+    stage.querySelectorAll("[data-scper]").forEach((x) => x.onclick = () => {
+      scv().page = Number(x.dataset.scper) || 0;
+      view.scPage = 1;
+      save();
+      renderStage();
+    });
+    stage.querySelectorAll("[data-scgo]").forEach((x) => x.onclick = () => {
+      const n = Number(x.dataset.scgo);
+      if (n > 0) { view.scPage = n; renderStage(); }
     });
     // 加 / 导入 / 改名 / 删
     const a = $("scAdd"); if (a) a.onclick = addExam;
