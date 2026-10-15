@@ -340,6 +340,38 @@ table.grid td.diff.down { color: #c0392b; }
   max-height: 260px; overflow: auto; padding: 4px; }
 .ac-item { padding: 7px 11px; border-radius: 6px; font-size: var(--fs-cell); cursor: pointer; color: var(--ink); }
 .ac-item.on, .ac-item:hover { background: var(--accent-soft); color: var(--accent); }
+/* 重名时用来区分的那一行小字（等级 · 最近一次考试），只用名单里真有的数据 */
+.ac-item .ac-sub { display: block; font-size: var(--fs-mini); color: var(--ink-3); margin-top: 1px; }
+.ac-item .ac-dup { display: inline-block; font-size: var(--fs-mini); color: var(--warn); margin-left: 6px; }
+.ac-none { padding: 9px 11px; font-size: var(--fs-cell); color: var(--ink-3); }
+
+/* ---------- 答题卡工作区：姓名搜索条 + 粘贴待归属区 ---------- */
+.pap-tools { display: flex; align-items: center; gap: 10px; margin: 4px 2px 10px; }
+.pap-paste { border: 1px solid var(--line-strong); border-radius: var(--radius);
+  background: var(--panel-solid); padding: 12px 14px; margin-bottom: 12px; }
+.pp-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 9px; }
+.pp-hint { font-size: var(--fs-mini); color: var(--ink-3); }
+.pp-drop { display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+  border: 1px dashed var(--line-strong); border-radius: 8px; padding: 12px 14px;
+  background: var(--bg-soft, rgba(0,0,0,.02)); cursor: pointer; outline: none; }
+.pp-drop:focus, .pp-drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.pp-arm { font-size: var(--fs-cell); color: var(--ink); }
+.pp-or { color: var(--ink-3); font-size: var(--fs-mini); }
+.pp-drop-hint { font-size: var(--fs-cell); color: var(--ink-2); }
+.pp-drop kbd { font-family: inherit; font-size: var(--fs-mini); border: 1px solid var(--line-strong);
+  border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; background: var(--panel); }
+.pp-thumbs { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 11px; }
+.pp-thumb { position: relative; width: 104px; border: 1px solid var(--line);
+  border-radius: 8px; overflow: hidden; background: var(--panel); }
+.pp-thumb img { display: block; width: 100%; height: 96px; object-fit: cover; }
+.pp-no { display: block; font-size: var(--fs-mini); color: var(--ink-3); text-align: center; padding: 3px 0 1px; }
+.pp-acts { display: flex; gap: 2px; justify-content: center; padding: 0 2px 4px; }
+.pp-acts .btnmini { padding: 1px 5px; font-size: var(--fs-mini); }
+.pp-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+.pp-f { display: flex; align-items: center; gap: 6px; font-size: var(--fs-cell); color: var(--ink-2); }
+.pp-f select { padding: 5px 8px; border: 1px solid var(--line-strong); border-radius: 7px;
+  background: var(--panel); color: var(--ink); font-size: var(--fs-cell); }
+.pp-stu { width: 190px; }
 .ck-copybar { display: flex; gap: 10px; margin-top: 14px; }
 
 /* ---------- 电联记录（学生详情面板里那一小块） ---------- */
@@ -630,7 +662,8 @@ textarea.note:focus { border-color: var(--accent); background: var(--panel); }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ---------- 看图 ---------- */
-.lightbox { position: fixed; inset: 0; background: rgba(12,16,22,.92); z-index: 80;
+/* z-index 得压得住「答题卡核对」那层浮层（.pap-ov 是 90）—— 核对页里点原图看大图走的就是这个灯箱 */
+.lightbox { position: fixed; inset: 0; background: rgba(12,16,22,.92); z-index: 95;
   display: none; flex-direction: column; }
 .lightbox.open { display: flex; }
 .lb-bar { display: flex; align-items: center; gap: 9px; padding: 11px 16px; color: #fff; font-size: var(--fs-cell); }
@@ -959,6 +992,16 @@ input[type=range] { accent-color: var(--accent); }
 .papcard-k { font-size: var(--fs-mini); color: var(--ink-3); }
 .papcard-t { width: 46px; height: 46px; object-fit: cover; border-radius: 6px;
   border: 1px solid var(--line); cursor: zoom-in; background: var(--panel-3); }
+/* 缩略图上的「换 / ✕」：图片传错了、传糊了，得当场换得掉 */
+.papcard { position: relative; display: inline-flex; line-height: 0; user-select: none; }
+.papcard-acts { position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 3px;
+  justify-content: center; padding: 2px; background: rgba(12, 16, 22, .6); border-radius: 0 0 6px 6px; }
+.pcb { font: inherit; font-size: 10px; line-height: 1.4; padding: 0 5px; cursor: pointer;
+  color: #fff; background: rgba(255, 255, 255, .18); border: 1px solid rgba(255, 255, 255, .3);
+  border-radius: 4px; }
+.pcb:hover { background: rgba(255, 255, 255, .34); }
+.pcb.danger { padding: 0 4px; }
+.pcb.danger:hover { background: var(--red); border-color: var(--red); }
 .attthumb.papercard { outline: 2px solid var(--accent-soft); outline-offset: -2px; }
 .attthumb .roleb { position: absolute; left: 0; bottom: 0; padding: 0 4px; font-size: 9.5px;
   font-weight: 700; color: #fff; background: rgba(47, 111, 235, .86); border-top-right-radius: 5px; }
@@ -2413,6 +2456,145 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     });
   }
 
+  /* -------------------------------------------------- 姓名搜索框（带联想）
+   * 成绩页、答题卡这些「有名单的页面」共用同一个：边打边联想、↑↓ 选、Enter 确认、
+   * Esc 关、点一下选中。**搜的是整份名单，不是屏幕上已经画出来的那几行。**
+   *
+   * 重名怎么区分：名单里**没有班级、也没有学号字段**（导入的 xlsx 就没有这两列），
+   * 所以这里用「等级 + 最近一次有分数的考试」这种**真实存在**的信息来分，
+   * 绝不编造班级或编号。
+   */
+  function dupNameCount() {
+    const n = {};
+    for (const s of DB.students) if (s.name) n[s.name] = (n[s.name] || 0) + 1;
+    return n;
+  }
+
+  /** 用来区分重名的一行小字（只用真实数据；一样都取不到就返回空串） */
+  function stuTag(s) {
+    const bits = [];
+    const lv = (DB.config.levels || []).find((l) => l.key === s.level);
+    if (lv && lv.label) bits.push(lv.label);
+    const exs = (s.exams || []).filter((e) => hasScore(e));
+    if (exs.length) {
+      const p = exs[exs.length - 1];
+      bits.push(`${p.name} ${p.score}${typeof p.full === "number" ? "/" + p.full : ""}`);
+    } else {
+      bits.push("还没有成绩");
+    }
+    return bits.join(" · ");
+  }
+
+  // Esc 关联想：面板挂在 body 上，但输入框每个字都会重画换成新元素，
+  // 挂在元素上的那个监听未必还是「当前这个框」的 —— 全局兜一层，任何时候按 Esc 都收得掉。
+  // 只删 `.ac-list` 这种联想面板，不碰弹窗自己的 Esc 逻辑。
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    _nsFocusId = "";   // 按 Esc = 搜索结束：别再让下一次重画把面板又弹回来
+    document.querySelectorAll(".ac-list").forEach((b) => b.remove());
+  });
+
+  let _nsFocusId = "";   // 最后一次聚焦过的姓名搜索框 —— 页面重画之后要把它还回去
+
+  function nameSearchBox(el, opts = {}) {
+    if (!el) return null;
+    let box = null, list = null, active = -1, hits = [];
+    const myId = el.id || "";
+    // 同一个输入框只留一个联想面板：每次重画都会挂一个新的，旧的可能还挂在 body 上
+    if (myId) document.querySelectorAll('.ac-list[data-for="' + myId + '"]').forEach((b) => b.remove());
+
+    const close = () => { if (box) { box.remove(); box = null; list = null; active = -1; hits = []; } };
+
+    const place = () => {
+      if (!box || !el.isConnected) return;
+      const r = el.getBoundingClientRect();
+      box.style.top = r.bottom + 4 + "px";
+      box.style.left = r.left + "px";
+      box.style.minWidth = Math.max(r.width, 220) + "px";
+    };
+
+    const show = () => {
+      const q = String(el.value || "").trim();
+      if (!q) { close(); return; }
+      const all = DB.students.filter((s) => s.name && s.name.includes(q));
+      hits = all.slice(0, 8);
+      // 顶栏那个搜索框还管「备注 / 聊天」，搜不到人名是正常的，别弹「没有叫…的学生」
+      if (!hits.length && opts.noHit === false) { close(); return; }
+
+      if (!box) {
+        box = document.createElement("div");
+        box.className = "ac-list";
+        if (myId) box.dataset.for = myId;
+        list = document.createElement("div");
+        box.appendChild(list);
+        document.body.appendChild(box);
+        // 别抢输入框焦点，否则 blur 一来就把列表关了
+        box.addEventListener("mousedown", (e) => e.preventDefault());
+      }
+      const dup = dupNameCount();
+      list.innerHTML = hits.length
+        ? hits.map((s, i) => {
+          const many = dup[s.name] > 1;
+          return `<div class="ac-item ${i === active ? "on" : ""}" data-i="${i}">`
+            + `<b>${esc(s.name)}</b>`
+            + (many ? `<span class="ac-sub">${esc(stuTag(s))}</span>` : "")
+            + (many ? `<span class="ac-dup">重名 ${dup[s.name]} 个</span>` : "")
+            + `</div>`;
+        }).join("")
+        : `<div class="ac-none">没有叫「${esc(q)}」的学生 —— 检查下是不是打错字了</div>`;
+      list.querySelectorAll(".ac-item").forEach((it) => it.onclick = () => pick(hits[+it.dataset.i]));
+      list.querySelectorAll(".ac-none").forEach((it) => it.onclick = () => close());
+      place();
+    };
+
+    const pick = (s) => {
+      if (!s) return;
+      close();
+      // 页面可能已经把输入框换成新的了 —— 始终写回到「现在页面上那个」
+      const live = (myId && document.getElementById(myId)) || el;
+      live.value = s.name;
+      live.blur();
+      // 选完就别再弹了 —— 重画之后输入框是新的，不把「刚才聚焦的是它」这点记忆清掉，
+      // 新框一挂上就又会把联想弹出来（用户刚点完，列表却又跳出来挡着）
+      _nsFocusId = "";
+      // 让页面上既有的 search 逻辑跟着刷新（各页的 oninput 各不相同）
+      live.dispatchEvent(new Event("input", { bubbles: true }));
+      if (opts.onPick) opts.onPick(s, live);
+    };
+
+    el.setAttribute("autocomplete", "off");
+    el.addEventListener("input", () => { active = -1; show(); });
+    el.addEventListener("focus", () => { _nsFocusId = myId; show(); });
+    el.addEventListener("blur", () => setTimeout(close, 180));
+    window.addEventListener("resize", place);
+    el.addEventListener("keydown", (e) => {
+      // Esc = 我不搜了：连同「重画后把光标还回去」那个记忆一起清掉，
+      // 否则下一次重画（点一下别处、切个列都可能触发）会把面板又弹回来
+      if (e.key === "Escape") { _nsFocusId = ""; close(); el.blur(); return; }
+      if (!box) {
+        if (e.key === "ArrowDown" || e.key === "Enter") { show(); e.preventDefault(); }
+        return;
+      }
+      const items = [...list.querySelectorAll(".ac-item")];
+      if (e.key === "ArrowDown") { e.preventDefault(); active = items.length ? (active + 1) % items.length : -1; }
+      else if (e.key === "ArrowUp") { e.preventDefault(); active = items.length ? (active - 1 + items.length) % items.length : -1; }
+      else if (e.key === "Enter") { e.preventDefault(); if (active >= 0 && items[active]) items[active].click(); return; }
+      else if (e.key === "Escape") { close(); return; }
+      else return;
+      items.forEach((it, i) => it.classList.toggle("on", i === active));
+    });
+
+    // 这个页面每敲一个字就整块重画（输入框被换成新的），所以光标要还回去，
+    // 而且**可能在我们挂上监听之前就已经被 focus 过了**（各页自己会 restore focus），
+    // 所以这里补一次 show() —— 不然联想面板永远不出现。
+    if (myId && _nsFocusId === myId && String(el.value || "").trim()) {
+      el.focus();
+      try { el.setSelectionRange(el.value.length, el.value.length); } catch { /* 忽略 */ }
+      show();
+    }
+    return { close, el };
+  }
+
   /* -------------------------------------------------------- 派生数据 */
 
   /** 问题标签：从「问题」栏里按关键词自动认出来的。和「家长类型」是两套东西。 */
@@ -2664,7 +2846,11 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
   function callLogList(bid, sid) {
     const per = ((DB.calls || {}).logs || {})[bid];
     const list = per && Array.isArray(per[sid]) ? per[sid].slice() : [];
-    return list.sort((a, b) => String(b.at || "").localeCompare(String(a.at || "")));
+    // `at` 只精确到分钟：同一分钟里记了两次（先「已沟通」再「未接听」）光看时间分不出先后，
+    // 于是列表状态会一直显示先记的那条。用插入位置兜底 —— 后记的算新的。
+    return list.map((x, i) => ({ x, i }))
+      .sort((a, b) => String(b.x.at || "").localeCompare(String(a.x.at || "")) || (b.i - a.i))
+      .map((p) => p.x);
   }
 
   /** 跨所有轮次，这个学生最近的一条逐次记录 */
@@ -2697,7 +2883,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
 
   function newCallLog() {
     return {
-      id: uid(), at: nowStamp(), status: "已沟通",
+      id: uid(), at: nowStamp(), status: "已沟通", stsTouched: false,
       note: "", next: "", nextAt: "",
       tr: "", trAt: "", trSrc: "",
       ai: null, aiOld: [], aiAt: "", aiModel: "",
@@ -2930,7 +3116,11 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     };
     REC.src = "";
     renderCallSheet();
-    toast(`录好了：${recFmt(sec)}，${(blob.size / 1048576).toFixed(1)} MB。别忘了保存`, 3600);
+    // 面板开着就直接归到「已沟通」——老师传完录音以为就算聊过了，
+    // 名单上却还写着「未联系」（用户 2026-10-15 报的）。录音本体还是照旧等「保存」。
+    const marked = recMarkTalking();
+    toast(`录好了：${recFmt(sec)}，${(blob.size / 1048576).toFixed(1)} MB`
+      + (marked ? "。已经算聊过了，名单上归到「已沟通」" : "。别忘了保存"), marked ? 5200 : 3600);
   }
 
   /** 丢弃当前这段（没保存就丢掉），同时把录音本体从内存里放掉 */
@@ -3419,6 +3609,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       if (!b) return;
       grabCallFields();
       d.status = b.dataset.clgst;
+      d.stsTouched = true;      // 老师自己点过结果 —— 自动归类就别覆盖他
       d.edited = true;
       view.callDirty = true;
       renderCallSheet();
@@ -3523,6 +3714,32 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
   }
 
   /* ---------------- 录音：取回 / 试听 / 存盘 / 删除 ---------------- */
+
+  /**
+   * 「记一次」里挂上录音 = 这次电联确实聊过了 —— 立刻把这个学生归到「已沟通」。
+   *
+   * 为什么要有这一步：录音挂上去只是躺在内存里（REC.pending），老师传完录音就去忙别的了，
+   * 名单上却还写着「未联系」（用户 2026-10-15 报的就是这个）。
+   *
+   * 三条规矩：
+   *   1. 老师**自己点过**结果芯片并且选的不是「已沟通」（未接听 / 改天再打 / 号码有误），就照他点的算，不覆盖；
+   *   2. **录音本体不强存** —— 它还留在「待保存」里，点「保存」才写进这条记录（这条流程没变）；
+   *   3. 只动这一个学生的状态，不碰别的批次、别的学生。
+   */
+  function recMarkTalking() {
+    const d = view.callDraft, ed = view.callEdit;
+    if (!d || !ed) return false;
+    if (d.stsTouched && d.status && d.status !== "已沟通") return false;
+    d.status = "已沟通";
+    DB.calls ||= { batches: [], status: {} };
+    DB.calls.status ||= {};
+    DB.calls.status[ed.bid] ||= {};
+    if (DB.calls.status[ed.bid][ed.sid] === "已沟通") return true;
+    DB.calls.status[ed.bid][ed.sid] = "已沟通";
+    save();
+    renderCallSheet();
+    return true;
+  }
 
   async function recBlobOf(meta) {
     if (REC.pending && (!meta || !meta.id || meta.id === (REC.pending.meta || {}).id)) return REC.pending.blob;
@@ -3916,7 +4133,10 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       meta: { name: file.name || "导入的录音", type: file.type || "audio/mpeg", size: file.size, sec: 0, src: "file", at: nowStamp() },
     };
     renderCallSheet();
-    toast("录音导进来了 —— 记得点「保存」，不然关掉就没了", 4200);
+    // 导进一段录音 = 这次电联聊过了：先归到「已沟通」（录音本体照旧等「保存」）
+    const markedI = recMarkTalking();
+    toast("录音导进来了" + (markedI ? "，名单上已经归到「已沟通」" : "")
+      + " —— 记得点「保存」，不然关掉就没了", 4600);
   }
 
   /**
@@ -4541,7 +4761,9 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       </div>`;
       pop.style.display = "none";
     }
-    $("lightbox").classList.add("open");
+    const lb = $("lightbox");
+    lb.dataset.openedAt = String(Date.now());   // 给双击留个时间戳：第二下别把刚开的图关掉
+    lb.classList.add("open");
   }
 
   function closeLightbox() {
@@ -4571,6 +4793,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     // 答题卡核对页：{ sid, eid }（null = 没打开）
     paperOpen: null,
     paperBatch: null,     // 答题卡工作区：当前打开的考试批次（null = 批次列表）
+    papQ: "",             // 答题卡名单页的姓名搜索（只筛那张表）
     paperFilter: "all",   // 批次里按状态筛名单
     paperStudent: null,   // 完整分析页：正在看哪个学生（null = 停在名单上）
     // 方案里正在被手工编辑的那一块：{eid, part:"ana"|"talk"} / 计划第几条 planEdit
@@ -5271,7 +5494,8 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     bindCommon();
 
     $("search").oninput = (e) => { view.query = e.target.value.trim(); renderStage(); renderSide(); };
-    attachNameAutocomplete($("search"));
+    // 顶栏搜索：既能搜姓名，也搜备注 / 聊天 —— 所以搜不到人名时不用弹提示
+    nameSearchBox($("search"), { noHit: false });
     $("seg").querySelectorAll("button").forEach((b) => b.onclick = () => {
       view.mode = b.dataset.mode;
       if (view.mode === "follow") view.filter = { kind: "follow" };
@@ -6471,7 +6695,13 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         <div class="pap-body">
           <div class="pap-left">
             <h5>原图（${cards.length} 张，点开看大图）</h5>
-            <div class="pap-thumbs">${cards.map((a) => `<img class="pap-thumb" data-papimg="${esc(a.id)}" src="${esc(a.thumb || "")}" alt="${esc(a.name || "")}" title="${esc(a.name || "")}">`).join("")}</div>
+            <div class="pap-thumbs">${cards.map((a) => `<span class="papcard">
+              <img class="pap-thumb" data-papimg="${esc(a.id)}" data-papeid="${esc(e.id)}" src="${esc(a.thumb || "")}" alt="${esc(a.name || "")}" title="点开看大图 · ${esc(a.name || "")}">
+              <span class="papcard-acts">
+                <button class="pcb" data-papswap="${esc(a.id)}" data-eid="${esc(e.id)}" title="换一张 —— 位置不动，重新挑一张图">换</button>
+                <button class="pcb danger" data-papdrop="${esc(a.id)}" data-eid="${esc(e.id)}" title="删掉这张">✕</button>
+              </span>
+            </span>`).join("")}</div>
           </div>
           <div class="pap-right">
             <h5>识别字段（勾了才会写进去）</h5>
@@ -6507,13 +6737,18 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     };
     $("papOk").onclick = () => confirmPaper();
     ov.onclick = (ev) => { if (ev.target === ov) closePaperReview(); };
-    ov.querySelectorAll("[data-papimg]").forEach((img) => img.onclick = async () => {
-      const blob = await FB().get(img.dataset.papimg);
-      if (!blob) return toast("这张图在存储里找不到了");
-      const u = URL.createObjectURL(blob);
-      const w = window.open(u, "_blank");
-      if (!w) toast("浏览器拦了新窗口 —— 允许一下弹窗就能看大图");
-      setTimeout(() => URL.revokeObjectURL(u), 60000);
+    // 原图：点一下就看大图（走灯箱，不再弹新窗口 —— 弹窗会被浏览器拦下来）；每张下面还有「换 / ✕」
+    ov.querySelectorAll("[data-papimg]").forEach((img) => img.onclick = (ev) => {
+      ev.stopPropagation();
+      openAttachment(img.dataset.papimg, img.dataset.papeid);
+    });
+    ov.querySelectorAll("[data-papswap]").forEach((b) => b.onclick = (ev) => {
+      ev.stopPropagation();
+      startPaperSwap(b.dataset.eid, b.dataset.papswap);
+    });
+    ov.querySelectorAll("[data-papdrop]").forEach((b) => b.onclick = (ev) => {
+      ev.stopPropagation();
+      dropPaperCard(b.dataset.eid, b.dataset.papdrop);
     });
   }
 
@@ -6658,6 +6893,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
 
   async function runPaperAnalysis(s, e, btn) {
     if (!paperDone(e)) return toast("先把答题卡核对完、点过「确认并写入」，才能生成分析");
+    if (!paperHas(e)) return toast("这张卡的识别结果被清掉了（原图换过或删过）—— 先点「重新识别」再分析", 6500);
     const prev = e.paper.analysis;
     if (prev && prev.text) {
       const ok = confirm(prev.edited
@@ -6875,12 +7111,14 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     // 先看「核对确认过没有」，再看有没有图 —— 这样图片事后被删掉，
     // 老师确认过的分析和话术也不会跟着消失。
     if (done) {
+      // 原图被换掉/删掉之后 ocr 会清空，但 status 还是 confirmed —— 分析和话术照旧显示（那是老师自己的成果），
+      // 只是「看识别结果」没东西可看了，别摆在那儿点了没反应
       bar = `<span class="chip ok">✅ 答题卡已核对</span>
         <span class="chip ${st.c}">${st.t}</span>
-        <button class="btn ghost" data-paprev="${e.id}">看识别结果</button>
+        ${has ? `<button class="btn ghost" data-paprev="${e.id}">看识别结果</button>` : ""}
         <button class="btn aibtn" data-papana="${e.id}" title="读的是这张答题卡的识别结果，逐板块说事实/推测/材料不足">🧩 分析答题卡板块</button>
         <button class="btn ghost" data-paprec="${e.id}">重新识别</button>
-        ${cards.length ? "" : `<span class="hint-inline">图片已经不在了 —— 方案还留着；要重新识别得先重新传图</span>`}`;
+        ${has ? "" : `<span class="hint-inline">${cards.length ? "答题卡原图换过或删过了 —— 识别结果已经清掉，点「重新识别」再来一次" : "图片已经不在了 —— 方案还留着；要重新识别得先重新传图"}</span>`}`;
       extra = quick ? "" : paperSolutionHtml(s, e);
     } else if (has) {
       bar = `<button class="btn primary" data-paprev="${e.id}">📋 继续核对（还没确认）</button>
@@ -6896,8 +7134,14 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         ${examImgCount(e) ? `<span class="hint-inline">上面那条附件是<b>试卷</b> —— 答题卡得用左边这个按钮单独传</span>` : ""}`;
     }
     const cardStrip = cards.length
-      ? `<div class="papcardrow"><span class="papcard-k">答题卡 ${paperImgCount(e)} 张</span>
-          ${cards.map((a) => `<img class="papcard-t" data-papimg="${esc(a.id)}" src="${esc(a.thumb || "")}" alt="${esc(a.name || "")}" title="${esc(a.name || "")}">`).join("")}
+      ? `<div class="papcardrow"><span class="papcard-k">答题卡 ${paperImgCount(e)} 张（点图看大图）</span>
+          ${cards.map((a) => `<span class="papcard">
+            <img class="papcard-t" data-papimg="${esc(a.id)}" data-papeid="${esc(e.id)}" src="${esc(a.thumb || "")}" alt="${esc(a.name || "")}" title="点开看大图 · ${esc(a.name || "")}">
+            <span class="papcard-acts">
+              <button class="pcb" data-papswap="${esc(a.id)}" data-eid="${esc(e.id)}" title="换一张 —— 位置不动，重新挑一张图">换</button>
+              <button class="pcb danger" data-papdrop="${esc(a.id)}" data-eid="${esc(e.id)}" title="删掉这张">✕</button>
+            </span>
+          </span>`).join("")}
         </div>`
       : "";
     return `<div class="papareabar">${bar}</div>${cardStrip}${extra}`;
@@ -7420,6 +7664,296 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     inp.click();
   }
 
+  /* ---------------------------------------- 换掉 / 删掉某一张已经进库的答题卡
+   * 2026-10-15 用户反馈：答题卡传错了、传糊了，没法替换 —— 界面上只有「传答题卡图片」，
+   * 一点就是往上追加，旧的还在，识别起来两张一起读。这里补上「换」和「✕」两个入口。
+   * 两条规矩：
+   *   1. **位置不动** —— 换的是第几张，换完还是第几张，页序不乱；
+   *   2. **只动这张卡** —— 成绩、分析、话术都是老师自己的东西，一概不碰；
+   *      但识别结果是照着旧图读的，底图一换它就不作数了，清掉，让老师重新识别一次。
+   */
+  let swapFor = null;   // {eid, aid} —— 非空表示这次选文件是拿来「换」的，不是「加」
+
+  /** 点「换」：先问清楚（已经识别过的才问），再把文件选择器叫起来 */
+  function startPaperSwap(eid, aid) {
+    const ex = findExam(eid);
+    const a = (ex?.attachments || []).find((x) => x.id === aid);
+    if (!a) return toast("这张卡找不到了 —— 重新打开一下这一页");
+    if (ex.paper && ex.paper.ocr) {
+      if (!confirm("这张答题卡已经识别过了。\n\n换了图，原来的识别结果就配不上新图 —— 我会把识别结果清掉；成绩、分析和话术都留着，你重新识别一次就行。\n\n要换吗？")) return;
+    }
+    const inp = $("attFile");
+    if (!inp) return toast("附件入口还没就绪，刷新一下再试");
+    swapFor = { eid, aid };
+    inp.value = "";
+    inp.click();
+  }
+
+  /** 真换：新图顶掉旧图那张（id 换新，位置和 role 一律不动），旧图从存储里删掉 */
+  async function swapPaperCard(eid, aid, file) {
+    const ex = findExam(eid);
+    const i = (ex?.attachments || []).findIndex((x) => x.id === aid);
+    if (i < 0) return toast("这张卡找不到了 —— 重新打开一下这一页");
+    if (!file || !/^image\//.test(file.type || "")) return toast("换答题卡只能用图片（截图、照片都行）", 5000);
+    const old = ex.attachments[i];
+    try {
+      const r = await FB().shrink(file);
+      if (!r) return toast("这张图读不出来 —— 换一张试试");
+      const id = uid();
+      await FB().put(id, r.blob);
+      ex.attachments[i] = Object.assign({}, old, {
+        id,
+        name: file.name || "换上的答题卡.jpg",
+        type: r.type, size: r.blob.size, w: r.w, h: r.h, thumb: r.thumb,
+        addedAt: Date.now(), role: "paper",
+      });
+      try { await FB().del(aid); } catch { /* 旧图删不掉也不影响用 */ }
+      dropPaperOcr(ex);
+      save();
+      paperRefresh();
+      refreshPaperReviewIfOpen(ex);
+      toast("换好了 —— 点图就能看新传的这张", 5000);
+    } catch (err) {
+      console.warn(err);
+      toast("换图失败：可能浏览器存储满了，先清理一些旧附件");
+    }
+  }
+
+  /** 点「✕」：删掉这一张（最后一张也一样），要删就重传 */
+  async function dropPaperCard(eid, aid) {
+    const ex = findExam(eid);
+    const a = (ex?.attachments || []).find((x) => x.id === aid);
+    if (!a) return toast("这张卡找不到了 —— 重新打开一下这一页");
+    const left = Math.max(0, paperImgCount(ex) - 1);
+    let msg = left ? `删掉这张答题卡？还剩 ${left} 张。` : "删掉最后一张答题卡？";
+    msg += (ex.paper && ex.paper.ocr)
+      ? "\n\n这场比赛已经识别核对过了 —— 识别结果会跟着清掉；成绩、分析和话术都留着。"
+      : "\n\n删了就找不回来了，要用得重新传。";
+    if (!confirm(msg)) return;
+    try { await FB().del(aid); } catch {}
+    ex.attachments = (ex.attachments || []).filter((x) => x.id !== aid);
+    dropPaperOcr(ex);
+    save();
+    paperRefresh();
+    refreshPaperReviewIfOpen(ex);
+    toast(left ? "已删掉这张" : "已删掉最后一张 —— 要重新传一张吗？");
+  }
+
+  /** 底图换了或删了：识别结果作废（成绩、分析、话术照旧留着，那是老师自己的东西） */
+  function dropPaperOcr(ex) {
+    if (ex && ex.paper && ex.paper.ocr) delete ex.paper.ocr;
+  }
+
+  /** 核对页开着的时候，换/删之后跟着重画（一张不剩就直接关掉） */
+  function refreshPaperReviewIfOpen(ex) {
+    if (!$("paperOv")) return;
+    if (paperImgCount(ex)) renderPaperReview();
+    else closePaperReview();
+  }
+
+  /* ---------------------------------------- 答题卡：粘贴 / 拖入的「待归属」区
+   * 「答题卡」工作区里那一片还没归属给谁的图片。粘贴、拖进来、选文件都先进这里，
+   * 看清楚几页、给谁、哪一场，再点「确认归属」才写进那条考试记录。
+   *
+   * 三条底线：
+   *   1. **不自动提交** —— 图放在这儿不会自己跑进库；
+   *   2. **不覆盖** —— 传进去是追加，已经有的答题卡一张不动；
+   *   3. **只认图片** —— 剪贴板里的文字不会被当成答题卡。
+   */
+  const PAPER_STAGE = [];   // [{key, file, url}]
+  let _ppSid = null;        // 归属给谁（学生 id）
+
+  const ppKey = () => "pp" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+  /** 收一批文件进待归属区；只认图片。返回真正收下的张数 */
+  function ppAdd(files) {
+    const arr = [...(files || [])];
+    if (!arr.length) return 0;
+    const imgs = arr.filter((f) => f && /^image\//.test(f.type || "") && f.size > 0);
+    if (!imgs.length) { toast("这些都还不是图片 —— 答题卡只收图片（截图、照片都行）", 5000); return 0; }
+    for (const f of imgs) PAPER_STAGE.push({ key: ppKey(), file: f, url: URL.createObjectURL(f) });
+    renderStage();
+    toast(`收下 ${imgs.length} 张，现在一共 ${PAPER_STAGE.length} 页 —— 选好给谁、哪一场，再点「确认归属」`, 5000);
+    return imgs.length;
+  }
+
+  function ppRemove(i) {
+    const it = PAPER_STAGE[i];
+    if (!it) return;
+    try { URL.revokeObjectURL(it.url); } catch { /* 忽略 */ }
+    PAPER_STAGE.splice(i, 1);
+    renderStage();
+  }
+
+  function ppClear() {
+    for (const it of PAPER_STAGE) { try { URL.revokeObjectURL(it.url); } catch { /* 忽略 */ } }
+    PAPER_STAGE.length = 0;
+  }
+
+  function ppMove(i, d) {
+    const j = i + d;
+    if (j < 0 || j >= PAPER_STAGE.length) return;
+    const t = PAPER_STAGE[i]; PAPER_STAGE[i] = PAPER_STAGE[j]; PAPER_STAGE[j] = t;
+    renderStage();
+  }
+
+  function ppReplace(i, file) {
+    const it = PAPER_STAGE[i];
+    if (!it || !file) return;
+    try { URL.revokeObjectURL(it.url); } catch { /* 忽略 */ }
+    it.file = file;
+    it.url = URL.createObjectURL(file);
+    renderStage();
+    toast(`第 ${i + 1} 页换成新图了`);
+  }
+
+  /** 从剪贴板事件里抠出图片文件（只认图片，文字一律不算） */
+  function ppFromClipboard(ev) {
+    const items = [...((ev.clipboardData && ev.clipboardData.items) || [])];
+    return items.filter((i) => i.kind === "file" && /^image\//.test(i.type || ""))
+      .map((i) => i.getAsFile()).filter(Boolean);
+  }
+
+  function ppPickedStudent() {
+    const el = $("ppStu");
+    const nm = el ? el.value.trim() : "";
+    const s = DB.students.find((x) => x.id === _ppSid && x.name === nm)
+      || DB.students.find((x) => x.name === nm);
+    return s || null;
+  }
+
+  function paperPasteHtml() {
+    const stu = ppPickedStudent();
+    const batches = examBatches();
+    const curB = view.paperBatch || ((batches[0] || {}).name || "");
+    const thumbs = PAPER_STAGE.length
+      ? `<div class="pp-thumbs">${PAPER_STAGE.map((it, i) => `
+          <div class="pp-thumb">
+            <img src="${esc(it.url)}" alt="第 ${i + 1} 页">
+            <span class="pp-no">第 ${i + 1} 页</span>
+            <div class="pp-acts">
+              <button class="btnmini" data-ppmv="${i}" data-d="-1" ${i ? "" : "disabled"} title="往前挪一页">↑</button>
+              <button class="btnmini" data-ppmv="${i}" data-d="1" ${i < PAPER_STAGE.length - 1 ? "" : "disabled"} title="往后挪一页">↓</button>
+              <button class="btnmini" data-pprep="${i}" title="换一张（顺序不动）">换</button>
+              <button class="btnmini danger" data-ppdel="${i}" title="删掉这一页">✕</button>
+            </div>
+          </div>`).join("")}</div>`
+      : "";
+
+    return `<div class="pap-paste" id="papPaste">
+      <div class="pp-top">
+        <b>📋 粘贴答题卡图片</b>
+        <span class="pp-hint">可 <kbd>Ctrl</kbd>+<kbd>V</kbd> 粘贴图片，也可点击上传或拖入图片</span>
+      </div>
+      <div class="pp-drop" id="ppDrop" tabindex="0">
+        <span class="pp-arm">点这里，再按 <kbd>Ctrl</kbd>+<kbd>V</kbd> 粘贴</span>
+        <span class="pp-or">或</span>
+        <button class="btnmini" data-pppick="1">选择文件</button>
+        <span class="pp-or">或</span>
+        <span class="pp-drop-hint">把图片拖进来</span>
+        <span class="hint-inline">多页答题卡就一张张连着粘，会按顺序排成第 1、2、3… 页</span>
+        <input type="file" id="ppFile" accept="image/*" multiple hidden>
+      </div>
+      ${thumbs}
+      <div class="pp-foot">
+        <label class="pp-f">给谁：
+          <input class="sc-q pp-stu" id="ppStu" placeholder="打名字，联想选一个" autocomplete="off" value="${esc(stu ? stu.name : "")}">
+        </label>
+        <label class="pp-f">哪一场：
+          <select id="ppExam">${batches.map((b) =>
+            `<option value="${esc(b.name)}" ${b.name === curB ? "selected" : ""}>${esc(b.name)}${b.date ? " · " + esc(b.date) : ""}</option>`).join("")}</select>
+        </label>
+        <span style="flex:1"></span>
+        <button class="btn primary" id="ppGo" ${(stu && PAPER_STAGE.length) ? "" : "disabled"}>确认归属，去核对</button>
+      </div>
+      <p class="hint" style="margin:6px 2px 0">
+        图停在这儿<b>不会自己进库</b>：确认归属才写进那条考试记录，而且只追加、不覆盖已有的答题卡。
+        识别还要在核对页上另点一次 —— 没核对确认的内容不会写进成绩。
+      </p>
+    </div>`;
+  }
+
+  /** 确认归属：把待归属区的图写进「某学生 · 某场考试」，然后进核对页（不自动识别） */
+  async function ppCommit() {
+    const s = ppPickedStudent();
+    if (!s) { const el = $("ppStu"); if (el) el.focus(); return toast("先选一个学生 —— 打两个字，在联想里点一下他", 5000); }
+    if (!PAPER_STAGE.length) return toast("还没有图片 —— 先粘贴或拖几张进来", 5000);
+    const b = examBatches().find((x) => x.name === ($("ppExam") || {}).value);
+    if (!b) return toast("没找到这一场考试，换一个试试", 5000);
+    const e = ensureBatchExam(s, b);
+    const had = paperImgCount(e);
+    if (had && !confirm(`${s.name} 的「${b.name}」已经传过 ${had} 张了。\n\n再传是【追加】在这后面，原来的一张都不会动；识别也要你到核对页再点一次。\n\n继续吗？`)) return;
+    const files = PAPER_STAGE.map((x) => x.file);
+    ppClear();
+    renderStage();
+    await addAttachments(files, e.id, "paper");
+    toast(`传到「${s.name} · ${b.name}」了 —— 核对无误再点「识别答题卡」`, 6500);
+    openPaperReview(s.id, e.id);
+  }
+
+  function bindPaperPaste(stage) {
+    const box = $("papPaste");
+    if (!box) return;
+    const drop = $("ppDrop");
+    const file = $("ppFile");
+
+    // 点粘贴区 = 把焦点放进来（这样 Ctrl+V 才稳稳落到这儿），顺手也能拖
+    box.onclick = (ev) => {
+      const pick = ev.target.closest("[data-pppick]");
+      if (pick) { file.value = ""; file.click(); return; }
+      if (ev.target.closest(".pp-thumb")) return;
+      if (drop) drop.focus();
+    };
+    if (drop) drop.onclick = (ev) => {
+      if (ev.target.closest("[data-pppick]")) return;
+      drop.focus();
+    };
+    if (file) file.onchange = () => { ppAdd(file.files); file.value = ""; };
+    if (drop) {
+      drop.ondragover = (ev) => { ev.preventDefault(); drop.classList.add("over"); };
+      drop.ondragleave = () => drop.classList.remove("over");
+      drop.ondrop = (ev) => {
+        ev.preventDefault(); drop.classList.remove("over");
+        ppAdd([...((ev.dataTransfer || {}).files || [])]);
+      };
+    }
+
+    stage.querySelectorAll("[data-ppmv]").forEach((b) => b.onclick = (ev) => {
+      ev.stopPropagation(); ppMove(+b.dataset.ppmv, +b.dataset.d);
+    });
+    stage.querySelectorAll("[data-ppdel]").forEach((b) => b.onclick = (ev) => {
+      ev.stopPropagation(); ppRemove(+b.dataset.ppdel);
+    });
+    stage.querySelectorAll("[data-pprep]").forEach((b) => b.onclick = (ev) => {
+      ev.stopPropagation();
+      const i = +b.dataset.pprep;
+      const inp = document.createElement("input");
+      inp.type = "file"; inp.accept = "image/*";
+      inp.onchange = () => { if (inp.files && inp.files[0]) ppReplace(i, inp.files[0]); };
+      inp.click();
+    });
+
+    // 归属：打名字 → 联想选
+    const stuEl = $("ppStu");
+    if (stuEl) {
+      if (stuEl.value.trim()) {
+        const hit = DB.students.find((x) => x.name === stuEl.value.trim());
+        if (hit) _ppSid = hit.id;
+      }
+      nameSearchBox(stuEl, { onPick: (s) => { _ppSid = s.id; renderStage(); } });
+      stuEl.addEventListener("input", () => {
+        const hit = DB.students.find((x) => x.name === stuEl.value.trim());
+        _ppSid = hit ? hit.id : null;
+        const go = $("ppGo");
+        if (go) go.disabled = !(_ppSid && PAPER_STAGE.length);
+      });
+    }
+    const exEl = $("ppExam");
+    if (exEl) exEl.onchange = () => { /* 只是选归属，不用重画 */ };
+    const go = $("ppGo");
+    if (go) go.onclick = () => { ppCommit(); };
+  }
+
   function renderPaperPage() {
     const stage = $("stage");
     if (!stage) return;
@@ -7569,7 +8103,10 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       cnt[st]++;
       return { s, e, st };
     });
-    const show = filt === "all" ? rows : rows.filter((r) => r.st === filt);
+    // 名单页的姓名搜索：只筛这张表 —— 不动批次、不动上面的筛选签
+    const pq = String(view.papQ || "").trim();
+    const show = (filt === "all" ? rows : rows.filter((r) => r.st === filt))
+      .filter((r) => !pq || r.s.name.includes(pq));
     const tabs = [["all", `全部 ${rows.length}`]]
       .concat(PAPER_ORDER.map((k) => [k, `${PAPER_ST[k].t} ${cnt[k]}`]));
 
@@ -7582,6 +8119,11 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         <button class="btn ghost" id="papBack">← 全部批次</button></span></div>`;
 
     stage.innerHTML = `<div class="pap-page">${head}
+      <div class="pap-tools">
+        <input class="sc-q" id="papQ" placeholder="搜姓名…" autocomplete="off" value="${esc(pq)}">
+        <span class="hint-inline">${pq ? `筛出 ${show.length} 人` : "边打边联想，选中就筛到他"}</span>
+      </div>
+      ${paperPasteHtml()}
       <div class="sc-tabs">${tabs.map(([k, t]) =>
         `<button class="seg ${filt === k ? "on" : ""}" data-pfilt="${k}">${esc(t)}</button>`).join("")}</div>
       ${show.length ? `<div class="wrap-table cap-md"><table class="grid">
@@ -7614,7 +8156,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
           </tr>`;
         }).join("")}</tbody>
       </table></div>`
-      : `<div class="pap-empty">这个筛选下没有人。</div>`}
+      : `<div class="pap-empty">${pq ? `这个筛选下没有叫「${esc(pq)}」的人。` : "这个筛选下没有人。"}</div>`}
       <p class="hint" style="margin:8px 2px 0">点任意一行进这个学生的详情；传图、识别、核对都在那条考试记录下面。</p>
     </div>`;
   }
@@ -7659,6 +8201,15 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       view.paperFilter = el.dataset.pfilt;
       renderStage();
     });
+
+    // 名单页的姓名搜索（跟成绩页同一套联想；只筛这张表）
+    const papQ = $("papQ");
+    if (papQ) {
+      papQ.oninput = () => { view.papQ = papQ.value; renderStage(); };
+      nameSearchBox(papQ, { onPick: () => { view.papQ = papQ.value; renderStage(); } });
+    }
+    // 粘贴 / 拖入答题卡图片的待归属区
+    bindPaperPaste(stage);
 
     // 新建批次：名字复用成绩页那一套，重名不重复建
     const nw = $("papNew");
@@ -7724,6 +8275,8 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       view.paperStudent = el.dataset.papgo;
       renderStage();
     });
+
+    bindPaperCards(stage);   // 原图那一排：点开看大图 / 换一张 / 删掉
   }
 
   /**
@@ -7754,12 +8307,33 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
   }
 
   /**
+   * 答题卡原图那一排（`.papcard`）：点开看大图、换一张、删掉。
+   * 完整分析页和详情面板走 bindPaperUI，答题卡独立页走 bindPaperPage —— 抽一份，两边行为一致。
+   */
+  function bindPaperCards(root) {
+    // 点图 = 看大图（灯箱）。别再用 window.open —— 浏览器拦弹窗，老师看到的就是「双击没反应」
+    root.querySelectorAll("[data-papimg]").forEach((img) => img.onclick = (ev) => {
+      ev.stopPropagation();
+      openAttachment(img.dataset.papimg, img.dataset.papeid);
+    });
+    root.querySelectorAll("[data-papswap]").forEach((b) => b.onclick = (ev) => {
+      ev.stopPropagation();
+      startPaperSwap(b.dataset.eid, b.dataset.papswap);
+    });
+    root.querySelectorAll("[data-papdrop]").forEach((b) => b.onclick = (ev) => {
+      ev.stopPropagation();
+      dropPaperCard(b.dataset.eid, b.dataset.papdrop);
+    });
+  }
+
+  /**
    * 答题卡那一整套操作（识别 / 核对 / 板块分析 / 手改 / 版本 / 话术 / 计划 / 导出）的绑定。
    * 完整分析页和右侧详情面板共用它 —— root 传哪个，就往哪个里面找按钮。
    */
   function bindPaperUI(root, s) {
     const d = root;
     const commit = paperCommit;
+    bindPaperCards(d);
     /* ---- 答题卡：识别 / 核对 / 板块分析 ---- */
     d.querySelectorAll("[data-paprec]").forEach((el) => el.onclick = () => {
       const ex = findExam(el.dataset.paprec);
@@ -9725,6 +10299,8 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         qEl.focus();
         try { qEl.setSelectionRange(qEl.value.length, qEl.value.length); } catch { /* 某些浏览器不支持，忽略 */ }
       }
+      // 边打边联想：选中某个人就把表格筛到他（**不动考试批次、不清排序和每页人数**）
+      nameSearchBox(qEl, { onPick: () => { view.scPage = 1; view.scQFocus = true; renderStage(); } });
     }
     // 表头点击排序：再点同一列就反向
     stage.querySelectorAll("[data-sortby]").forEach((th) => th.onclick = () => {
@@ -10736,7 +11312,14 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         const files = [...inp.files];
         const eid = pickFor;
         inp.value = "";
-        if (eid && files.length) addAttachments(files, eid, pickRole);
+        if (!files.length) { swapFor = null; return; }   // 选择器里点了取消 —— 别把「换」的意图留到下次
+        // 点的是「换」：只吃第一张，顶掉原来那张，位置不动；别的什么都不碰
+        if (swapFor) {
+          const sw = swapFor; swapFor = null;
+          swapPaperCard(sw.eid, sw.aid, files[0]);
+          return;
+        }
+        if (eid) addAttachments(files, eid, pickRole);
       };
       document.body.appendChild(inp);
 
@@ -10748,12 +11331,28 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
 
       $("lbClose").onclick = closeLightbox;
       $("lightbox").onclick = (e) => {
+        // 刚打开的前 400ms 不认「点背景关闭」：双击看图时第二下会落在刚铺开的遮罩上，
+        // 不挡的话图闪一下就没了 —— 看着跟「双击没反应」一模一样
+        const lb = $("lightbox");
+        if (Date.now() - Number(lb.dataset.openedAt || 0) < 400) return;
         if (e.target.id === "lightbox" || e.target.classList.contains("lb-body")) closeLightbox();
       };
 
       document.addEventListener("paste", (ev) => {
         const ae = document.activeElement;
         if (ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA")) return;   // 正常粘贴文字，别抢
+
+        // ① 答题卡工作区：粘进来的图片进「待归属」区（不会自己进库，也不会覆盖已有的）
+        if (view.mode === "paper" && $("papPaste")) {
+          const imgs = ppFromClipboard(ev);
+          if (imgs.length) { ev.preventDefault(); ppAdd(imgs); return; }
+          const hasFile = [...((ev.clipboardData && ev.clipboardData.items) || [])].some((i) => i.kind === "file");
+          if (hasFile) { ev.preventDefault(); toast("剪贴板里这个不是图片 —— 答题卡只认图片，文字不会被当成答题卡", 6000); return; }
+          ev.preventDefault();
+          toast("剪贴板里没有图片。截图/复制的图片才行；也可以点「选择文件」或把图拖进来", 6500);
+          return;
+        }
+
         if (!$("detail") || !$("detail").classList.contains("open")) return;
         const strip = ae && ae.closest ? ae.closest(".attstrip") : null;
         let eid = strip ? strip.dataset.eid : armedExam;
