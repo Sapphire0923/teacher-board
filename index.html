@@ -34,6 +34,13 @@
   --accent: #2f6feb;
   --accent-soft: #eaf1ff;
   --accent-ink: #ffffff;
+  /* 第二强调色：暖橘。只用于「要动手的」和「要盯的」——
+     主要操作按钮、今天要跟进、录音中、AI 角标。
+     2026-10-16 按用户选定的「混搭」方案加入：
+     墨绿/灰绿做主线，柔和橘色做点缀，两个颜色各司其职，不混用。 */
+  --accent-2: #e0764a;
+  --accent-2-soft: #fdf0e9;
+  --accent-2-line: #f3d3c1;
 
   --red: #d93843;   --red-soft: #fdecec;   --red-line: #f6cfd1;
   --amber: #c47f17; --amber-soft: #fdf3e3; --amber-line: #f0dcb8;
@@ -41,6 +48,10 @@
 
   --tag-bg: #eef2f8; --tag-ink: #46536b;
   --shadow: 0 1px 2px rgba(16,24,40,.06), 0 4px 14px rgba(16,24,40,.05);
+  /* 卡片柔和阴影：两层、都不深。比 --shadow 更有存在感，
+     但远不到「糊一团」的程度 —— 用户明确要求阴影别太重。 */
+  --shadow-card: 0 1px 2px rgba(26,32,44,.045), 0 6px 18px rgba(26,32,44,.055);
+  --shadow-hover: 0 2px 4px rgba(26,32,44,.05), 0 12px 28px rgba(26,32,44,.08);
   --shadow-lg: 0 18px 48px rgba(16,24,40,.22);
   --mask: rgba(16,24,40,.42);
   --toast-bg: #1b1f26;
@@ -77,25 +88,32 @@
   --wall: none;              /* 壁纸图，由 JS 设为 url(data:...) */
 }
 
-/* 浅绿主题 */
+/* 浅绿主题（2026-10-16 按「混搭」方案重调：
+   主线换成更温和的墨绿，底色更干净；点缀色是暖橘。
+   原来 --accent 是 #2f9e63（偏亮的草绿），跟暖橘放一起会互相抢，所以压深压灰一点。） */
 :root[data-theme="green"] {
   color-scheme: light;
-  --bg: #f0f6f1;
+  --bg: #eef3ef;
   --panel: #ffffff;
-  --panel-2: #f7fbf8;
-  --panel-3: #e9f3ec;
-  --panel-4: #f2f8f4;
-  --line: #dce8df;
-  --line-strong: #c2d6c8;
+  --panel-2: #f7faf8;
+  --panel-3: #e8f0ea;
+  --panel-4: #f1f7f3;
+  --line: #dbe6de;
+  --line-strong: #bccfc3;
   --ink: #16211a;
   --ink-2: #4d6557;
   --ink-3: #7d9586;
-  --accent: #2f9e63;
-  --accent-soft: #e3f4ea;
+  --accent: #2c7d5a;
+  --accent-soft: #e2f1e9;
+  --accent-2: #cf6a3c;
+  --accent-2-soft: #fbeee6;
+  --accent-2-line: #eed2c0;
   --tag-bg: #e6f1ea; --tag-ink: #3c5c49;
-  --th-bg: #e8f1ea; --th-ink: #3f5a4a; --th-line: #ccdcd1;
+  --th-bg: #e6efe9; --th-ink: #3f5a4a; --th-line: #cbdbd0;
   --row-alt: #f7fbf8; --panel-solid: #ffffff;
   --shadow: 0 1px 2px rgba(20,50,32,.06), 0 4px 14px rgba(20,50,32,.06);
+  --shadow-card: 0 1px 2px rgba(22,44,32,.05), 0 6px 18px rgba(22,44,32,.06);
+  --shadow-hover: 0 2px 4px rgba(22,44,32,.05), 0 12px 28px rgba(22,44,32,.09);
 }
 
 /* 深色主题 */
@@ -114,6 +132,10 @@
   --accent: #4c8dff;
   --accent-soft: #1d2c46;
   --accent-ink: #ffffff;
+  /* 深色下的暖橘得提亮，否则在深底上糊成一团 */
+  --accent-2: #e8895c;
+  --accent-2-soft: #3a271d;
+  --accent-2-line: #55392a;
   --red: #ff6b73;   --red-soft: #3a2224;   --red-line: #5c3236;
   --amber: #e0a44a; --amber-soft: #382d1c; --amber-line: #5a4728;
   --green: #4cc38a; --green-soft: #1c3529; --green-line: #2c5340;
@@ -121,6 +143,8 @@
   --th-bg: #2b323a; --th-ink: #b6c1cc; --th-line: #3d4650;
   --row-alt: #22272d; --panel-solid: #1e2227;
   --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.28);
+  --shadow-card: 0 1px 2px rgba(0,0,0,.26), 0 6px 18px rgba(0,0,0,.3);
+  --shadow-hover: 0 2px 6px rgba(0,0,0,.3), 0 12px 28px rgba(0,0,0,.38);
   --shadow-lg: 0 18px 48px rgba(0,0,0,.5);
   --mask: rgba(0,0,0,.55);
   --toast-bg: #e7ebef;
@@ -208,10 +232,14 @@ header.top { display: flex; align-items: center; gap: 9px; padding: 9px 14px;
 .stat.warn b { color: var(--amber); }
 .stat.bad { background: var(--red-soft); border-color: var(--red-line); color: var(--red); }
 .stat.bad b { color: var(--red); }
+/* 「要动手的」统计胶囊走暖橘（还没电联 / 待跟进这类）。跟红色区分开：
+   红色是「已经出事了」，橘色是「还来得及、但该动了」。 */
+.stat.act { background: var(--accent-2-soft); border-color: var(--accent-2-line); color: var(--accent-2); }
+.stat.act b { color: var(--accent-2); }
 .spacer { flex: 1; }
 .tools { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
 /* 搜索框是唯一可以「让位」的控件：空间不够时先收缩它，别把整排按钮挤下去 */
-input.search { flex: 0 1 140px; min-width: 104px; padding: 7px 11px; border: 1px solid var(--line);
+input.search { flex: 0 1 168px; min-width: 150px; padding: 7px 11px; border: 1px solid var(--line);
   border-radius: var(--radius-s); background: var(--panel-2); outline: none; font-size: var(--fs-body); }
 input.search:focus { border-color: var(--accent); background: var(--panel); }
 input.search::placeholder { color: var(--ink-3); }
@@ -223,8 +251,11 @@ button.btn, a.btn { display: inline-block; padding: 6px 11px; border-radius: var
   background: var(--panel); cursor: pointer; transition: .12s; white-space: nowrap;
   text-decoration: none; color: inherit; font-size: var(--fs-cell); font-weight: 500; line-height: 1.5; }
 button.btn:hover, a.btn:hover { border-color: var(--line-strong); background: var(--panel-2); }
-button.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
-button.btn.primary:hover { filter: brightness(1.08); }
+/* 主要操作按钮走暖橘：一屏里只有一两颗，扫一眼就知道该点哪儿。
+   后台的绿留给「已完成 / 通过」这类状态，不抢按钮的位置。 */
+button.btn.primary { background: var(--accent-2); border-color: var(--accent-2); color: #fff; font-weight: 600;
+  box-shadow: 0 1px 2px rgba(207,106,60,.24); }
+button.btn.primary:hover { filter: brightness(1.06); border-color: var(--accent-2); }
 button.btn.ghost { background: transparent; }
 button.btn.danger { color: var(--red); }
 button.btn:disabled { opacity: .5; cursor: default; }
@@ -239,18 +270,24 @@ main { display: flex; flex: 1; min-height: 0; }
 /* ---------- 侧栏 ---------- */
 aside.side { width: 212px; flex: 0 0 212px; background: var(--panel);
   border-right: 1px solid var(--line); overflow-y: auto; padding: 14px 9px 40px; }
-/* 侧栏一长条（30 个筛选项），滚下去就不知道自己在哪一组了，所以让分组标题跟着走 */
-.side h3 { position: sticky; top: 0; z-index: 2; background: var(--panel); padding: 7px 9px 5px;
-  margin: 7px 0 2px; font-size: var(--fs-aux); font-weight: 700; letter-spacing: .6px;
+/* 侧栏一长条（30 个筛选项），滚下去就不知道自己在哪一组了，所以让分组标题跟着走。
+   分组标题沿用 B 方案的处理：小号、字距拉开、上下留白收紧，让一整列看起来是
+   「分组 + 条目」而不是一坨同粗同重的文字。 */
+.side h3 { position: sticky; top: 0; z-index: 2; background: var(--panel); padding: 9px 9px 5px;
+  margin: 5px 0 2px; font-size: var(--fs-mini); font-weight: 700; letter-spacing: 1.2px;
   color: var(--ink-3); }
 .side h3:first-child { margin-top: 0; }
 /* 侧栏菜单统一 13.5px / 400，选中才加粗 —— 之前继承 body 的 14px，
-   跟顶栏按钮的 13.5px、标签的 11px 混在一起，同一列字忽大忽小。 */
-.nav { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px;
+   跟顶栏按钮的 13.5px、标签的 11px 混在一起，同一列字忽大忽小。
+   2026-10-16：选中态加一条暖橘左边条 —— 侧栏 30 项太长，
+   光靠底色深浅找当前位置不够快，有根竖条一扫就能定位。 */
+.nav { position: relative; display: flex; align-items: center; justify-content: space-between; padding: 7px 10px;
   border-radius: var(--radius-s); cursor: pointer; color: var(--ink-2); border: 0; background: transparent;
   width: 100%; text-align: left; font-size: var(--fs-body); line-height: 1.5; }
 .nav:hover { background: var(--panel-3); }
 .nav.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.nav.on::before { content: ""; position: absolute; left: -9px; top: 6px; bottom: 6px; width: 3px;
+  border-radius: 0 3px 3px 0; background: var(--accent-2); }
 .nav .n { font-size: var(--fs-aux); color: var(--ink-3); padding-left: 8px; }
 .nav.on .n { color: var(--accent); }
 .nav .dot { width: 7px; height: 7px; border-radius: 50%; margin-right: 8px; flex: 0 0 7px; }
@@ -267,7 +304,7 @@ aside.side { width: 212px; flex: 0 0 212px; background: var(--panel);
   padding: 6px 2px; border-bottom: 1px solid var(--line); }
 .ck-week-body { display: grid; gap: 9px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
 .ck-task { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 11px 13px; cursor: pointer; box-shadow: var(--shadow); }
+  padding: 11px 13px; cursor: pointer; box-shadow: var(--shadow-card); }
 .ck-task:hover { border-color: var(--accent); }
 .ck-task-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
 .ck-date { font-weight: 650; font-size: var(--fs-cell); }
@@ -280,7 +317,7 @@ aside.side { width: 212px; flex: 0 0 212px; background: var(--panel);
 .ck-prog-bar { height: 100%; background: var(--accent); border-radius: 4px; transition: width .2s; }
 .ck-task-stat { font-size: var(--fs-mini); color: var(--ink-3); margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px 10px; }
 .ck-detail-h { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 14px 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  padding: 14px 16px; margin-bottom: 12px; box-shadow: var(--shadow-card); }
 .ck-detail-title { font-size: 15px; font-weight: 700; }
 .ck-detail-src { font-size: var(--fs-aux); color: var(--ink-3); margin-top: 4px; }
 .ck-detail-content { font-size: var(--fs-cell); color: var(--ink-2); margin-top: 8px; white-space: pre-wrap; line-height: 1.6; }
@@ -321,7 +358,7 @@ aside.side { width: 212px; flex: 0 0 212px; background: var(--panel);
 /* ---------- 成绩统计条（平均分/最高最低/及格率…） ---------- */
 .sc-stats { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
 .sc-stat { background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 10px 16px; min-width: 100px; box-shadow: var(--shadow); }
+  padding: 10px 16px; min-width: 100px; box-shadow: var(--shadow-card); }
 .sc-stat .k { display: block; font-size: var(--fs-mini); color: var(--ink-3); margin-bottom: 3px; }
 .sc-stat b { font-size: 18px; color: var(--ink); font-weight: 700; }
 .sc-stat .s { display: block; font-size: var(--fs-mini); color: var(--ink-3); margin-top: 3px; }
@@ -394,11 +431,15 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 20px 60px;
   letter-spacing: .2px; margin-right: 2px; }
 .listbar .cnt { color: var(--ink-3); font-size: var(--fs-body); }
 .cards { display: grid; gap: 13px; grid-template-columns: repeat(auto-fill, minmax(256px, 1fr)); }
-.card { background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 13px 15px; cursor: pointer; transition: .14s; box-shadow: var(--shadow);
+/* 学员卡片（2026-10-16 混搭）：布局与密度仍是 B —— 一屏塞得下、扫得快；
+   质感借 A —— 圆角 14、两层柔影、悬停轻微抬起。阴影刻意压得很浅，
+   卡片多的时候不会糊成一片灰。 */
+.card { background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--radius-l);
+  padding: 13px 15px; cursor: pointer; transition: transform .14s, box-shadow .14s, border-color .14s;
+  box-shadow: var(--shadow-card);
   border-left: 3px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
-.card:hover { transform: translateY(-1px); border-color: var(--line-strong); }
-.card.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.card:hover { transform: translateY(-1px); border-color: var(--line-strong); box-shadow: var(--shadow-hover); }
+.card.sel { border-color: var(--accent-2); box-shadow: 0 0 0 2px var(--accent-2-soft), var(--shadow-card); }
 .card .row1 { display: flex; align-items: center; gap: 8px; }
 .card .nm { font-weight: 700; font-size: 15.5px; letter-spacing: .2px; }
 .lv { font-size: var(--fs-mini); font-weight: 700; padding: 2px 7px; border-radius: 6px;
@@ -438,7 +479,7 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 20px 60px;
 
 /* ---------- 表格 ---------- */
 .wrap-table { overflow: auto; max-height: calc(100vh - 190px); border-radius: var(--radius);
-  box-shadow: var(--shadow); background: var(--panel-solid); }
+  box-shadow: var(--shadow-card); background: var(--panel-solid); }
 
 /* 列少的表别把列摊到 1600px 上 —— 电联「全部」只有「姓名 + 每轮 + 沟通次数」，
    成绩「全部」是「姓名 + 每场考试 + 平均」，列一拉宽就是满屏空白（用户反馈）。
@@ -607,11 +648,15 @@ textarea.note:focus { border-color: var(--accent); background: var(--panel); }
 .mask { position: fixed; inset: 0; background: var(--mask); display: none;
   align-items: center; justify-content: center; z-index: 50; padding: 22px; }
 .mask.open { display: flex; }
-.modal { background: var(--panel); border-radius: 14px; width: min(720px, 100%); max-height: 88vh;
+.modal { background: var(--panel); border-radius: var(--radius-l); width: min(720px, 100%); max-height: 88vh;
   display: flex; flex-direction: column; box-shadow: var(--shadow-lg); }
 .modal.wide { width: min(900px, 100%); }
 .modal header { padding: 14px 18px; border-bottom: 1px solid var(--line); font-weight: 650;
   display: flex; align-items: center; gap: 10px; }
+/* 标题左侧一小段暖橘竖条：弹窗一多，靠这条能立刻认出「这是一个操作面板」，
+   也顺手把「当前在看哪个弹窗」和后面的内容分开。 */
+.modal header::before { content: ""; flex: none; width: 3px; height: 15px; border-radius: 2px;
+  background: var(--accent-2); }
 .modal .body { padding: 15px 18px; overflow-y: auto; }
 .modal footer { padding: 12px 18px; border-top: 1px solid var(--line);
   display: flex; gap: 9px; justify-content: flex-end; align-items: center; flex-wrap: wrap; }
@@ -971,9 +1016,9 @@ input[type=range] { accent-color: var(--accent); }
 /* ---- 答题卡工作区：第一级「考试批次」卡片 ---- */
 .batch-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
 .batchcard { background: var(--panel-solid); border: 1px solid var(--line);
-  border-radius: var(--radius); padding: 14px 16px; cursor: pointer;
+  border-radius: var(--radius); padding: 14px 16px; cursor: pointer; box-shadow: var(--shadow-card);
   display: flex; flex-direction: column; gap: 9px; }
-.batchcard:hover { border-color: var(--accent); box-shadow: 0 2px 10px rgba(47, 111, 235, .1); }
+.batchcard:hover { border-color: var(--accent); box-shadow: var(--shadow-hover); }
 .bc-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .bc-top b { font-size: var(--fs-head); font-weight: 700; color: var(--ink); }
 .bc-meta { font-size: var(--fs-mini); color: var(--ink-3); }
@@ -1057,7 +1102,10 @@ input[type=range] { accent-color: var(--accent); }
   padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--radius-s);
   background: var(--panel-solid); color: var(--ink); }
 .plan-in:focus { outline: none; border-color: var(--accent); }
-.planrow.editing { display: block; background: var(--accent-soft); border-color: var(--accent); }
+.planrow.editing { display: block; background: var(--accent-2-soft); border-color: var(--accent-2); }
+/* 「正在录音」本身就是要盯的状态，走暖橘而不是红 —— 红留给报错 */
+.recjob.run { border-color: var(--accent-2); }
+.recsrstate.on { color: var(--accent-2); }
 
 @media (max-width: 820px) {
   .pap-body { flex-direction: column; overflow: auto; }
@@ -5526,7 +5574,10 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     const chips = [`<div class="stat"><b>${S.length}</b>人</div>`];
     for (const f of DB.config.flags) {
       const pending = n((s) => !flagDone(s, f));
-      chips.push(`<div class="stat ${pending ? "bad" : ""}"><b>${pending}</b>${esc(f.label)}未完成</div>`);
+      // 2026-10-16：未完成走暖橘（.stat.act），不再用红色。
+      // 打卡/电联没做完是「该动了」，不是「出事了」——73 人班里天天有几十条没完成，
+      // 一片红看久了就麻木了，红色得留给真正要报警的东西。
+      chips.push(`<div class="stat ${pending ? "act" : ""}"><b>${pending}</b>${esc(f.label)}未完成</div>`);
     }
     const risk = n((s) => risksOf(s).length > 0);
     if (risk) chips.push(`<div class="stat warn"><b>${risk}</b>有短板</div>`);
