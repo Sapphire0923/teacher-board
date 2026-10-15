@@ -901,6 +901,33 @@ input[type=range] { accent-color: var(--accent); }
 .aiwhich { flex: 1 1 100%; font-size: var(--fs-mini); color: var(--ink-3); line-height: 1.7; }
 .aiwhich b { color: var(--ink-2); }
 
+/* ---- 完整分析页：一页到底，只有页面级滚动 ------------------------------- */
+/* 主内容区整页铺开。宽度给足，长文才读得下去；上限是为了超宽屏上别拉成一条 */
+.papsheet { max-width: 1080px; }
+.papjump { display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  margin: 0 0 16px; padding: 0 2px 10px; border-bottom: 1px solid var(--line); }
+.papjump .btnmini { padding: 3px 10px; color: var(--ink-2); }
+.papjump .btnmini:hover { color: var(--accent); border-color: var(--accent); }
+.papsec { background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 15px 18px 17px; margin-bottom: 16px; }
+.papsec > h3 { margin: 0 0 12px; padding-bottom: 9px; border-bottom: 1px solid var(--line);
+  font-size: var(--fs-head); font-weight: 700; color: var(--ink); letter-spacing: .2px; }
+/* 分区里面不再套一层卡片和边框 —— 否则就是「大框套小框」，看着更挤 */
+.papsec .aibox { border: none; background: transparent; padding: 0; margin: 0; }
+.papsec .aibox + .aibox { margin-top: 14px; }
+.papsec .aitext { font-size: var(--fs-body); line-height: 1.85; }
+.papsec .talk-box { font-size: var(--fs-body); line-height: 1.85; }
+.papsec .pap-edit { min-height: 120px; }
+.papsec .box { border: none; background: transparent; padding: 0; margin: 0; }
+.papsec .box > h4 { display: none; }   /* 分区标题已经说了，不用再来一个 */
+/* 抽屉里那行指路 */
+.papwhere { align-items: center; }
+.papwhere .hint-inline { flex: 1 1 100%; }
+/* 学员卡片底下的「📋 完整分析」 */
+.cardfoot { display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+  margin-top: 9px; padding-top: 9px; border-top: 1px dashed var(--line); }
+.cardfoot .hint-inline { flex: 1 1 auto; }
+
 /* ---- 答题卡方案：手工改 / 历史版本 / 话术 / 导出 ---- */
 .btnmini { font-size: var(--fs-cell); color: var(--accent); cursor: pointer; padding: 3px 10px;
   border-radius: var(--radius-s); border: 1px solid var(--line); background: var(--panel-solid); }
@@ -3807,7 +3834,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       } catch (err) { console.warn(err); fail++; }
     }
     save();
-    renderDetail();
+    paperRefresh();
     if (!ok) { toast("添加失败：可能浏览器存储已满，或文件读不出来"); return; }
     toast(`已添加 ${ok} 个附件` + (fail ? `，${fail} 个失败` : ""));
     // 存满之前先说一声，别等写不进去了才发现
@@ -3883,6 +3910,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     paperOpen: null,
     paperBatch: null,     // 答题卡工作区：当前打开的考试批次（null = 批次列表）
     paperFilter: "all",   // 批次里按状态筛名单
+    paperStudent: null,   // 完整分析页：正在看哪个学生（null = 停在名单上）
     // 方案里正在被手工编辑的那一块：{eid, part:"ana"|"talk"} / 计划第几条 planEdit
     paperEdit: null,
     planEdit: null,
@@ -4804,13 +4832,27 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     return `<span class="lv" style="background:${hexSoft(c)};color:${c}" ${auto ? 'title="按评分自动算出"' : ""}>${esc(lv)}${auto ? "<i>自动</i>" : ""}</span>`;
   }
 
+  /**
+   * 卡片上那个「完整分析」进的是哪一场：最近一次**有答题卡记录**的考试。
+   * 一场都没有就返回 null，卡片上不出现这个入口。
+   */
+  function cardPaperExam(s) {
+    const list = examsSorted(s).filter((e) => e.paper);
+    return list.length ? list[list.length - 1] : null;
+  }
+
   function card(s) {
     const lv = levelOf(s);
+    const pe = cardPaperExam(s);
     return `<div class="card ${view.selected === s.id ? "sel" : ""}" data-id="${s.id}"
       style="border-left-color:${lv ? levelColor(lv) : "var(--line)"}">
       <div class="row1"><span class="nm">${esc(s.name)}</span>${levelBadge(s)}</div>
       ${scoreBox(s)}${chipsOf(s)}
       <div class="cons ${s.cons ? "" : "empty"}">${s.cons ? "⚠ " + esc(s.cons) : "（未记录问题）"}</div>
+      ${pe ? `<div class="cardfoot">
+        <button class="btnmini" data-cardfull="${esc(s.id)}" data-cardfbatch="${esc(batchKeyOf(pe))}"
+          title="答题卡、板块分析、复习计划、话术、导出 —— 整页看">📋 完整分析</button>
+        <span class="hint-inline">${esc(pe.name || "没写考试名")}</span></div>` : ""}
     </div>`;
   }
 
@@ -5044,6 +5086,17 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     stage.querySelectorAll("[data-id]").forEach((el) => el.onclick = () => {
       view.selected = el.dataset.id; renderStage(); renderDetail();
     });
+    // 卡片上的「📋 完整分析」→ 直接进答题卡工作区的整页（不经过右侧抽屉）
+    stage.querySelectorAll("[data-cardfull]").forEach((el) => el.onclick = (ev) => {
+      ev.stopPropagation();
+      view.mode = "paper";
+      view.paperBatch = el.dataset.cardfbatch || null;
+      view.paperFilter = "all";
+      view.paperStudent = el.dataset.cardfull;
+      view.selected = null;
+      syncSeg();
+      render();
+    });
     // keepDetail: 文字输入触发的局部刷新，绝不能重建详情面板，否则光标会被踢飞
     if (!keepDetail) renderDetail();
   }
@@ -5127,7 +5180,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
           <input type="number" class="exfull" data-ex="full" value="${typeof e.full === "number" ? e.full : ""}" placeholder="满分">
         </div>
         ${attStripHtml(e)}
-        ${paperBlockHtml(s, e)}
+        ${paperPointerHtml(s, e)}
         ${aiBlockHtml(s, e)}
       </div>`).join("");
   }
@@ -5573,7 +5626,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         status: "draft", at: new Date().toISOString(), model: "（演示，未接入）",
         mock: true, ocr: mockPaper(s, e), checks: {},
       };
-      save(); renderDetail(); openPaperReview(s.id, e.id);
+      save(); paperRefresh(); openPaperReview(s.id, e.id);
       return toast("没填 API key，先用演示数据把流程走一遍", 6000);
     }
 
@@ -5599,7 +5652,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         status: "draft", at: new Date().toISOString(), model: r.model,
         mock: false, ocr, checks: {}, usage: r.usage,
       };
-      save(); renderDetail(); openPaperReview(s.id, e.id);
+      save(); paperRefresh(); openPaperReview(s.id, e.id);
       toast("识别好了 —— 逐项核对完再确认写入");
     } catch (err) {
       console.error(err);
@@ -5949,7 +6002,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         imgs: urls.length, usage: r.usage, edited: false,
       });
       const n = (e.paper.analysis.versions || []).length;
-      save(); renderDetail();
+      save(); paperRefresh();
       toast("分析好了" + (r.usage && r.usage.total_tokens ? `（用了 ${r.usage.total_tokens} token）` : "")
         + (n ? `　之前那版存在「历史版本」里（${n} 个）` : ""), 6000);
     } catch (err) {
@@ -6011,7 +6064,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       const parent = String(j.parent || "").trim();
       if (!student && !parent) throw new Error("模型没写出话术，再点一次试试");
       e.paper.talk = { student, parent, at: new Date().toISOString(), model: r.model, edited: false };
-      save(); renderDetail();
+      save(); paperRefresh();
       toast("话术生成好了 —— 用的是「" + nickOf(s.name) + "」这个称呼，不合适可以直接改");
     } catch (err) {
       console.error(err);
@@ -6092,7 +6145,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         at: new Date().toISOString(), examId: e.id, examName: e.name || "", midterm: mid,
         summary: String(j.summary || ""), notes: String(j.notes || ""), items, model: r.model,
       };
-      save(); renderDetail();
+      save(); paperRefresh();
       toast("计划排好了（" + items.length + " 条）—— 做完一条勾一条，下次重排会照着调");
     } catch (err) {
       console.error(err);
@@ -6112,7 +6165,24 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
    *   🧩 分析答题卡 → 读识别结果，逐板块说事实/推测/材料不足（在这里）
    * 以前它们共用一个图片池，看着就像两个按钮干同一件事，现在各读各的。
    */
-  function paperBlockHtml(s, e) {
+  /**
+   * 详情抽屉里**不再摊开整份方案**了 —— 那内容太长，挤在 392px 的窄抽屉里
+   * 得套娃滚动。这里只留一行：状态 + 「打开完整分析」，正文去工作区整页看。
+   */
+  function paperPointerHtml(s, e) {
+    const st = paperState(e);
+    const stT = (PAPER_ST[st] || {}).t || "未上传";
+    const ready = paperDone(e) && e.paper && e.paper.analysis && e.paper.analysis.text;
+    const chip = ready ? `<span class="chip ok">✅ 已核对</span>`
+      : st === "none" ? `<span class="chip ex">答题卡未上传</span>`
+      : `<span class="chip warn">${esc(stT)}</span>`;
+    return `<div class="papareabar papwhere">${chip}
+      <button class="btn" data-papfull="${esc(s.id)}" data-papfbatch="${esc(batchKeyOf(e))}">📋 打开完整分析</button>
+      <span class="hint-inline">答题卡原图、板块分析、复习计划、两段话术、导出 Word —— 都在那一页里整页打开</span></div>`;
+  }
+
+  /** quick = true 只要上面那条操作栏和缩略图，方案正文由调用方自己分区渲染 */
+  function paperBlockHtml(s, e, quick) {
     const cards = paperCards(e);
     const has = paperHas(e);
     const done = paperDone(e);
@@ -6128,7 +6198,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         <button class="btn aibtn" data-papana="${e.id}" title="读的是这张答题卡的识别结果，逐板块说事实/推测/材料不足">🧩 分析答题卡板块</button>
         <button class="btn ghost" data-paprec="${e.id}">重新识别</button>
         ${cards.length ? "" : `<span class="hint-inline">图片已经不在了 —— 方案还留着；要重新识别得先重新传图</span>`}`;
-      extra = paperSolutionHtml(s, e);
+      extra = quick ? "" : paperSolutionHtml(s, e);
     } else if (has) {
       bar = `<button class="btn primary" data-paprev="${e.id}">📋 继续核对（还没确认）</button>
         <span class="hint-inline">识别于 ${esc(String(e.paper.at || "").slice(0, 16).replace("T", " "))}${isMockPaper(e) ? " · <b>演示数据</b>" : ""}</span>`;
@@ -6151,24 +6221,28 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
   }
 
   /**
-   * 核对确认之后的那一整块「方案」：分析 + 话术 + 导出/复制。
-   * 三件事都遵守同一条规矩：手工改过的版本优先，AI 不能静默盖掉老师写的东西。
+   * 还没生成分析时的开场白。详情面板和完整分析页都只把它放在「成绩与板块分析」那一段。
+   * 生成了分析就返回空串 —— 调用方靠「空不空」判断方案到底有没有。
    */
-  function paperSolutionHtml(s, e) {
-    const st = scoreStateOf(e);
+  function paperIntroHtml(s, e) {
     const an = e.paper.analysis;
-    const talk = e.paper.talk;
+    if (an && an.text) return "";
+    const st = scoreStateOf(e);
     const parts = [];
+    parts.push(`<p class="hint" style="margin:5px 0 0">核对好了。点「按板块分析」让它逐块看一遍 —— 要是你还没传主观题的作答，它会直接告诉你哪块判断不了。</p>`);
+    if (st.k === "none") parts.push(`<p class="hint-inline">这次考试还没记总分 —— 分析里凡是牵扯总分的都会标「成绩未填写」，不会替你补一个数。</p>`);
+    if (st.k === "pending") parts.push(`<p class="hint-inline">卡上的总分和看板里记的不一样，点「看识别结果」能对照着重核一遍。</p>`);
+    return parts.join("");
+  }
 
-    if (!an || !an.text) {
-      parts.push(`<p class="hint" style="margin:5px 0 0">核对好了。点「按板块分析」让它逐块看一遍 —— 要是你还没传主观题的作答，它会直接告诉你哪块判断不了。</p>`);
-      if (st.k === "none") parts.push(`<p class="hint-inline">这次考试还没记总分 —— 分析里凡是牵扯总分的都会标「成绩未填写」，不会替你补一个数。</p>`);
-      if (st.k === "pending") parts.push(`<p class="hint-inline">卡上的总分和看板里记的不一样，点「看识别结果」能对照着重核一遍。</p>`);
-      return parts.join("");
-    }
-
+  /**
+   * 「成绩与板块分析」整块（没生成分析就返回空串）。
+   * 手工改过的版本优先，AI 不能静默盖掉老师写的东西。
+   */
+  function paperAnaHtml(s, e) {
+    const an = e.paper.analysis;
+    if (!an || !an.text) return "";
     const editingAna = view.paperEdit && view.paperEdit.eid === e.id && view.paperEdit.part === "ana";
-    const editingTalk = view.paperEdit && view.paperEdit.eid === e.id && view.paperEdit.part === "talk";
     const vers = an.versions || [];
 
     const verBlock = vers.length ? `<details class="pap-ver"><summary>历史版本 ${vers.length} 个（重新分析会自动存到这里）</summary>
@@ -6179,7 +6253,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         </div>`).join("")}
       </details>` : "";
 
-    parts.push(`<div class="aibox" style="border-top:none;padding-top:0;margin-top:4px">
+    return `<div class="aibox" style="border-top:none;padding-top:0;margin-top:4px">
       <div class="aihead"><b>🤖 答题卡分析</b>
         <span class="hint-inline">${esc(an.model || "")} · ${esc(tsTxt(an.at))}${an.imgs ? " · " + an.imgs + " 张图" : ""}${an.edited ? " · <b>你改过</b>" : ""}</span>
         <span style="flex:1"></span>
@@ -6193,8 +6267,13 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
              <span class="hint-inline">导出的 Word 和复制的文字都用你改过的这版</span></div>`
         : `<div class="aitext">${mdLite(an.text)}</div>`}
       ${verBlock}
-      <div class="aifoot">分析是 AI 给的，只能当参考 —— 它对不对你比我清楚，不合适就点「✎ 改」直接改。</div></div>`);
+      <div class="aifoot">分析是 AI 给的，只能当参考 —— 它对不对你比我清楚，不合适就点「✎ 改」直接改。</div></div>`;
+  }
 
+  /** 「给学生和家长的话术」整块 */
+  function paperTalkHtml(s, e) {
+    const talk = e.paper.talk;
+    const editingTalk = view.paperEdit && view.paperEdit.eid === e.id && view.paperEdit.part === "talk";
     let talkBody;
     if (!talk) {
       talkBody = `<p class="hint" style="margin:5px 0 0">按核对好的名字生成两段话：一段直接说给孩子，一段发给家长。先用「${esc(nickOf(s.name) || "孩子")}」这个昵称，不合适可以改。</p>`;
@@ -6210,20 +6289,31 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       talkBody = `<div class="aitext">${one("对孩子说", talk.student)}${one("发给家长", talk.parent)}</div>`;
     }
 
-    parts.push(`<div class="aibox" style="border-top:none">
+    return `<div class="aibox" style="border-top:none">
       <div class="aihead"><b>💬 给学生和家长的话术</b>
         ${talk ? `<span class="hint-inline">${esc(tsTxt(talk.at))}${talk.edited ? " · <b>你改过</b>" : ""} · 称呼「${esc(nickOf(s.name))}」</span>` : ""}
         <span style="flex:1"></span>
         ${(talk && !editingTalk) ? `<span class="btnmini" data-paptalkedit="${e.id}">✎ 改</span>` : ""}
         <button class="btn aibtn" data-paptalk="${e.id}">${talk ? "🔄 重新生成" : "💬 生成话术"}</button></div>
-      ${talkBody}</div>`);
+      ${talkBody}</div>`;
+  }
 
-    parts.push(`<div class="papareabar" style="margin-top:6px">
+  /** 导出 / 复制那一行 */
+  function paperExpHtml(s, e) {
+    return `<div class="papareabar" style="margin-top:6px">
       <button class="btn" data-papexp="${e.id}">📄 导出 Word</button>
       <button class="btn" data-papcopy="${e.id}">📋 复制文字</button>
-      <span class="hint-inline">导出的是整份方案：考试分析 + 各板块得分 + 复习计划 + 话术 + 待确认项</span></div>`);
+      <span class="hint-inline">导出的是整份方案：考试分析 + 各板块得分 + 复习计划 + 话术 + 待确认项</span></div>`;
+  }
 
-    return parts.join("");
+  /**
+   * 核对确认之后的那一整块「方案」：分析 + 话术 + 导出/复制。
+   * 详情面板里用的就是这个三连（对外行为跟以前一模一样）。
+   */
+  function paperSolutionHtml(s, e) {
+    const intro = paperIntroHtml(s, e);
+    if (intro) return intro;
+    return paperAnaHtml(s, e) + paperTalkHtml(s, e) + paperExpHtml(s, e);
   }
 
   /** 详情页里那块「到期中的复习计划」 */
@@ -6600,6 +6690,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     // 侧栏点「答题卡」= 回工作区根（批次列表）。停在某个批次里再点侧栏，
     // 期望的是「回总览」，不是「又进那个批次」——要回批次就点那张卡。
     view.paperBatch = null;
+    view.paperStudent = null;
     syncSeg();
     render();
   }
@@ -6650,10 +6741,28 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     const stage = $("stage");
     if (!stage) return;
     const batches = examBatches();
-    const cur = view.paperBatch ? batches.find((b) => b.name === view.paperBatch) : null;
-    // 批次被删掉/改名了，自动退回批次列表
-    if (view.paperBatch && !cur) view.paperBatch = null;
-    if (cur) { renderPaperRoster(cur); bindPaperPage(); return; }
+    let cur = view.paperBatch ? batches.find((b) => b.name === view.paperBatch) : null;
+    // 批次名对不上了：最常见的成因是**核对确认时把这场考试的考试名改了**
+    // （批次的键就是考试名，名字一改，原来那个批次就不存在了）。
+    // 这时候不能把人一脚踢回批次列表 —— 正看到一半的方案会凭空消失。
+    // 拿「正在看的那个学生」反查他自己最新的答题卡批次，接着看。
+    if (!cur && view.paperStudent) {
+      const st0 = DB.students.find((x) => x.id === view.paperStudent);
+      const pe = st0 && cardPaperExam(st0);
+      if (pe) {
+        view.paperBatch = batchKeyOf(pe);
+        cur = batches.find((b) => b.name === view.paperBatch) || null;
+      }
+    }
+    // 真找不回来了（批次被删、学生没记录）才退回批次列表
+    if (!cur) { view.paperBatch = null; view.paperStudent = null; }
+    if (cur) {
+      const stu = view.paperStudent ? DB.students.find((x) => x.id === view.paperStudent) : null;
+      // 学生在完整分析页里 —— 顶层还是「返回名单」，回不去就退回名单
+      if (view.paperStudent && !stu) view.paperStudent = null;
+      if (stu) { renderPaperStudent(cur, stu); bindPaperPage(); return; }
+      renderPaperRoster(cur); bindPaperPage(); return;
+    }
 
     const all = DB.students.length;
     const done = batches.reduce((a, b) => a + b.done, 0);
@@ -6698,6 +6807,71 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       <div class="bc-bar"><i style="width:${pct}%"></i></div>
       <div class="bc-foot">已核对 ${b.done} / ${all} 人（${pct}%）${b.n ? ` · 成绩表里 ${b.n} 条记录` : " · 成绩表里还没有这场"}</div>
     </div>`;
+  }
+
+  /**
+   * 第三级：**完整分析页** —— 在主内容区整页铺开，不再塞进右侧窄抽屉。
+   *
+   * 一页到底、只有页面级滚动，五个分区从上到下。原文（原图缩略图、板块分析、
+   * 复习计划、两段话术、导出复制）都原样搬过来，能力一个没少；换学生就把
+   * 「正在改哪一块」清掉，免得把上一个人的编辑状态带过来。
+   */
+  function renderPaperStudent(b, s) {
+    const stage = $("stage");
+    if (!stage) return;
+    const e = batchExamOf(s, b.name);
+    if (_editOwner !== s.id) { _editOwner = s.id; view.paperEdit = null; view.planEdit = null; }
+
+    const st = e ? paperState(e) : "none";
+    const stT = (PAPER_ST[st] || {}).t || "未上传";
+    const sc = e && hasScore(e)
+      ? String(e.score) + (typeof e.full === "number" ? "/" + e.full : "") : "";
+    const ready = !!(e && paperDone(e) && e.paper && e.paper.analysis && e.paper.analysis.text);
+
+    // ① 答题卡与识别结果：操作栏 + 答题卡缩略图（方案正文不在这里，下面分区各管各的）
+    const secCard = e
+      ? paperBlockHtml(s, e, true)
+      : `<div class="papareabar">
+           <button class="btn" data-papup="${esc(s.id)}">📷 传答题卡图片</button>
+           <span class="chip ex">未上传</span>
+           <span class="hint-inline">这场考试这个学生还没有记录 —— 传了先进核对页，确认了才写进去</span>
+         </div>`;
+
+    // ② 成绩与板块分析：没核对 / 没分析时给的是「下一步该点哪儿」，不是空白
+    let secAna;
+    if (!e) secAna = `<p class="hint">还没传答题卡，出不了板块分析。点上面那个「📷 传答题卡图片」先传。</p>`;
+    else if (!paperDone(e)) secAna = `<p class="hint">答题卡还没核对确认。回到上面点「📋 继续核对」或「🔍 识别答题卡」，确认之后才会生成分析 —— 没确认的内容不会写进成绩。</p>`;
+    else secAna = paperAnaHtml(s, e) || paperIntroHtml(s, e);
+
+    const secTalk = ready ? paperTalkHtml(s, e) : "";
+    const secExp = ready ? paperExpHtml(s, e) : "";
+
+    const jump = `<div class="papjump">
+      ${[["secCard", "① 答题卡与识别结果"], ["secAna", "② 成绩与板块分析"],
+        ["secPlan", "③ 个性化复习计划"]]
+        .concat(ready ? [["secTalk", "④ 给学生和家长的话术"], ["secExp", "⑤ 导出与复制"]] : [])
+        .map(([id, t]) => `<button class="btnmini" data-jump="${id}">${t}</button>`).join("")}
+      <span style="flex:1"></span>
+      <span class="hint-inline">这一页是整份方案 —— 往下滚就能看全，不用在小窗里翻</span></div>`;
+
+    stage.innerHTML = `<div class="pap-page papsheet">
+      <div class="sc-detail-h">
+        <b>${esc(s.name)}</b>
+        <span class="hint-inline">${esc(b.name)} · ${esc(b.date || "没写日期")}${typeof b.full === "number" ? " · 满分 " + b.full : ""}</span>
+        <span class="chip ${st === "analyzed" || st === "confirmed" ? "ok" : st === "none" ? "ex" : "warn"}">${esc(stT)}</span>
+        ${sc ? `<span class="chip">${esc(sc)}</span>` : ""}
+        <span class="sc-actions"><button class="btn ghost" id="papSBack">← 返回名单</button></span>
+      </div>
+      ${jump}
+      <section class="papsec" id="secCard"><h3>① 答题卡与识别结果</h3>${secCard}</section>
+      <section class="papsec" id="secAna"><h3>② 成绩与板块分析</h3>${secAna}</section>
+      <section class="papsec" id="secPlan"><h3>③ 个性化复习计划</h3>${planBoxHtml(s)}</section>
+      ${ready ? `<section class="papsec" id="secTalk"><h3>④ 给学生和家长的话术</h3>${secTalk}</section>
+        <section class="papsec" id="secExp"><h3>⑤ 导出与复制</h3>${secExp}</section>` : ""}
+    </div>`;
+
+    // 操作绑定：整页上的按钮跟详情面板里是同一套逻辑
+    bindPaperUI(stage, s);
   }
 
   /** 第二级：一个批次的**全班名单** —— 谁传了、谁待核对、谁还没交 */
@@ -6777,10 +6951,20 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     stage.querySelectorAll("[data-batch]").forEach((el) => el.onclick = () => {
       view.paperBatch = el.dataset.batch;
       view.paperFilter = "all";
+      view.paperStudent = null;
       renderStage();
     });
     const back = $("papBack");
-    if (back) back.onclick = () => { view.paperBatch = null; view.paperFilter = "all"; renderStage(); };
+    if (back) back.onclick = () => {
+      view.paperBatch = null; view.paperFilter = "all"; view.paperStudent = null; renderStage();
+    };
+    // 完整分析页 → 返回名单。批次和筛选签原样留着，切学生不用退回去重挑
+    const sback = $("papSBack");
+    if (sback) sback.onclick = () => { view.paperStudent = null; renderStage(); };
+    stage.querySelectorAll("[data-jump]").forEach((el) => el.onclick = () => {
+      const t = $(el.dataset.jump);
+      if (t) t.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
     const exp = $("papExport");
     if (exp) exp.onclick = () => {
       const b = examBatches().find((x) => x.name === view.paperBatch);
@@ -6811,12 +6995,11 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       toast(has ? `已经有「${v}」这个批次了，直接进去` : `建好了「${v}」`);
     };
 
-    // 点一行 → 进学生详情，并把那场考试滚到眼前
+    // 点一行 → 在主内容区**整页**打开这个学生的完整分析（不再挤进右侧窄抽屉）
     stage.querySelectorAll("[data-prow]").forEach((row) => row.onclick = (ev) => {
       if (ev.target.closest("button")) return;   // 行内的按钮自己管自己
-      view.selected = row.dataset.prow;
-      view.scrollExam = row.dataset.papex || null;
-      renderDetail();
+      view.paperStudent = row.dataset.prow;
+      renderStage();
     });
 
     // 传图 → 没有考试记录就先建一条（批次里点「传答题卡」不该被"先去成绩页加考试"挡住）
@@ -6855,9 +7038,8 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     });
     stage.querySelectorAll("[data-papgo]").forEach((el) => el.onclick = (ev) => {
       ev.stopPropagation();
-      view.selected = el.dataset.papgo;
-      view.scrollExam = el.dataset.papex || null;
-      renderDetail();
+      view.paperStudent = el.dataset.papgo;
+      renderStage();
     });
   }
 
@@ -6876,6 +7058,221 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     d.innerHTML = "";
     _detScroll = 0;
     _detId = null;
+  }
+
+  /**
+   * 答题卡这一套动作共用的「存盘 + 重画 + 提示」。
+   * 详情面板里那份 commit 是 renderDetail 的局部闭包，抽出来的 bindPaperUI 够不着，
+   * 所以这里单独放一个 —— 两边行为一致：都不重建正在编辑的输入框内容（由重画负责）。
+   */
+  function paperCommit(msg) {
+    save(); renderStats(); renderSide(); renderStage();
+    if (msg) toast(msg);
+  }
+
+  /**
+   * 答题卡那一整套操作（识别 / 核对 / 板块分析 / 手改 / 版本 / 话术 / 计划 / 导出）的绑定。
+   * 完整分析页和右侧详情面板共用它 —— root 传哪个，就往哪个里面找按钮。
+   */
+  function bindPaperUI(root, s) {
+    const d = root;
+    const commit = paperCommit;
+    /* ---- 答题卡：识别 / 核对 / 板块分析 ---- */
+    d.querySelectorAll("[data-paprec]").forEach((el) => el.onclick = () => {
+      const ex = findExam(el.dataset.paprec);
+      if (!ex) return toast("找不到那场考试了");
+      if (!aiKey()) { toast("没填 API key —— 先用演示数据走一遍流程", 6000); }
+      recognizePaper(s, ex, el);
+    });
+    d.querySelectorAll("[data-paprev]").forEach((el) => el.onclick = () => {
+      const ex = findExam(el.dataset.paprev);
+      if (ex && paperHas(ex)) openPaperReview(s.id, ex.id);
+    });
+    d.querySelectorAll("[data-papana]").forEach((el) => el.onclick = () => {
+      const ex = findExam(el.dataset.papana);
+      if (!ex) return toast("找不到那场考试了");
+      if (!aiKey()) return toast("还没填 API key —— 去「设置 → AI 分析」填一个", 6500);
+      runPaperAnalysis(s, ex, el);
+    });
+    d.querySelectorAll("[data-papanadel]").forEach((el) => el.onclick = () => {
+      const ex = findExam(el.dataset.papanadel);
+      if (!ex || !ex.paper) return;
+      if (!confirm("删掉这段答题卡分析？（识别核对的结果还在；删了就找不回来了）")) return;
+      delete ex.paper.analysis;
+      view.paperEdit = null;
+      commit("已删掉这段分析");
+    });
+
+    /* ---- 手工改分析 / 恢复历史版本 ---- */
+    d.querySelectorAll("[data-papanaedit]").forEach((el) => el.onclick = () => {
+      view.paperEdit = { eid: el.dataset.papanaedit, part: "ana" };
+      paperRefresh();
+    });
+    const anCancel = $("papAnCancel");
+    if (anCancel) anCancel.onclick = () => { view.paperEdit = null; paperRefresh(); };
+    const anSave = $("papAnSave");
+    if (anSave) anSave.onclick = () => {
+      const ta = $("papAnEdit");
+      const ex = findExam(view.paperEdit && view.paperEdit.eid);
+      if (!ta || !ex || !ex.paper || !ex.paper.analysis) return;
+      const t = String(ta.value || "").trim();
+      if (!t) return toast("空的就不存了 —— 想删掉请点右上的 ✕");
+      ex.paper.analysis.text = t;
+      ex.paper.analysis.edited = true;
+      ex.paper.analysis.editedAt = new Date().toISOString();
+      view.paperEdit = null;
+      commit("改好了 —— 导出和复制用的就是你这版");
+      paperRefresh();
+    };
+    d.querySelectorAll("[data-papvback]").forEach((el) => el.onclick = () => {
+      const ex = findExam(el.dataset.papvback);
+      if (!ex || !ex.paper || !ex.paper.analysis) return;
+      const i = Number(el.dataset.papvi);
+      const v = (ex.paper.analysis.versions || [])[i];
+      if (!v) return toast("这一版找不到了");
+      const prev = ex.paper.analysis;
+      if (!confirm("恢复这一版？现在这段会存进历史版本，不会丢。\n\n" + String(v.text || "").slice(0, 120) + "…")) return;
+      archiveAnalysis(ex);
+      ex.paper.analysis = Object.assign({}, ex.paper.analysis, {
+        text: v.text, at: v.at, model: v.model, edited: !!v.edited, editedAt: v.editedAt,
+      });
+      // 恢复的这一版从历史里拿掉，免得重复
+      ex.paper.analysis.versions = (ex.paper.analysis.versions || []).filter((x) => !(x.text === v.text && x.at === v.at));
+      commit("恢复好了");
+      paperRefresh();
+    });
+
+    /* ---- 话术 ---- */
+    d.querySelectorAll("[data-paptalk]").forEach((el) => el.onclick = () => {
+      const ex = findExam(el.dataset.paptalk);
+      if (!ex) return toast("找不到那场考试了");
+      if (!aiKey()) return toast("还没填 API key —— 去「设置 → AI 分析」填一个", 6500);
+      runTalk(s, ex, el);
+    });
+    d.querySelectorAll("[data-paptalkedit]").forEach((el) => el.onclick = () => {
+      view.paperEdit = { eid: el.dataset.paptalkedit, part: "talk" };
+      paperRefresh();
+    });
+    const tkCancel = $("papTalkCancel");
+    if (tkCancel) tkCancel.onclick = () => { view.paperEdit = null; paperRefresh(); };
+    const tkSave = $("papTalkSave");
+    if (tkSave) tkSave.onclick = () => {
+      const ex = findExam(view.paperEdit && view.paperEdit.eid);
+      if (!ex || !ex.paper || !ex.paper.talk) return;
+      ex.paper.talk.student = String(($("papTalkStu") || {}).value || "").trim();
+      ex.paper.talk.parent = String(($("papTalkPar") || {}).value || "").trim();
+      ex.paper.talk.edited = true;
+      ex.paper.talk.editedAt = new Date().toISOString();
+      view.paperEdit = null;
+      commit("话术改好了");
+      paperRefresh();
+    };
+
+    /* ---- 导出 Word / 复制文字 ---- */
+    d.querySelectorAll("[data-papexp]").forEach((el) => el.onclick = () => {
+      const ex = findExam(el.dataset.papexp);
+      if (!ex) return toast("找不到那场考试了");
+      exportPaperDocx(s, ex);
+    });
+    d.querySelectorAll("[data-papcopy]").forEach((el) => el.onclick = () => {
+      const ex = findExam(el.dataset.papcopy);
+      if (!ex) return toast("找不到那场考试了");
+      copyPaperText(s, ex);
+    });
+
+    /* ---- 到期中的复习计划 ---- */
+    const planMidEl = $("planMid");
+    if (planMidEl) planMidEl.onchange = () => {
+      DB.config.examTarget = DB.config.examTarget || { midterm: "" };
+      DB.config.examTarget.midterm = planMidEl.value;
+      save(); paperRefresh();
+      toast(planMidEl.value ? "期中考试日期记下了" : "期中日期清空了");
+    };
+    d.querySelectorAll("[data-plandone]").forEach((cb) => cb.onchange = () => {
+      const p = planOf(s);
+      if (!p) return;
+      const i = Number(cb.dataset.plandone);
+      if (!p.items[i]) return;
+      p.items[i].done = !!cb.checked;
+      save(); paperRefresh();
+    });
+    const planGoBtn = $("planGo");
+    if (planGoBtn) planGoBtn.onclick = () => {
+      const ex = findExam(planGoBtn.dataset.exam);
+      if (!ex) return toast("找不到那场考试了 —— 重新确认一次答题卡");
+      if (!aiKey()) return toast("还没填 API key —— 去「设置 → AI 分析」填一个", 6500);
+      runPlan(s, ex, planGoBtn);
+    };
+
+    /* ---- 计划单条：改 / 删 ---- */
+    d.querySelectorAll("[data-planedit]").forEach((el) => el.onclick = () => {
+      view.planEdit = Number(el.dataset.planedit);
+      paperRefresh();
+    });
+    const piCancel = $("planItemCancel");
+    if (piCancel) piCancel.onclick = () => { view.planEdit = null; paperRefresh(); };
+    const piSave = $("planItemSave");
+    if (piSave) piSave.onclick = () => {
+      const p = planOf(s);
+      const i = Number(piSave.dataset.plani);
+      if (!p || !p.items[i]) return;
+      const get = (k) => {
+        const el = d.querySelector('[data-planin="' + k + '"]');
+        return el ? String(el.value || "").trim() : "";
+      };
+      const it = p.items[i];
+      it.period = get("period");
+      it.content = get("content");
+      it.how = get("how");
+      it.standard = get("standard");
+      it.review = get("review");
+      it.minutes = numOrNull(get("minutes"));
+      it.edited = true;
+      view.planEdit = null;
+      commit("这条改好了 —— 导出 Word 和复制文字用的都是改过的");
+      paperRefresh();
+    };
+    const piDel = $("planItemDel");
+    if (piDel) piDel.onclick = () => {
+      const p = planOf(s);
+      const i = Number(piDel.dataset.plani);
+      if (!p || !p.items[i]) return;
+      if (!confirm("删掉这条任务？")) return;
+      p.items.splice(i, 1);
+      view.planEdit = null;
+      commit("删掉了");
+      paperRefresh();
+    };
+
+    root.querySelectorAll("[data-attpick]").forEach((b) => b.onclick = (ev) => {
+      ev.stopPropagation();
+      pickFor = b.dataset.attpick;
+      armedExam = pickFor;
+      pickRole = b.dataset.attrole || "exam";
+      const inp = $("attFile");
+      inp.value = "";
+      inp.click();
+    });
+
+    // 抽屉里那一行「📋 打开完整分析」→ 切到答题卡工作区，整页打开这个学生这场比赛
+    d.querySelectorAll("[data-papfull]").forEach((el) => el.onclick = () => {
+      view.mode = "paper";
+      view.paperBatch = el.dataset.papfbatch || null;
+      view.paperFilter = "all";
+      view.paperStudent = el.dataset.papfull;
+      view.selected = null;
+      syncSeg();
+      render();
+    });
+  }
+
+  /**
+   * 改完东西之后重画哪一边：在完整分析页里就重画主内容区，
+   * 在卡片页（抽屉模式）里就重画抽屉。
+   */
+  function paperRefresh() {
+    if (view.paperStudent) { renderStage(); return; }
+    renderDetail();
   }
 
   function renderDetail() {
@@ -7231,172 +7628,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       commit("已删掉这段分析");
     });
 
-    /* ---- 答题卡：识别 / 核对 / 板块分析 ---- */
-    d.querySelectorAll("[data-paprec]").forEach((el) => el.onclick = () => {
-      const ex = findExam(el.dataset.paprec);
-      if (!ex) return toast("找不到那场考试了");
-      if (!aiKey()) { toast("没填 API key —— 先用演示数据走一遍流程", 6000); }
-      recognizePaper(s, ex, el);
-    });
-    d.querySelectorAll("[data-paprev]").forEach((el) => el.onclick = () => {
-      const ex = findExam(el.dataset.paprev);
-      if (ex && paperHas(ex)) openPaperReview(s.id, ex.id);
-    });
-    d.querySelectorAll("[data-papana]").forEach((el) => el.onclick = () => {
-      const ex = findExam(el.dataset.papana);
-      if (!ex) return toast("找不到那场考试了");
-      if (!aiKey()) return toast("还没填 API key —— 去「设置 → AI 分析」填一个", 6500);
-      runPaperAnalysis(s, ex, el);
-    });
-    d.querySelectorAll("[data-papanadel]").forEach((el) => el.onclick = () => {
-      const ex = findExam(el.dataset.papanadel);
-      if (!ex || !ex.paper) return;
-      if (!confirm("删掉这段答题卡分析？（识别核对的结果还在；删了就找不回来了）")) return;
-      delete ex.paper.analysis;
-      view.paperEdit = null;
-      commit("已删掉这段分析");
-    });
-
-    /* ---- 手工改分析 / 恢复历史版本 ---- */
-    d.querySelectorAll("[data-papanaedit]").forEach((el) => el.onclick = () => {
-      view.paperEdit = { eid: el.dataset.papanaedit, part: "ana" };
-      renderDetail();
-    });
-    const anCancel = $("papAnCancel");
-    if (anCancel) anCancel.onclick = () => { view.paperEdit = null; renderDetail(); };
-    const anSave = $("papAnSave");
-    if (anSave) anSave.onclick = () => {
-      const ta = $("papAnEdit");
-      const ex = findExam(view.paperEdit && view.paperEdit.eid);
-      if (!ta || !ex || !ex.paper || !ex.paper.analysis) return;
-      const t = String(ta.value || "").trim();
-      if (!t) return toast("空的就不存了 —— 想删掉请点右上的 ✕");
-      ex.paper.analysis.text = t;
-      ex.paper.analysis.edited = true;
-      ex.paper.analysis.editedAt = new Date().toISOString();
-      view.paperEdit = null;
-      commit("改好了 —— 导出和复制用的就是你这版");
-      renderDetail();
-    };
-    d.querySelectorAll("[data-papvback]").forEach((el) => el.onclick = () => {
-      const ex = findExam(el.dataset.papvback);
-      if (!ex || !ex.paper || !ex.paper.analysis) return;
-      const i = Number(el.dataset.papvi);
-      const v = (ex.paper.analysis.versions || [])[i];
-      if (!v) return toast("这一版找不到了");
-      const prev = ex.paper.analysis;
-      if (!confirm("恢复这一版？现在这段会存进历史版本，不会丢。\n\n" + String(v.text || "").slice(0, 120) + "…")) return;
-      archiveAnalysis(ex);
-      ex.paper.analysis = Object.assign({}, ex.paper.analysis, {
-        text: v.text, at: v.at, model: v.model, edited: !!v.edited, editedAt: v.editedAt,
-      });
-      // 恢复的这一版从历史里拿掉，免得重复
-      ex.paper.analysis.versions = (ex.paper.analysis.versions || []).filter((x) => !(x.text === v.text && x.at === v.at));
-      commit("恢复好了");
-      renderDetail();
-    });
-
-    /* ---- 话术 ---- */
-    d.querySelectorAll("[data-paptalk]").forEach((el) => el.onclick = () => {
-      const ex = findExam(el.dataset.paptalk);
-      if (!ex) return toast("找不到那场考试了");
-      if (!aiKey()) return toast("还没填 API key —— 去「设置 → AI 分析」填一个", 6500);
-      runTalk(s, ex, el);
-    });
-    d.querySelectorAll("[data-paptalkedit]").forEach((el) => el.onclick = () => {
-      view.paperEdit = { eid: el.dataset.paptalkedit, part: "talk" };
-      renderDetail();
-    });
-    const tkCancel = $("papTalkCancel");
-    if (tkCancel) tkCancel.onclick = () => { view.paperEdit = null; renderDetail(); };
-    const tkSave = $("papTalkSave");
-    if (tkSave) tkSave.onclick = () => {
-      const ex = findExam(view.paperEdit && view.paperEdit.eid);
-      if (!ex || !ex.paper || !ex.paper.talk) return;
-      ex.paper.talk.student = String(($("papTalkStu") || {}).value || "").trim();
-      ex.paper.talk.parent = String(($("papTalkPar") || {}).value || "").trim();
-      ex.paper.talk.edited = true;
-      ex.paper.talk.editedAt = new Date().toISOString();
-      view.paperEdit = null;
-      commit("话术改好了");
-      renderDetail();
-    };
-
-    /* ---- 导出 Word / 复制文字 ---- */
-    d.querySelectorAll("[data-papexp]").forEach((el) => el.onclick = () => {
-      const ex = findExam(el.dataset.papexp);
-      if (!ex) return toast("找不到那场考试了");
-      exportPaperDocx(s, ex);
-    });
-    d.querySelectorAll("[data-papcopy]").forEach((el) => el.onclick = () => {
-      const ex = findExam(el.dataset.papcopy);
-      if (!ex) return toast("找不到那场考试了");
-      copyPaperText(s, ex);
-    });
-
-    /* ---- 到期中的复习计划 ---- */
-    const planMidEl = $("planMid");
-    if (planMidEl) planMidEl.onchange = () => {
-      DB.config.examTarget = DB.config.examTarget || { midterm: "" };
-      DB.config.examTarget.midterm = planMidEl.value;
-      save(); renderDetail();
-      toast(planMidEl.value ? "期中考试日期记下了" : "期中日期清空了");
-    };
-    d.querySelectorAll("[data-plandone]").forEach((cb) => cb.onchange = () => {
-      const p = planOf(s);
-      if (!p) return;
-      const i = Number(cb.dataset.plandone);
-      if (!p.items[i]) return;
-      p.items[i].done = !!cb.checked;
-      save(); renderDetail();
-    });
-    const planGoBtn = $("planGo");
-    if (planGoBtn) planGoBtn.onclick = () => {
-      const ex = findExam(planGoBtn.dataset.exam);
-      if (!ex) return toast("找不到那场考试了 —— 重新确认一次答题卡");
-      if (!aiKey()) return toast("还没填 API key —— 去「设置 → AI 分析」填一个", 6500);
-      runPlan(s, ex, planGoBtn);
-    };
-
-    /* ---- 计划单条：改 / 删 ---- */
-    d.querySelectorAll("[data-planedit]").forEach((el) => el.onclick = () => {
-      view.planEdit = Number(el.dataset.planedit);
-      renderDetail();
-    });
-    const piCancel = $("planItemCancel");
-    if (piCancel) piCancel.onclick = () => { view.planEdit = null; renderDetail(); };
-    const piSave = $("planItemSave");
-    if (piSave) piSave.onclick = () => {
-      const p = planOf(s);
-      const i = Number(piSave.dataset.plani);
-      if (!p || !p.items[i]) return;
-      const get = (k) => {
-        const el = d.querySelector('[data-planin="' + k + '"]');
-        return el ? String(el.value || "").trim() : "";
-      };
-      const it = p.items[i];
-      it.period = get("period");
-      it.content = get("content");
-      it.how = get("how");
-      it.standard = get("standard");
-      it.review = get("review");
-      it.minutes = numOrNull(get("minutes"));
-      it.edited = true;
-      view.planEdit = null;
-      commit("这条改好了 —— 导出 Word 和复制文字用的都是改过的");
-      renderDetail();
-    };
-    const piDel = $("planItemDel");
-    if (piDel) piDel.onclick = () => {
-      const p = planOf(s);
-      const i = Number(piDel.dataset.plani);
-      if (!p || !p.items[i]) return;
-      if (!confirm("删掉这条任务？")) return;
-      p.items.splice(i, 1);
-      view.planEdit = null;
-      commit("删掉了");
-      renderDetail();
-    };
+    bindPaperUI(d, s);
 
     /* ---- 附件 ---- */
     d.querySelectorAll(".attstrip").forEach((strip) => {
@@ -7418,15 +7650,6 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       };
     });
 
-    d.querySelectorAll("[data-attpick]").forEach((b) => b.onclick = (ev) => {
-      ev.stopPropagation();
-      pickFor = b.dataset.attpick;
-      armedExam = pickFor;
-      pickRole = b.dataset.attrole || "exam";
-      const inp = $("attFile");
-      inp.value = "";
-      inp.click();
-    });
 
     d.querySelectorAll(".attthumb").forEach((t) => {
       t.querySelector("img")?.addEventListener("click", (ev) => {
