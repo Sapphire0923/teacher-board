@@ -3171,7 +3171,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       return `<div class="recfilebox">
         <div class="recfilehead"><span class="rectag">${tag}</span>
           <span class="recname" title="${esc(m.name)}">${esc(m.name)}</span>
-          <span class="recmeta">${m.sec ? recFmt(m.sec) + " · " : ""}${recSizeText(m.size)} · ${esc(REC_SRC_NAME[m.src] || m.src || "")}</span>
+          <span class="recmeta"><span data-recsec="1">${m.sec ? recFmt(m.sec) + " · " : ""}</span>${recSizeText(m.size)} · ${esc(REC_SRC_NAME[m.src] || m.src || "")}</span>
           <span class="recfmt ${fl.cls}" title="${esc(fl.tip)}">${fl.text}</span></div>
         ${recPlayerHtml(which)}
         <div class="recfilebtns">
@@ -3550,6 +3550,11 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       dur = got.sec;
       // meta 里如果存着 0（老录音当时没读出来），这里补上，但**不动数据库**，只改界面
       if (meta && !meta.sec) meta.sec = dur;
+      // 文件行头上那个时长也是「读出来才有的」，一并补上 —— 不然标题不写时长、播放器写 05:00。
+      // 注意 box 是播放器本身，时长在包着它的 .recfilebox 里。
+      const fileBox = box.closest(".recfilebox");
+      const secEl = fileBox && fileBox.querySelector("[data-recsec]");
+      if (secEl && !/\d/.test(secEl.textContent)) secEl.textContent = recFmt(dur) + " · ";
       ready = true;
       if (note) { note.textContent = ""; note.className = "rp-note"; }
       paint();
@@ -3837,12 +3842,13 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     if (!/^audio\//.test(file.type || "") && !/\.(m4a|amr|mp3|wav|aac|ogg|webm|mp4)$/i.test(file.name || "")) {
       return toast("这看着不是音频 —— m4a / mp3 / amr / wav / webm 都行", 5000);
     }
-    const sec = await audioDuration(file);
+    // 时长**不在这里等**：一段五分钟的录音要读好几秒，等的时候界面像卡死了。
+    // 先挂上去（sec:0），播放器那条链会把真实时长读出来并回填 meta.sec。
     if (REC.pendingUrl) URL.revokeObjectURL(REC.pendingUrl);
     REC.pendingUrl = URL.createObjectURL(file);
     REC.pending = {
       blob: file,
-      meta: { name: file.name || "导入的录音", type: file.type || "audio/mpeg", size: file.size, sec: sec || 0, src: "file", at: nowStamp() },
+      meta: { name: file.name || "导入的录音", type: file.type || "audio/mpeg", size: file.size, sec: 0, src: "file", at: nowStamp() },
     };
     renderCallSheet();
     toast("录音导进来了 —— 记得点「保存」，不然关掉就没了", 4200);
