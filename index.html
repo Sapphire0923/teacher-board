@@ -3879,7 +3879,9 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         try { URL.revokeObjectURL(url); } catch (e) {}
         resolve({ sec: Math.max(0, Math.round(sec || 0)), err: err || "" });
       };
-      const t = setTimeout(() => fin(0, "读了 8 秒也没读出时长"), 8000);
+      // 20 秒：读时长是在后台跑的，界面照样能用，所以宁可多等也别误报。
+      // （实测一段 4.6MB 的五分钟 WAV 只要 99ms；20 秒是给超大文件/慢机器留的余量）
+      const t = setTimeout(() => fin(0, "读了 20 秒也没读出时长"), 20000);
       a.preload = "metadata";
       a.onloadedmetadata = () => {
         if (isFinite(a.duration) && a.duration > 0) { clearTimeout(t); return fin(a.duration); }
