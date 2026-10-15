@@ -7941,6 +7941,10 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       const pick = ev.target.closest("[data-pppick]");
       if (pick) { file.value = ""; file.click(); return; }
       if (ev.target.closest(".pp-thumb")) return;
+      // 点「给谁 / 哪一场」这些控件（input / select / label）时，焦点得留在控件里，
+      // 别被下面那句 drop.focus() 抢走 —— 否则光标被拽到粘贴区、字打不进去，
+      // 看着就像「在搜索框一打字就自动点到了上面的粘贴答题卡图片」
+      if (ev.target.closest("input, select, textarea, label")) return;
       if (drop) drop.focus();
     };
     if (drop) drop.onclick = (ev) => {
