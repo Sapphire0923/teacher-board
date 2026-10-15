@@ -6446,8 +6446,8 @@ input[type=range] { accent-color: var(--accent); }
       <button class="btn" id="clAdd">＋ 新建一轮</button>`;
 
     if (!cur) {
-      // 「全部」= 跨批次总表：行是学生，列是每一轮
-      const anyone = DB.students.filter((s) => batches.some((b) => callStatusOf(callBatchId(b), s.id) !== "未联系"));
+      // 「全部」= 跨批次总表：行是学生（全班都列，没打过的人格子留「—」），列是每一轮
+      const anyone = DB.students;
       const statRow = (label, fn) =>
         `<tr class="stat-row"><td class="sticky-l">${esc(label)}</td>${
           batches.map((b) => `<td>${esc(fn(callBatchStats(callBatchId(b))))}</td>`).join("")}</tr>`;
@@ -6470,7 +6470,7 @@ input[type=range] { accent-color: var(--accent); }
             ${statRow("未接听", (st) => st["未接听"])}
             ${statRow("接通率", (st) => st.total ? Math.round(st["已沟通"] / st.total * 100) + "%" : "—")}
           </tfoot></table></div>`;
-      if (!anyone.length) stage.innerHTML = `<div class="sc-tabs">${tabs}</div><div class="empty-hint">这几轮还没有人记过结果</div>`;
+      if (!anyone.length) stage.innerHTML = `<div class="sc-tabs">${tabs}</div><div class="empty-hint">还没有学生名单</div>`;
     } else {
       // 单轮：统计 + 名单（按结果筛选）+ 每个学生一行五个按钮
       const st = callBatchStats(curId);
