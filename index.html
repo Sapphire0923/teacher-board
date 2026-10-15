@@ -19,46 +19,47 @@
 :root {
   color-scheme: light;
 
-  --bg: #f5f6f8;
+  --bg: #f5f5f7;             /* 苹果官网那种极浅中性灰，不带任何色偏 */
   --panel: #ffffff;          /* 主面板 */
-  --panel-2: #fafbfc;        /* 次级面（输入框、表头） */
-  --panel-3: #f2f4f7;        /* 三级面（胶囊、标签） */
-  --panel-4: #f6f8fa;        /* 四级面（小格子） */
-  --line: #e4e7ec;
-  --line-strong: #cfd5de;
+  --panel-2: #fafafc;        /* 次级面（输入框、表头） */
+  --panel-3: #f2f2f5;        /* 三级面（胶囊、标签） */
+  --panel-4: #f7f7f9;        /* 四级面（小格子） */
+  --line: #e3e3e8;
+  --line-strong: #cdcdd4;
 
-  --ink: #1b1f26;
-  --ink-2: #5b6472;
-  --ink-3: #8d97a6;
+  --ink: #1d1d1f;            /* 苹果正文色 */
+  --ink-2: #55555c;
+  --ink-3: #86868b;          /* 苹果次要文字色 */
 
-  /* 主色：温和的墨绿/灰绿（2026-10-16 按用户选定的「混搭」方案从蓝 #2f6feb 换过来）。
-     原来是蓝 #2f6feb —— 用户要的是「温和的墨绿/灰绿做主线」，
-     所以默认主题这一层就得是墨绿，光改 [data-theme="green"] 那一块是没用的：
-     老师默认用的就是浅色主题。 */
-  --accent: #3f6f5a;
-  --accent-soft: #e7f0ea;
+  /* 主色：一种克制的绿（2026-10-16 用户要求「绿色 + 白色」，
+     从上一版的墨绿+暖橘「混搭」收敛成单绿色系）。
+     苹果那种高级感靠的是「大量白 + 只用一种强调色」，所以这里只留一个绿，
+     暖橘整条退场 —— 它原来干的活拆成两半：品牌色归绿，「未完成」的提醒归琥珀。 */
+  --accent: #1a7f4b;
+  --accent-soft: #e9f5ee;
   --accent-ink: #ffffff;
-  /* 第二强调色：暖橘。只用于「要动手的」和「要盯的」——
-     主要操作按钮、今天要跟进、录音中、AI 角标。
-     2026-10-16 按用户选定的「混搭」方案加入：
-     墨绿/灰绿做主线，柔和橘色做点缀，两个颜色各司其职，不混用。 */
-  --accent-2: #e0764a;
-  --accent-2-soft: #fdf0e9;
-  --accent-2-line: #f3d3c1;
+  /* --accent-2 保留变量名（多处组件在引用），但不再引入第二个色相，
+     只作为「比主色更实一点」的深绿，用在最需要抓眼球的按钮上。 */
+  --accent-2: #14663c;
+  --accent-2-soft: #e9f5ee;
+  --accent-2-line: #cfe6da;
 
   --red: #d93843;   --red-soft: #fdecec;   --red-line: #f6cfd1;
-  --amber: #c47f17; --amber-soft: #fdf3e3; --amber-line: #f0dcb8;
-  --green: #1f8a5f; --green-soft: #e8f6ef; --green-line: #cfe9dc;
+  --amber: #b06a08; --amber-soft: #fdf4e3; --amber-line: #f0dfc0;
+  /* 状态绿（已完成 / 通过）：跟品牌绿 --accent 拉开一点层次，
+     否则「绿按钮」和「绿状态」在白底上糊成一片、看不出哪个能点。 */
+  --green: #16784a; --green-soft: #e6f4ec; --green-line: #cbe5d8;
 
-  --tag-bg: #eef2f8; --tag-ink: #46536b;
-  --shadow: 0 1px 2px rgba(16,24,40,.06), 0 4px 14px rgba(16,24,40,.05);
+  --tag-bg: #f0f0f3; --tag-ink: #4a4a52;
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 14px rgba(0,0,0,.045);
   /* 卡片柔和阴影：两层、都不深。比 --shadow 更有存在感，
-     但远不到「糊一团」的程度 —— 用户明确要求阴影别太重。 */
-  --shadow-card: 0 1px 2px rgba(26,32,44,.045), 0 6px 18px rgba(26,32,44,.055);
-  --shadow-hover: 0 2px 4px rgba(26,32,44,.05), 0 12px 28px rgba(26,32,44,.08);
-  --shadow-lg: 0 18px 48px rgba(16,24,40,.22);
-  --mask: rgba(16,24,40,.42);
-  --toast-bg: #1b1f26;
+     但远不到「糊一团」的程度 —— 用户明确要求阴影别太重。
+     2026-10-16 绿白改版：阴影从带蓝的冷灰换成纯中性灰，配白底更干净。 */
+  --shadow-card: 0 1px 2px rgba(0,0,0,.04), 0 6px 18px rgba(0,0,0,.05);
+  --shadow-hover: 0 2px 4px rgba(0,0,0,.045), 0 12px 28px rgba(0,0,0,.07);
+  --shadow-lg: 0 18px 48px rgba(0,0,0,.2);
+  --mask: rgba(0,0,0,.4);
+  --toast-bg: #1d1d1f;
   --toast-ink: #fff;
 
   --radius: 12px;
@@ -92,28 +93,27 @@
   --wall: none;              /* 壁纸图，由 JS 设为 url(data:...) */
 }
 
-/* 浅绿主题（2026-10-16 按「混搭」方案重调：
-   主线换成更温和的墨绿，底色更干净；点缀色是暖橘。
-   原来 --accent 是 #2f9e63（偏亮的草绿），跟暖橘放一起会互相抢，所以压深压灰一点。） */
+/* 浅绿主题（2026-10-16 绿白改版：跟默认主题保持同一套绿色系，
+   只是底色更偏浅绿一点点。暖橘点缀整条退场 —— 全站只用一支强调色。） */
 :root[data-theme="green"] {
   color-scheme: light;
-  --bg: #eef3ef;
+  --bg: #f2f6f3;
   --panel: #ffffff;
-  --panel-2: #f7faf8;
-  --panel-3: #e8f0ea;
-  --panel-4: #f1f7f3;
-  --line: #dbe6de;
-  --line-strong: #bccfc3;
-  --ink: #16211a;
-  --ink-2: #4d6557;
-  --ink-3: #7d9586;
-  --accent: #2c7d5a;
-  --accent-soft: #e2f1e9;
-  --accent-2: #cf6a3c;
-  --accent-2-soft: #fbeee6;
-  --accent-2-line: #eed2c0;
-  --tag-bg: #e6f1ea; --tag-ink: #3c5c49;
-  --th-bg: #e6efe9; --th-ink: #3f5a4a; --th-line: #cbdbd0;
+  --panel-2: #f8fbf9;
+  --panel-3: #eef3f0;
+  --panel-4: #f4f8f5;
+  --line: #e0e8e3;
+  --line-strong: #c6d3ca;
+  --ink: #1d1d1f;
+  --ink-2: #55555c;
+  --ink-3: #86868b;
+  --accent: #1a7f4b;
+  --accent-soft: #e9f5ee;
+  --accent-2: #14663c;
+  --accent-2-soft: #e9f5ee;
+  --accent-2-line: #cfe6da;
+  --tag-bg: #eef2f0; --tag-ink: #4a4a52;
+  --th-bg: #e9f0eb; --th-ink: #44514a; --th-line: #d3ded7;
   --row-alt: #f7fbf8; --panel-solid: #ffffff;
   --shadow: 0 1px 2px rgba(20,50,32,.06), 0 4px 14px rgba(20,50,32,.06);
   --shadow-card: 0 1px 2px rgba(22,44,32,.05), 0 6px 18px rgba(22,44,32,.06);
@@ -133,13 +133,15 @@
   --ink: #e7ebef;
   --ink-2: #aab4bf;
   --ink-3: #7c8792;
-  --accent: #4c8dff;
-  --accent-soft: #1d2c46;
+  /* 2026-10-16 绿白改版：深色主题的主色也从蓝 #4c8dff 换成绿，
+     跟浅色主题同一个色相，切主题时不会突然变一种颜色。
+     深色底上绿得提亮才看得清（#3fa06a）。 */
+  --accent: #3fa06a;
+  --accent-soft: #16301f;
   --accent-ink: #ffffff;
-  /* 深色下的暖橘得提亮，否则在深底上糊成一团 */
-  --accent-2: #e8895c;
-  --accent-2-soft: #3a271d;
-  --accent-2-line: #55392a;
+  --accent-2: #2f7d51;
+  --accent-2-soft: #16301f;
+  --accent-2-line: #2a5138;
   --red: #ff6b73;   --red-soft: #3a2224;   --red-line: #5c3236;
   --amber: #e0a44a; --amber-soft: #382d1c; --amber-line: #5a4728;
   --green: #4cc38a; --green-soft: #1c3529; --green-line: #2c5340;
@@ -236,10 +238,11 @@ header.top { display: flex; align-items: center; gap: 9px; padding: 9px 14px;
 .stat.warn b { color: var(--amber); }
 .stat.bad { background: var(--red-soft); border-color: var(--red-line); color: var(--red); }
 .stat.bad b { color: var(--red); }
-/* 「要动手的」统计胶囊走暖橘（还没电联 / 待跟进这类）。跟红色区分开：
-   红色是「已经出事了」，橘色是「还来得及、但该动了」。 */
-.stat.act { background: var(--accent-2-soft); border-color: var(--accent-2-line); color: var(--accent-2); }
-.stat.act b { color: var(--accent-2); }
+/* 「要动手的」统计胶囊走琥珀（还没电联 / 待跟进这类）。跟红色区分开：
+   红色是「已经出事了」，琥珀是「还来得及、但该动了」。
+   2026-10-16 从暖橘改过来 —— 绿白改版后绿是品牌色，提醒色得另找一支。 */
+.stat.act { background: var(--amber-soft); border-color: var(--amber-line); color: var(--amber); }
+.stat.act b { color: var(--amber); }
 .spacer { flex: 1; }
 .tools { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
 /* 搜索框是唯一可以「让位」的控件：空间不够时先收缩它，别把整排按钮挤下去 */
@@ -255,11 +258,12 @@ button.btn, a.btn { display: inline-block; padding: 6px 11px; border-radius: var
   background: var(--panel); cursor: pointer; transition: .12s; white-space: nowrap;
   text-decoration: none; color: inherit; font-size: var(--fs-cell); font-weight: 500; line-height: 1.5; }
 button.btn:hover, a.btn:hover { border-color: var(--line-strong); background: var(--panel-2); }
-/* 主要操作按钮走暖橘：一屏里只有一两颗，扫一眼就知道该点哪儿。
-   后台的绿留给「已完成 / 通过」这类状态，不抢按钮的位置。 */
-button.btn.primary { background: var(--accent-2); border-color: var(--accent-2); color: #fff; font-weight: 600;
-  box-shadow: 0 1px 2px rgba(207,106,60,.24); }
-button.btn.primary:hover { filter: brightness(1.06); border-color: var(--accent-2); }
+/* 主要操作按钮走品牌绿：一屏里只有一两颗，扫一眼就知道该点哪儿。
+   2026-10-16 绿白改版：原来暖橘兼职当按钮色，现在统一收归绿色系；
+   阴影也从橘色投影换成绿色投影（原来是 rgba(207,106,60,…) 的橘影，绿底上会很脏）。 */
+button.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
+  box-shadow: 0 1px 2px rgba(20,102,60,.22); }
+button.btn.primary:hover { filter: brightness(1.07); border-color: var(--accent); }
 button.btn.ghost { background: transparent; }
 button.btn.danger { color: var(--red); }
 button.btn:disabled { opacity: .5; cursor: default; }
@@ -283,18 +287,25 @@ aside.side { width: 212px; flex: 0 0 212px; background: var(--panel);
 .side h3:first-child { margin-top: 0; }
 /* 侧栏菜单统一 13.5px / 400，选中才加粗 —— 之前继承 body 的 14px，
    跟顶栏按钮的 13.5px、标签的 11px 混在一起，同一列字忽大忽小。
-   2026-10-16：选中态加一条暖橘左边条 —— 侧栏 30 项太长，
-   光靠底色深浅找当前位置不够快，有根竖条一扫就能定位。 */
+   2026-10-16：选中态统一成「浅绿底 + 左侧一条绿竖条」——
+   原来那条是暖橘，绿白改版后统一收归品牌绿，一项一色的问题就此消失。
+   侧栏 30 项太长，光靠底色深浅找当前位置不够快，有根竖条一扫就能定位。 */
 .nav { position: relative; display: flex; align-items: center; justify-content: space-between; padding: 7px 10px;
   border-radius: var(--radius-s); cursor: pointer; color: var(--ink-2); border: 0; background: transparent;
-  width: 100%; text-align: left; font-size: var(--fs-body); line-height: 1.5; }
-.nav:hover { background: var(--panel-3); }
+  width: 100%; text-align: left; font-size: var(--fs-body); line-height: 1.5;
+  transition: background-color .12s, color .12s; }
+.nav:hover { background: var(--panel-3); color: var(--ink); }
 .nav.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .nav.on::before { content: ""; position: absolute; left: -9px; top: 6px; bottom: 6px; width: 3px;
-  border-radius: 0 3px 3px 0; background: var(--accent-2); }
-.nav .n { font-size: var(--fs-aux); color: var(--ink-3); padding-left: 8px; }
-.nav.on .n { color: var(--accent); }
+  border-radius: 0 3px 3px 0; background: var(--accent); }
+.nav .n { font-size: var(--fs-aux); color: var(--ink-3); padding-left: 8px; font-variant-numeric: tabular-nums; }
+.nav.on .n { color: var(--accent); font-weight: 600; }
 .nav .dot { width: 7px; height: 7px; border-radius: 50%; margin-right: 8px; flex: 0 0 7px; }
+/* 侧栏条目左右两半：左边「圆点+文字」做省略号，右边计数固定不缩。
+   2026-10-16 重组：原来这里是一串内联 style，五个入口各写各的，
+   现在统一成这两个类，字号/缩进/间距才真的能对齐。 */
+.nav-l { display: flex; align-items: center; min-width: 0; }
+.nav-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* 侧栏可折叠分组标题：可点、带 caret，跟普通 h3 一个位置但能点 */
 .side h3.side-group { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px; }
@@ -455,9 +466,10 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 20px 60px;
   border-radius: 6px; background: var(--panel-3); color: var(--ink-2); border: 1px solid var(--line); }
 .chip.ok { background: var(--green-soft); color: var(--green); border-color: var(--green-line); }
 .chip.no { background: var(--red-soft); color: var(--red); border-color: var(--red-line); }
-/* 暖橘芯片：用在「还没做」这类**需要关注但不算异常**的状态上（未打卡 / 未电联）。
-   红色（.chip.no）留给真异常 —— 逾期、短板、读不出来。见 app.js 里 flagText 那处注释。 */
-.chip.act { background: var(--accent-2-soft); color: var(--accent-2); border-color: var(--accent-2-line); }
+/* 「还没做」芯片：2026-10-16 绿白改版后从暖橘改成琥珀。
+   原因：绿现在是品牌色（主按钮、选中态都在用），提醒色再借用绿色系就分不清
+   「这个绿是状态还是按钮」；琥珀跟「已完成」的绿、真异常的红色都能一眼分开。 */
+.chip.act { background: var(--amber-soft); color: var(--amber); border-color: var(--amber-line); }
 .chip.ex { background: var(--amber-soft); color: var(--amber); border-color: var(--amber-line); }
 .chip.tag { background: var(--tag-bg); color: var(--tag-ink); }
 /* 家长类型：颜色由 JS 按标签给（内联），这里只定形状 —— 比问题标签厚一点，
@@ -474,10 +486,14 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 20px 60px;
 .ptagbtn.on { font-weight: 600; }
 .ptaginput { width: 140px; font-size: var(--fs-aux); padding: 3px 7px; }
 .scores { display: flex; gap: 6px; }
+/* 评分小格：2026-10-16 绿白改版。
+   原来低分（.low）会铺一层粉红底 —— 73 人的班，一屏几十块粉红，
+   把真正要报警的红色淹掉了，也违背「数据本身是重点、底色别抢戏」。
+   现在改成**只让数字变色 + 一点极淡的底**，异常照样一眼看见，但页面干净得多。 */
 .sc { flex: 1; text-align: center; padding: 4px 0; border-radius: 7px; background: var(--panel-4); border: 1px solid var(--line); }
 .sc .k { display: block; font-size: var(--fs-mini); color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sc .v { font-size: 14px; font-weight: 650; font-variant-numeric: tabular-nums; }
-.sc.low { background: var(--red-soft); border-color: var(--red-line); }
+.sc.low { background: #fdf6f6; border-color: #f1dcde; }
 .sc.low .v { color: var(--red); }
 .sc.mid .v { color: var(--amber); }
 .cons { font-size: var(--fs-aux); color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 2;
@@ -660,10 +676,11 @@ textarea.note:focus { border-color: var(--accent); background: var(--panel); }
 .modal.wide { width: min(900px, 100%); }
 .modal header { padding: 14px 18px; border-bottom: 1px solid var(--line); font-weight: 650;
   display: flex; align-items: center; gap: 10px; }
-/* 标题左侧一小段暖橘竖条：弹窗一多，靠这条能立刻认出「这是一个操作面板」，
-   也顺手把「当前在看哪个弹窗」和后面的内容分开。 */
+/* 标题左侧一小段品牌绿竖条：弹窗一多，靠这条能立刻认出「这是一个操作面板」，
+   也顺手把「当前在看哪个弹窗」和后面的内容分开。
+   2026-10-16 绿白改版：从暖橘换成品牌绿（--accent-2 现在也是深绿），全站只留一支强调色。 */
 .modal header::before { content: ""; flex: none; width: 3px; height: 15px; border-radius: 2px;
-  background: var(--accent-2); }
+  background: var(--accent); }
 .modal .body { padding: 15px 18px; overflow-y: auto; }
 .modal footer { padding: 12px 18px; border-top: 1px solid var(--line);
   display: flex; gap: 9px; justify-content: flex-end; align-items: center; flex-wrap: wrap; }
@@ -1110,9 +1127,10 @@ input[type=range] { accent-color: var(--accent); }
   background: var(--panel-solid); color: var(--ink); }
 .plan-in:focus { outline: none; border-color: var(--accent); }
 .planrow.editing { display: block; background: var(--accent-2-soft); border-color: var(--accent-2); }
-/* 「正在录音」本身就是要盯的状态，走暖橘而不是红 —— 红留给报错 */
-.recjob.run { border-color: var(--accent-2); }
-.recsrstate.on { color: var(--accent-2); }
+/* 「正在录音」本身就是要盯的状态。2026-10-16 绿白改版：
+   这里原来有一条旧的暖橘 .recjob.run，跟下面 1208 那条绿色的重复了，删掉。
+   录音的「进行中」用品牌绿（它不是异常），真正的强提示交给上面那颗脉动红点。 */
+.recsrstate.on { color: var(--accent); }
 
 @media (max-width: 820px) {
   .pap-body { flex-direction: column; overflow: auto; }
@@ -5619,74 +5637,76 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
   function renderSide() {
     const S = DB.students;
     const f = view.filter;
+    // 侧栏条目统一走这一个模板：一致的缩进、行高、计数样式
     const row = (kind, v, label, c, color) =>
       `<button class="nav ${f.kind === kind && String(f.v ?? "") === String(v ?? "") ? "on" : ""}" data-kind="${kind}" data-v="${esc(v ?? "")}">
-        <span style="display:flex;align-items:center;min-width:0">${color ? `<span class="dot" style="background:${color}"></span>` : ""}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(label)}</span></span>
+        <span class="nav-l">${color ? `<span class="dot" style="background:${color}"></span>` : ""}<span class="nav-t">${esc(label)}</span></span>
         <span class="n">${c}</span></button>`;
+    // 可折叠分组标题（统一交互：点一下折/展，状态记在 view.sideCollapsed）
+    const groupHead = (key, label) => {
+      const open = !view.sideCollapsed[key];
+      return `<h3 class="side-group" data-group="${key}">${esc(label)} <span class="caret">${open ? "▾" : "▸"}</span></h3>`;
+    };
+    const isOpen = (key) => !view.sideCollapsed[key];
 
     const tagCount = {};
     for (const s of S) for (const t of tagsOf(s)) tagCount[t] = (tagCount[t] || 0) + 1;
 
-    let html = `<h3>总览</h3>${row("all", null, "全部学员", S.length)}`;
-
-    // 语文打卡入口（常驻，跟等级平级）
+    /* ---- ① 工作区：五个入口平级。2026-10-16 重组：
+       以前「全部学员」在「总览」组、另外四个各挂一个彩色圆点，
+       一条侧栏里混着「蓝点、绿点、黄点、紫点」，看着就乱。
+       现在统一成一个「工作区」组，**都不带彩色圆点** —— 靠选中态那一根绿竖条指示当前位置，
+       跟苹果那种「只用一种强调色」的做法一致。 ---- */
     const ckTasks = (DB.checkin?.tasks || []).length;
-    html += `<button class="nav ck-nav ${view.mode === "checkin" ? "on" : ""}" data-ck="1">
-      <span style="display:flex;align-items:center;min-width:0"><span class="dot" style="background:#2f6feb"></span><span>语文打卡</span></span>
-      <span class="n">${ckTasks}</span></button>`;
-
-    // 成绩入口（常驻）：进去按考试分类看全班分数
     const exNames = examNameList();
-    html += `<button class="nav ck-nav ${view.mode === "score" ? "on" : ""}" data-score="1">
-      <span style="display:flex;align-items:center;min-width:0"><span class="dot" style="background:#1f8a5f"></span><span>成绩</span></span>
-      <span class="n">${exNames.length}</span></button>`;
-
-    // 电联入口（常驻）：按电联批次看全班谁通了谁没通
     const callBatches = (DB.calls?.batches || []).length;
-    html += `<button class="nav ck-nav ${view.mode === "call" ? "on" : ""}" data-call="1">
-      <span style="display:flex;align-items:center;min-width:0"><span class="dot" style="background:#c47f17"></span><span>电联</span></span>
-      <span class="n">${callBatches}</span></button>`;
-
-    // 答题卡入口（常驻）：一次考试一个批次 → 进批次看全班名单
     const pB = examBatches();
     const pPending = pB.reduce((a, b) => a + b.todo, 0);
-    html += `<button class="nav ck-nav ${view.mode === "paper" ? "on" : ""}" data-paper="1">
-      <span style="display:flex;align-items:center;min-width:0"><span class="dot" style="background:#8b5cf6"></span><span>答题卡</span></span>
-      <span class="n">${pPending ? pPending : pB.length}</span></button>`;
 
+    let html = `<h3>工作区</h3>`;
+    html += row("all", null, "全部学员", S.length);
+    html += `<button class="nav ${view.mode === "checkin" ? "on" : ""}" data-ck="1">
+      <span class="nav-l"><span class="nav-t">语文打卡</span></span><span class="n">${ckTasks}</span></button>`;
+    html += `<button class="nav ${view.mode === "score" ? "on" : ""}" data-score="1">
+      <span class="nav-l"><span class="nav-t">成绩</span></span><span class="n">${exNames.length}</span></button>`;
+    html += `<button class="nav ${view.mode === "call" ? "on" : ""}" data-call="1">
+      <span class="nav-l"><span class="nav-t">电联</span></span><span class="n">${callBatches}</span></button>`;
+    html += `<button class="nav ${view.mode === "paper" ? "on" : ""}" data-paper="1">
+      <span class="nav-l"><span class="nav-t">答题卡</span></span><span class="n">${pPending ? pPending : pB.length}</span></button>`;
+
+    /* ---- ② 学员分层：S/A/B/C/D 级，可折叠（默认展开 —— 这是老师最常用的筛法） ---- */
     if (hasLevels()) {
-      html += `<h3>等级</h3>` + DB.config.levels.map((l) =>
+      html += groupHead("level", "学员分层");
+      if (isOpen("level")) html += DB.config.levels.map((l) =>
         row("level", l.key, l.label + (l.label.length <= 2 ? " 级" : ""), S.filter((s) => levelOf(s) === l.key).length, l.color)).join("");
     }
 
-    // —— 该盯谁（跟进提醒），可折叠 ——
-    const followOpen = !view.sideCollapsed.follow;
+    /* ---- ③ 待办与筛选：今日跟进 / 待跟进 / 未打卡 / 未电联 / 低评分，可折叠 ---- */
     const ds = dailyStats();
-    const followRows =
-      row("today", null, "今日跟进", `${ds.done}/${ds.total}`, "#d93843") +
+    const todoRows =
+      row("today", null, "今日跟进", `${ds.done}/${ds.total}`) +
       row("follow", null, "待跟进（全部）", S.filter(needFollow).length) +
       DB.config.flags.map((fl) => row("flag", fl.key, "还没" + fl.label, S.filter((s) => !flagDone(s, fl)).length)).join("") +
       DB.config.dims.map((d) => row("risk", d.key, d.label + " ≤" + DB.config.riskAt, S.filter((s) => risksOf(s).includes(d.label)).length)).join("");
-    html += `<h3 class="side-group" data-group="follow">该盯谁 <span class="caret">${followOpen ? "▾" : "▸"}</span></h3>`;
-    html += followOpen ? followRows : "";
+    html += groupHead("follow", "待办与筛选");
+    if (isOpen("follow")) html += todoRows;
 
-    // —— 问题标签，可折叠（默认折起，多了会很长）——
+    /* ---- 问题标签 / 家长类型：保持现在的可折叠行为（默认折起） ----
+       「更多筛选」那个改法先搁置（2026-10-16 用户明确说「明天再说」），
+       这里只做视觉统一，不动结构和 data 属性 —— 回归里 V19/V20 在数 ptag 条目。 ---- */
     const tagRows = Object.entries(tagCount).sort((a, b) => b[1] - a[1]).map(([t, c]) => row("tag", t, t, c)).join("");
     if (tagRows) {
-      const tagOpen = !view.sideCollapsed.tag;
-      html += `<h3 class="side-group" data-group="tag">问题标签 <span class="caret">${tagOpen ? "▾" : "▸"}</span></h3>`;
-      html += tagOpen ? tagRows : "";
+      html += groupHead("tag", "问题标签");
+      if (isOpen("tag")) html += tagRows;
     }
 
-    // —— 家长类型，可折叠（默认折起）——
     const ptagCount = {};
     for (const s of S) for (const t of parentTagsOf(s)) ptagCount[t] = (ptagCount[t] || 0) + 1;
     const ptagRows = Object.entries(ptagCount).sort((a, b) => b[1] - a[1])
       .map(([t, c]) => row("ptag", t, t, c, parentTagColor(t))).join("");
     if (ptagRows) {
-      const ptagOpen = !view.sideCollapsed.ptag;
-      html += `<h3 class="side-group" data-group="ptag">家长类型 <span class="caret">${ptagOpen ? "▾" : "▸"}</span></h3>`;
-      html += ptagOpen ? ptagRows : "";
+      html += groupHead("ptag", "家长类型");
+      if (isOpen("ptag")) html += ptagRows;
     }
 
     $("side").innerHTML = html;
@@ -9145,7 +9165,14 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       if (!c) continue;
       if (hay.includes(s.name) || hay.includes(c)) hits.push({ s, len: c.length });
     }
-    if (!hits.length) return [];
+    if (!hits.length) {
+      // 逐字都没对上 → 容错兜底：把消息头一段（通常是「某某妈妈 2026/10/11」）拿去比对姓名。
+      // 只认「几乎肯定是他」的，拿不准就进「未归类」，绝不乱分。
+      const head = (msg.speaker || msg.text || "").replace(/[\d/:\-\s]/g, "").slice(0, 10);
+      const fm = head ? bestNameMatch(head) : null;
+      if (fm) return [fm.s];
+      return [];
+    }
     hits.sort((a, b) => b.len - a.len);
     const top = hits[0].len;
     return hits.filter((h) => h.len === top).map((h) => h.s);
@@ -9233,8 +9260,14 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       const body = m ? m[2].trim() : sent;
       const who = findAllStudents(sent);
       const field = guessField(body);
-      if (!who.length) Q.push({ sid: "", body, field, raw: sent });
-      else for (const s of who) Q.push({ sid: s.id, body, field, raw: sent });
+      if (!who.length) {
+        // 一个人都没逐字对上 → 交给容错匹配（同音/形近/繁简/带尾巴的叫法）。
+        // 拿不准就留空，预览里标黄让老师点选 —— 绝不硬塞给某个人。
+        const head = (m ? m[1] : sent).replace(/^[\s\-–•*\d.、]+/, "").slice(0, 8);
+        const fm = bestNameMatch(head);
+        if (fm) Q.push({ sid: fm.s.id, body, field, raw: sent, fuzzy: fm.score });
+        else Q.push({ sid: "", body, field, raw: sent });
+      } else for (const s of who) Q.push({ sid: s.id, body, field, raw: sent });
     }
     renderQuickPreview();
   }
@@ -9246,15 +9279,18 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     const fields = [["pros", "优点"], ["cons", "问题"], ["note", "备注"]];
 
     const matched = Q.filter((r) => r.sid).length;
+    const qGuessed = Q.filter((r) => r.sid && r.fuzzy).length;
     $("quickHint").innerHTML = `识别到 <b>${Q.length}</b> 条，其中 <b>${matched}</b> 条认出了学生` +
-      (Q.length - matched ? `，还有 ${Q.length - matched} 条要你手动指定` : "") + "。";
+      (Q.length - matched ? `，还有 ${Q.length - matched} 条要你手动指定` : "") + "。" +
+      (qGuessed ? ` <b style="color:var(--amber)">有 ${qGuessed} 条是「猜」的，请扫一眼。</b>` : "");
 
     $("quickPreview").innerHTML = `
       <div class="preview" style="margin-top:12px;max-height:none">
         <table><thead><tr><th style="width:130px">学生</th><th style="width:96px">记到</th><th>内容</th><th style="width:40px"></th></tr></thead>
         <tbody>${Q.map((r, i) => `<tr>
           <td><select data-q="sid" data-i="${i}" style="width:100%;padding:3px 5px;border:1px solid var(--line);border-radius:6px;background:${r.sid ? "#fff" : "var(--amber-soft)"}">
-            <option value="" ${r.sid ? "" : "selected"}>— 未认出 —</option>${opts(r.sid)}</select></td>
+            <option value="" ${r.sid ? "" : "selected"}>— 未认出 —</option>${opts(r.sid)}</select>${
+            r.fuzzy ? ` <b style="color:var(--amber)" title="原文里没有这个名字，是按同音/形近/繁简推出来的">猜</b>` : ""}</td>
           <td><select data-q="field" data-i="${i}" style="width:100%;padding:3px 5px;border:1px solid var(--line);border-radius:6px;background:#fff">
             ${fields.map(([v, l]) => `<option value="${v}" ${v === r.field ? "selected" : ""}>${l}</option>`).join("")}</select></td>
           <td><input type="text" data-q="body" data-i="${i}" value="${esc(r.body)}"
@@ -9323,6 +9359,178 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       .replace(/[\uFF0F]/g, "/")
       .replace(/[\u3000\t]/g, " ")
       .replace(/\uFEFF/g, "");
+  }
+
+  /* ---- 姓名容错匹配（2026-10-16 加）
+   *
+   * 为什么要它：认人原来全靠 `text.includes(姓名)`，一个字符对不上就认不出。
+   * 老师的真实输入里到处都是偏差：
+   *   · 同音字 —— 「张景川」其实是「张璟川」
+   *   · 形近字 —— 「高智昂」和「高一铄」同姓易混
+   *   · 繁体/异体 —— 系统导出成「張三」
+   *   · 带尾巴 —— 「郝钰萱同学」「小董」「董佳泽妈妈」
+   * 认错人的代价比认不出大得多（会把分数写到别人头上），所以这里的分寸是：
+   * **只在「几乎肯定是他」时才认；拿不准就交给老师点选**（预览里标黄）。
+   * 参考了 Fuse.js 的「模糊匹配 + 阈值」思路，但它是 15KB 的库，
+   * 这个看板是零依赖单文件，所以按同样思路自己写 —— 就几十行。
+   */
+
+  /** 常见异体/繁体 → 简体（只收姓名里真会遇到的，不做全表） */
+  const VAR_CHAR = {
+    "張": "张", "劉": "刘", "陳": "陈", "趙": "赵", "孫": "孙", "楊": "杨", "黃": "黄",
+    "鄭": "郑", "韓": "韩", "馬": "马", "馮": "冯", "許": "许", "謝": "谢", "蕭": "萧",
+    "羅": "罗", "蘇": "苏", "葉": "叶", "呂": "吕", "盧": "卢", "鄧": "邓", "蔣": "蒋",
+    "顧": "顾", "沈": "沈", "陸": "陆", "範": "范", "龔": "龚", "董": "董", "憲": "宪",
+    "妍": "妍", "峰": "峰", "鋒": "锋", "傑": "杰", "潔": "洁", "強": "强", "靜": "静",
+    "龍": "龙", "艷": "艳", "豔": "艳", "鳳": "凤", "禕": "祎", "瑋": "玮", "燁": "烨",
+    "鏵": "铧", "銘": "铭", "澤": "泽", "鑫": "鑫", "樂": "乐", "東": "东", "華": "华",
+    "國": "国", "學": "学", "燦": "灿", "詩": "诗", "語": "语", "軒": "轩", "軒": "轩",
+    "鈺": "钰", "藝": "艺", "諾": "诺", "達": "达", "婉": "婉", "睿": "睿", "宸": "宸",
+    "淙": "淙", "皓": "皓", "婧": "婧", "嫻": "娴", "帥": "帅", "軍": "军", "儒": "儒",
+  };
+
+  /** 把字符串规整到「可比较」的样子：去尾巴、繁体转简、去空白标点 */
+  /* ---- 汉字转拼音（2026-10-16 加）
+   *
+   * 为什么需要：同音错字是输入里最大的一类偏差，而且**编辑距离救不了** ——
+   * 「闫昊宸」写成「闫浩辰」是两个字都错，编辑距离=2，按字比对认不出来；
+   * 但两者拼音都是 YANHAOCHEN，**折叠成拼音就直接相等**。
+   *
+   * 数据只有 3.6KB：411 个「边界汉字」+ 对应拼音，任意汉字二分查找落在哪个区间即得拼音。
+   * 边界表源自 Android HanziToPinyin（Apache-2.0），tiny-pinyin 整理（MIT）。
+   * 对比：pinyin-pro 主字典 353KB —— 那是给多音字/词组用的，姓名场景用不上。
+   * **零依赖：数据直接内联，不引任何库。**
+   */
+  const PY_UNIHANS = "阿哎安肮凹八挀扳邦勹陂奔伻屄边灬憋汃冫癶峬嚓偲参仓撡冊嵾曽叉芆辿伥抄车抻阷吃充抽出欻揣巛刅吹旾逴呲匆凑粗汆崔邨搓咑呆丹当刀嘚扥灯氐甸刁爹丁丟东吺厾耑垖吨多妸诶奀鞥儿发帆匚飞分丰覅仏紑夫旮侅甘冈皋戈给根刯工勾估瓜乖关光归丨呙哈咍佄夯茠诃黒拫亨噷叿齁乎花怀欢巟灰昏吙丌加戋江艽阶巾坕冂丩凥姢噘军咔开刊忼尻匼肎劥空抠扝夸蒯宽匡亏坤扩垃来兰啷捞肋勒崚哩俩奁良撩毟拎伶溜囖龙瞜噜驴娈掠抡罗呣妈埋嫚牤猫么呅门甿咪宀喵乜民名谬摸哞毪嗯拏腉囡囔孬疒娞恁能妮拈娘鸟捏囜宁妞农羺奴女奻疟黁挪喔讴妑拍眅乓抛呸喷匉丕囨剽氕姘乒钋剖仆七掐千呛悄癿亲靑卭丘区峑缺夋呥穣娆惹人扔日茸厹邚挼堧婑瞤捼仨毢三桒掻閪森僧杀筛山伤弰奢申升尸収书刷衰闩双脽吮说厶忪捜苏狻夊孙唆他囼坍汤夲忑熥剔天旫帖厅囲偷凸湍推吞乇穵歪弯尣危昷翁挝乌夕虲仙乡灱些心星凶休吁吅削坃丫恹央幺倻一囙应哟佣优扜囦曰晕帀災兂匨傮则贼怎増扎捚沾张佋蜇贞争之中州朱抓拽专妆隹宒卓乲宗邹租钻厜尊昨兙";
+  const PY_PINYINS = "A,AI,AN,ANG,AO,BA,BAI,BAN,BANG,BAO,BEI,BEN,BENG,BI,BIAN,BIAO,BIE,BIN,BING,BO,BU,CA,CAI,CAN,CANG,CAO,CE,CEN,CENG,CHA,CHAI,CHAN,CHANG,CHAO,CHE,CHEN,CHENG,CHI,CHONG,CHOU,CHU,CHUA,CHUAI,CHUAN,CHUANG,CHUI,CHUN,CHUO,CI,CONG,COU,CU,CUAN,CUI,CUN,CUO,DA,DAI,DAN,DANG,DAO,DE,DEN,DENG,DI,DIAN,DIAO,DIE,DING,DIU,DONG,DOU,DU,DUAN,DUI,DUN,DUO,E,EI,EN,ENG,ER,FA,FAN,FANG,FEI,FEN,FENG,FIAO,FO,FOU,FU,GA,GAI,GAN,GANG,GAO,GE,GEI,GEN,GENG,GONG,GOU,GU,GUA,GUAI,GUAN,GUANG,GUI,GUN,GUO,HA,HAI,HAN,HANG,HAO,HE,HEI,HEN,HENG,HM,HONG,HOU,HU,HUA,HUAI,HUAN,HUANG,HUI,HUN,HUO,JI,JIA,JIAN,JIANG,JIAO,JIE,JIN,JING,JIONG,JIU,JU,JUAN,JUE,JUN,KA,KAI,KAN,KANG,KAO,KE,KEN,KENG,KONG,KOU,KU,KUA,KUAI,KUAN,KUANG,KUI,KUN,KUO,LA,LAI,LAN,LANG,LAO,LE,LEI,LENG,LI,LIA,LIAN,LIANG,LIAO,LIE,LIN,LING,LIU,LO,LONG,LOU,LU,LV,LUAN,LVE,LUN,LUO,M,MA,MAI,MAN,MANG,MAO,ME,MEI,MEN,MENG,MI,MIAN,MIAO,MIE,MIN,MING,MIU,MO,MOU,MU,N,NA,NAI,NAN,NANG,NAO,NE,NEI,NEN,NENG,NI,NIAN,NIANG,NIAO,NIE,NIN,NING,NIU,NONG,NOU,NU,NV,NUAN,NVE,NUN,NUO,O,OU,PA,PAI,PAN,PANG,PAO,PEI,PEN,PENG,PI,PIAN,PIAO,PIE,PIN,PING,PO,POU,PU,QI,QIA,QIAN,QIANG,QIAO,QIE,QIN,QING,QIONG,QIU,QU,QUAN,QUE,QUN,RAN,RANG,RAO,RE,REN,RENG,RI,RONG,ROU,RU,RUA,RUAN,RUI,RUN,RUO,SA,SAI,SAN,SANG,SAO,SE,SEN,SENG,SHA,SHAI,SHAN,SHANG,SHAO,SHE,SHEN,SHENG,SHI,SHOU,SHU,SHUA,SHUAI,SHUAN,SHUANG,SHUI,SHUN,SHUO,SI,SONG,SOU,SU,SUAN,SUI,SUN,SUO,TA,TAI,TAN,TANG,TAO,TE,TENG,TI,TIAN,TIAO,TIE,TING,TONG,TOU,TU,TUAN,TUI,TUN,TUO,WA,WAI,WAN,WANG,WEI,WEN,WENG,WO,WU,XI,XIA,XIAN,XIANG,XIAO,XIE,XIN,XING,XIONG,XIU,XU,XUAN,XUE,XUN,YA,YAN,YANG,YAO,YE,YI,YIN,YING,YO,YONG,YOU,YU,YUAN,YUE,YUN,ZA,ZAI,ZAN,ZANG,ZAO,ZE,ZEI,ZEN,ZENG,ZHA,ZHAI,ZHAN,ZHANG,ZHAO,ZHE,ZHEN,ZHENG,ZHI,ZHONG,ZHOU,ZHU,ZHUA,ZHUAI,ZHUAN,ZHUANG,ZHUI,ZHUN,ZHUO,ZI,ZONG,ZOU,ZU,ZUAN,ZUI,ZUN,ZUO".split(",");
+  // 少数多音/易错字单独钉死（边界表按区间取，覆盖不到例外）
+  const PY_EXC = { "曾": "ZENG", "沈": "SHEN", "嗲": "DIA", "碡": "ZHOU", "聒": "GUO", "炔": "QUE", "蚵": "KE", "砉": "HUA", "嬤": "MO", "嬷": "MO", "蹒": "PAN", "蹊": "XI", "丬": "PAN", "霰": "XIAN", "莘": "XIN", "豉": "CHI", "饧": "XING", "筠": "JUN", "长": "CHANG", "帧": "ZHEN", "峙": "SHI", "郍": "NA", "芎": "XIONG", "谁": "SHUI" };
+
+  let _pyCollator = null;
+  function pyCollator() {
+    if (_pyCollator === null) {
+      try { _pyCollator = new Intl.Collator(["zh-Hans-CN", "zh-CN"]); } catch (e) { _pyCollator = false; }
+    }
+    return _pyCollator;
+  }
+
+  /** 单个汉字 → 拼音（大写、无声调）；非汉字原样返回 */
+  function pyOfChar(ch) {
+    if (PY_EXC[ch]) return PY_EXC[ch];
+    if (ch.charCodeAt(0) < 256) return ch.toUpperCase();
+    const co = pyCollator();
+    if (!co) return ch;
+    if (co.compare(ch, PY_UNIHANS[0]) < 0) return ch;
+    if (co.compare(ch, PY_UNIHANS[PY_UNIHANS.length - 1]) > 0) return ch;
+    let begin = 0, end = PY_UNIHANS.length - 1, offset = -1, cmp = 0;
+    while (begin <= end) {
+      offset = (begin + end) >> 1;
+      cmp = co.compare(ch, PY_UNIHANS[offset]);
+      if (cmp === 0) break;
+      else if (cmp > 0) begin = offset + 1;
+      else end = offset - 1;
+    }
+    if (cmp < 0) offset--;
+    return PY_PINYINS[offset] || ch;
+  }
+
+  /** 整串 → 无声调拼音（小写）：「张璟川」→ zhangjingchuan */
+  const toPinyin = (s) => String(s || "").split("").map(pyOfChar).join("").toLowerCase();
+  /** 整串 → 拼音首字母：「张静怡」→ zjy */
+  const toPinyinInitials = (s) => String(s || "").split("").map((c) => {
+    const p = pyOfChar(c);
+    return p.length > 1 ? p[0] : p;
+  }).join("").toLowerCase();
+
+  function normalizeNamePart(t) {
+    let s = String(t || "");
+    s = s.replace(/(同学|学生|家长|妈妈|爸爸|妈妈咪|老师|小朋友|孩子)$/g, "");
+    s = s.replace(/[\s·・．.、,，:：;；!！?？()（）【】\[\]"'"']/g, "");
+    s = s.split("").map((c) => VAR_CHAR[c] || c).join("");
+    return s.trim();
+  }
+
+  /** 编辑距离（Levenshtein）—— 经典的模糊匹配底座，纯算法、零数据 */
+  function editDistance(a, b) {
+    if (a === b) return 0;
+    const m = a.length, n = b.length;
+    if (!m) return n;
+    if (!n) return m;
+    let prev = new Array(n + 1);
+    let cur = new Array(n + 1);
+    for (let j = 0; j <= n; j++) prev[j] = j;
+    for (let i = 1; i <= m; i++) {
+      cur[0] = i;
+      for (let j = 1; j <= n; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+      }
+      const t = prev; prev = cur; cur = t;
+    }
+    return prev[n];
+  }
+
+  /**
+   * 给一个「疑似姓名」的片段，在名单里找最像的人。
+   * 返回 { s, name, score }（没把握就返回 null）—— **宁可 null 也不猜**。
+   *
+   * 判定规则（按可信度从高到低）：
+   *   1. 完全相等 / 去掉尾巴后相等        → 铁定是他
+   *   2. 编辑距离 1 且长度≥3             → 差一个字（同音、形近、错别字），认
+   *   3. 片段是姓名的前后缀且长度≥2      → 「小董」「佳泽」这种叫法
+   *   4. 编辑距离 2 且长度≥4             → 只在前三条都没命中时兜底，且要求**明显比第二名像**
+   */
+  function bestNameMatch(frag, opts = {}) {
+    const q = normalizeNamePart(frag);
+    if (!q || q.length < 2) return null;
+    const minLen = opts.minLen || 2;
+    // 两字片段只认「精确相等」：中文两字组合概率太高，
+    // 「张雨」跟「张雨辰」、「王雨」跟「王宇航」都像 —— 这种时候必须闭嘴交给老师。
+    const strictTwo = q.length < 3;
+    const cands = [];
+    for (const s of DB.students) {
+      const full = normalizeNamePart(s.name);
+      if (!full || full.length < minLen) continue;
+      const core = normalizeNamePart(coreName(s.name));
+      const given = full.length >= 2 ? full.slice(1) : "";
+      let best = null;
+      const consider = (target, base) => {
+        if (!target) return;
+        let sc = -1;
+        if (q === target) sc = 100;
+        else if (core && q === core) sc = 96;
+        else if (strictTwo) return;              // 两字片段到此为止：不相等就不认
+        else {
+          // ① 拼音折叠：**同音不同字**（张璟川/张景川、闫昊宸/闫浩辰）在这里直接相等。
+          //    这是比编辑距离更可靠的信号 —— 两个字都写错时编辑距离=2 认不出，拼音却能对上。
+          const pq = toPinyin(q), pt = toPinyin(target);
+          if (pq && pq === pt && q.length >= 2) sc = 88;
+          else {
+            const d = editDistance(q, target);
+            if (d === 1 && Math.min(q.length, target.length) >= 3) sc = 80;
+            else if (d === 2 && Math.min(q.length, target.length) >= 4) sc = 58;
+            // 前后缀：只认长度≥2 的，否则「王」会命中一堆人
+            else if (q.length >= 2 && target.includes(q)) sc = 70;
+            else if (given && q.length >= 2 && given.includes(q)) sc = 66;
+          }
+        }
+        if (sc > 0 && (!best || sc > best.sc)) best = { sc, base };
+      };
+      consider(full, s.name);
+      if (core && core !== full) consider(core, s.name);
+      if (given && given.length >= 2) consider(given, s.name);
+      if (best) cands.push({ s, sc: best.sc, base: best.base, full });
+    }
+    if (!cands.length) return null;
+    cands.sort((a, b) => b.sc - a.sc || a.full.length - b.full.length);
+    const top = cands[0];
+    // 兜底档（编辑距离 2 / 前缀这类）必须**明显**领先第二名才敢认，
+    // 否则「王宇航」和「王勇翔」之间就会乱点鸳鸯谱
+    if (top.sc < 96) {
+      const second = cands.find((c) => c.s !== top.s);
+      if (second && second.sc >= top.sc - 8) return null;   // 两个都像 = 谁都别认，交给老师
+    }
+    return { s: top.s, name: top.s.name, score: top.sc };
   }
 
   /**
@@ -9409,7 +9617,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
 
     const out = [];
     for (const clean of lines) {
-      let sid = "", name = "", rest = clean;
+      let sid = "", name = "", rest = clean, fuzzy = 0;
 
       const hit = matchLineStudent(clean);
       if (hit) {
@@ -9440,6 +9648,18 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         const s = DB.students.find((x) => x.name === name) ||
                   DB.students.find((x) => coreName(x.name) === name);
         if (s) sid = s.id;
+        // 精确名对不上 → 交给容错匹配（繁简/同音/形近/多一字少一字）。
+        // 只在「几乎肯定是他」时才认，拿不准就留空让老师点选（预览里标黄）
+        else {
+          const fm = bestNameMatch(name);
+          if (fm) { sid = fm.s.id; name = fm.s.name; fuzzy = fm.score; }
+        }
+      }
+      // 连名字都没认出来（比如整句都是噪声、或者只写了个错别字）→ 拿这一行再容错一次
+      if (!sid && !name) {
+        const frag = clean.replace(/[\d\s/:：.%-]/g, "").trim();
+        const fm = frag ? bestNameMatch(frag) : null;
+        if (fm) { sid = fm.s.id; name = fm.s.name; fuzzy = fm.score; }
       }
 
       // 分数：优先取「数字+分」这种明确写法（家长话里「考了107分」），否则取最后一个数字
@@ -9454,7 +9674,8 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       }
 
       if (!name && !sid && score === null) continue;   // 整行都是噪声
-      out.push({ sid, name: name || "未认出", score, full, raw: clean });
+      // fuzzy>0 表示这一行是「猜」出来的（不是原文里逐字对上的），预览里要标出来让老师复核
+      out.push({ sid, name: name || "未认出", score, full, raw: clean, fuzzy });
     }
     return out;
   }
@@ -9519,9 +9740,11 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       same ? upd++ : add++;
     }
 
+    const guessed = SC.filter((r) => r.sid && r.fuzzy).length;
     $("scoreHint").innerHTML = `识别到 <b>${SC.length}</b> 行，认出 <b>${matched}</b> 人` +
       `，其中 <b>${withScore}</b> 条能写入` +
       (matched < SC.length ? `，还有 ${SC.length - matched} 行要你手动指定学生` : "") + "。" +
+      (guessed ? ` <b style="color:var(--amber)">有 ${guessed} 行是「猜」的（原文里名字对不上，按同音/形近/繁简推的）—— 请扫一眼下面带「猜」标记的行。</b>` : "") +
       (dup.size ? ` <b style="color:var(--red)">有 ${dup.size} 人重复出现，写入时只留最后一条。</b>` : "");
     $("scoreMode").innerHTML = `考试「<b>${esc(t.name || "（未填名称）")}</b>」${esc(t.date)} · 满分 ${t.full}。` +
       ` 同名同日期的已有成绩会被<b>更新</b>（${upd} 条），其余<b>新增</b>（${add} 条）——所以重复导入不会变成两次考试。`;
@@ -9536,7 +9759,9 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
             style="width:100%;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:#fff"></td>
           <td><input type="number" data-sc="full" data-i="${i}" value="${typeof r.full === "number" ? r.full : ""}" placeholder="${t.full}"
             style="width:100%;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:#fff"></td>
-          <td><span class="hint" style="margin:0">${esc(r.raw)}</span>${dup.has(r.sid) && r.sid ? ' <b style="color:var(--red)">重复</b>' : ""}</td>
+          <td><span class="hint" style="margin:0">${esc(r.raw)}</span>${
+            r.fuzzy ? ` <b style="color:var(--amber)" title="原文里没有这个名字，是按同音/形近/繁简推出来的，写错了会记到别人头上">猜</b>` : ""}${
+            dup.has(r.sid) && r.sid ? ' <b style="color:var(--red)">重复</b>' : ""}</td>
           <td><span class="x" data-scdel="${i}" style="cursor:pointer;color:var(--ink-3)">✕</span></td>
         </tr>`).join("")}</tbody></table></div>`;
 
@@ -9890,16 +10115,30 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       // 去掉可能粘进来的序号/符号
       const nm = tok.replace(/^[\d.、)）\-–—•*]+/, "").trim();
       if (!nm) continue;
-      const s = DB.students.find((x) => x.name === nm) ||
-                DB.students.find((x) => coreName(x.name) === nm) ||
-                DB.students.find((x) => coreName(x.name) === coreName(nm));
-      CK_BATCH.push({ sid: s ? s.id : "", name: nm, matched: !!s, status: pendingStatus || null });
+      // 先逐字精确对，对不上再用容错匹配（繁简/同音/形近/带尾巴）——
+      // 名单是「批量导入」的场景，认错人会把状态写到别人头上，所以容错也只认有把握的
+      const m2 = matchBatchName(nm);
+      CK_BATCH.push({ sid: m2.s ? m2.s.id : "", name: nm, matched: !!m2.s, status: pendingStatus || null, fuzzy: m2.fuzzy });
     }
 
     const matched = CK_BATCH.filter((r) => r.matched).length;
     $("ckBatchResult").innerHTML = `识别到 <b>${CK_BATCH.length}</b> 个名字，认出 <b>${matched}</b> 人` +
       (CK_BATCH.length - matched ? `，<b style="color:var(--red)">${CK_BATCH.length - matched} 个没对上</b>（不写入）` : "") + "。";
     $("ckBatchResult").dataset.ready = "1";
+  }
+
+  /**
+   * 批量导入名单时认人（打卡 / 电联 共用）。
+   * 先走原来的精确匹配（姓名 / 去尾巴 / 去尾巴后再去尾巴），
+   * 再退回容错匹配。返回 { s, fuzzy }：s 就是名单里那个**真对象**，fuzzy=true 表示是猜出来的。
+   */
+  function matchBatchName(nm) {
+    const exact = DB.students.find((x) => x.name === nm) ||
+                  DB.students.find((x) => coreName(x.name) === nm) ||
+                  DB.students.find((x) => coreName(x.name) === coreName(nm));
+    if (exact) return { s: exact, fuzzy: false };
+    const fm = bestNameMatch(nm);
+    return fm ? { s: fm.s, fuzzy: true } : { s: null, fuzzy: false };
   }
 
   function saveCkBatch() {
@@ -10898,10 +11137,8 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       if (CALL_STATUSES.includes(tok)) { pending = tok; continue; }
       const nm = tok.replace(/^[\d.、)）\-–—•*]+/, "").trim();
       if (!nm) continue;
-      const s = DB.students.find((x) => x.name === nm) ||
-                DB.students.find((x) => coreName(x.name) === nm) ||
-                DB.students.find((x) => coreName(x.name) === coreName(nm));
-      CALL_BATCH.push({ sid: s ? s.id : "", name: nm, matched: !!s, status: pending || null });
+      const m3 = matchBatchName(nm);
+      CALL_BATCH.push({ sid: m3.s ? m3.s.id : "", name: nm, matched: !!m3.s, status: pending || null, fuzzy: m3.fuzzy });
     }
     const matched = CALL_BATCH.filter((r) => r.matched).length;
     $("clBatchResult").innerHTML = `识别到 <b>${CALL_BATCH.length}</b> 个名字，认出 <b>${matched}</b> 人` +
@@ -11763,9 +12000,26 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     }
   });
 
+  /* 申请「持久化存储」（2026-10-16 加）
+   *
+   * 看板的数据只在本机浏览器里，没有云端备份。而浏览器对本地数据的默认策略是
+   * **best-effort**：磁盘紧张时可能在不通知用户的情况下把整个源的数据清掉。
+   * `navigator.storage.persist()` 通过之后，除非用户手动删，数据不会被自动清理。
+   * 对「家长聊天 + 成绩 + 答题卡照片」这种没法重来的资料，这道保险值得加。
+   * 纯浏览器原生 API，零依赖、零体积；不支持或用户拒绝都只是静默降级，不打扰老师。
+   */
+  async function askPersistentStorage() {
+    try {
+      if (!navigator.storage || !navigator.storage.persist) return;
+      if (await navigator.storage.persisted()) return;      // 已经是持久的，别反复问
+      await navigator.storage.persist();                    // 浏览器自行决定（多数无弹窗）
+    } catch (e) { /* 不支持就算了，不影响主流程 */ }
+  }
+
   DB = load();
   render();
   loadCustomWall();   // 自定义背景图存在 IndexedDB，异步取回来后再刷一次主题
+  askPersistentStorage();
 })();
 </script>
 </body>
