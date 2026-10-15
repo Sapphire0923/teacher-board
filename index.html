@@ -570,6 +570,9 @@ button.aibtn { padding: 4px 10px; font-size: 12.5px; }
 .drop .t { font-weight: 650; font-size: 16px; }
 .drop .s { color: var(--ink-3); font-size: 13px; margin-top: 6px; }
 .or { text-align: center; color: var(--ink-3); font-size: 12.5px; margin: 16px 0; }
+/* 「暂无名单，直接使用」下面那行小字 */
+.onboard .skip-hint { text-align: center; color: var(--ink-3); font-size: 12.5px;
+  margin: 7px 0 0; line-height: 1.6; }
 .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
 .tile { border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--panel); }
 .tile h4 { margin: 0 0 6px; font-size: 14px; }
@@ -1609,6 +1612,13 @@ input[type=range] { accent-color: var(--accent); }
       maxScore: 3,
       // 教师自定义的考试名清单（成绩侧栏按它分类）。空 = 从学生成绩里自动归纳。
       examNames: [],
+      /**
+       * 用户在引导页点过「暂无名单，直接使用」。
+       * 没有名单时 render() 默认强制回引导页，这个开关就是那道口子——
+       * 不然没有学生名单的人会被永远卡在导入界面（2026-10-15 用户反馈）。
+       * 一旦真的导进/载入了名单就清掉，下次没数据时该回引导页还是回。
+       */
+      noRoster: false,
     };
   }
 
@@ -2393,7 +2403,8 @@ input[type=range] { accent-color: var(--accent); }
     fillLevelMins();   // 每次渲染前补齐等级门槛，新增/导入的等级才不会永远评不上
     applyTheme();
     document.title = (DB.config.className ? DB.config.className + " · " : "") + DB.config.title;
-    if (!DB.students.length) return renderOnboard();
+    // 没名单就强制回引导页 —— 除非用户自己点了「暂无名单，直接使用」（见 defaultConfig 的 noRoster）
+    if (!DB.students.length && !DB.config.noRoster) return renderOnboard();
     renderApp();
   }
 
@@ -2521,6 +2532,12 @@ input[type=range] { accent-color: var(--accent); }
           <input type="file" id="fileCsv" accept=".csv,.txt" hidden>
         </div>
 
+        <div class="rowset" style="justify-content:center;margin:16px 0 0">
+          <button class="btn" id="obNoRoster">暂无名单，直接使用</button>
+        </div>
+        <p class="skip-hint">手上还没有名单也没关系，先进去用；想加人的时候点右上角「换名单」，
+        或者「＋ 加学员」一个个加。</p>
+
         <div class="sect" style="margin-top:28px">
           <div class="grid3">
             <div class="tile"><h4>🔒 默认不上传</h4><p>没有服务器、没有账号。名单、聊天记录、备注都不出这台电脑。
@@ -2532,7 +2549,13 @@ input[type=range] { accent-color: var(--accent); }
       </div></section></main></div>`;
 
     bindCommon();
-    $("obSample").onclick = () => { DB.students = sampleStudents(); DB.config.className = "示例班级"; save(); render(); toast("已载入示例数据"); };
+    $("obSample").onclick = () => { DB.students = sampleStudents(); DB.config.className = "示例班级"; DB.config.noRoster = false; save(); render(); toast("已载入示例数据"); };
+    // 「暂无名单，直接使用」：立一个开关，让 render() 之后不再把人拽回引导页
+    $("obNoRoster").onclick = () => {
+      DB.config.noRoster = true;
+      save(); render();
+      toast("先空着用 —— 想加人时点右上角「换名单」");
+    };
     $("drop").onclick = () => $("fileXlsx").click();
     $("fileXlsx").onchange = (e) => e.target.files[0] && handleXlsxFile(e.target.files[0]);
     $("obCsv").onclick = () => $("fileCsv").click();
@@ -2953,6 +2976,7 @@ input[type=range] { accent-color: var(--accent); }
       DB.config.levels.push({ key: s.level, label: s.level, color: "#8d97a6" });
     }
     DB.daily = { date: "", ids: [], done: [] };   // 名单变了，今日队列作废重排
+    DB.config.noRoster = false;   // 名单真进来了，「暂无名单，直接使用」这道口子收回去
     save();
     $("mImport").classList.remove("open");
     toast(summary);
@@ -3337,7 +3361,14 @@ input[type=range] { accent-color: var(--accent); }
     };
 
     const stage = $("stage");
-    if (!list.length) { stage.innerHTML = `<div class="empty-hint">没有符合条件的学员</div>`; return; }
+    // 一个人都没有 ≠ 筛掉了。空名单是「暂无名单，直接使用」进来的，得告诉人家下一步在哪。
+    if (!list.length) {
+      stage.innerHTML = DB.students.length
+        ? `<div class="empty-hint">没有符合条件的学员</div>`
+        : `<div class="empty-hint">这里还空着 —— 右上角「换名单」导入表格，
+           或者「＋ 加学员」先加两个人试试</div>`;
+      return;
+    }
 
     if (view.mode === "table") {
       const cols = [["name", "姓名"], ...(hasLevels() ? [["level", "等级"]] : []),
