@@ -655,6 +655,114 @@ input[type=range] { accent-color: var(--accent); }
   @page { size: A4 portrait; margin: 12mm 14mm; }
 }
 
+
+
+/* ==========================================================================
+   答题卡：核对弹窗 + 分析 + 到期中的复习计划 + 总览页
+   设计口径：所有「AI 读出来的东西」都必须先过核对页、老师点了「确认并写入」
+   才允许落库；没确认过，分析和计划按钮一律不许点（app.js 里 paperDone() 把守）。
+   ========================================================================== */
+
+/* ---- 核对弹窗 ---- */
+.pap-ov { position: fixed; inset: 0; z-index: 90; background: rgba(20, 22, 26, .42);
+  display: flex; align-items: center; justify-content: center; padding: 24px; }
+.pap-dlg { width: min(1080px, 96vw); max-height: 92vh; display: flex; flex-direction: column;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .22); overflow: hidden; }
+.pap-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+  border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.pap-head b { font-size: 14px; }
+.pap-tip { margin: 0; padding: 10px 16px; font-size: 12px; line-height: 1.7;
+  color: var(--ink-2); background: var(--panel-3); border-bottom: 1px solid var(--line); }
+.pap-tip b { color: var(--red); }
+.pap-mock { margin: 0; padding: 9px 16px; font-size: 12px; line-height: 1.7;
+  background: var(--amber-soft); color: var(--amber); border-bottom: 1px solid var(--amber-line); }
+.pap-body { flex: 1; min-height: 0; display: flex; gap: 0; overflow: hidden; }
+.pap-left { width: 300px; flex: none; border-right: 1px solid var(--line);
+  padding: 12px 14px; overflow: auto; }
+.pap-right { flex: 1; min-width: 0; padding: 12px 16px; overflow: auto; }
+.pap-body h5 { margin: 12px 0 6px; font-size: 12px; color: var(--ink-3); font-weight: 600; }
+.pap-body h5:first-child { margin-top: 0; }
+.pap-thumbs { display: flex; flex-wrap: wrap; gap: 8px; }
+.pap-thumb { width: 128px; border: 1px solid var(--line); border-radius: 6px;
+  cursor: zoom-in; background: #fff; }
+.pap-thumb:hover { border-color: var(--accent); }
+.pap-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; flex-wrap: wrap; }
+.pap-ck { flex: none; display: flex; align-items: center; }
+.pap-k { width: 76px; flex: none; font-size: 12.5px; color: var(--ink-2); }
+.pap-v { flex: 1; min-width: 120px; padding: 4px 8px; font-size: 12.5px;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2, #fff); }
+.pap-ok { margin: 8px 0; padding: 7px 10px; font-size: 12.5px; border-radius: 6px;
+  background: var(--green-soft); color: var(--green); border: 1px solid var(--green-line); }
+.pap-warn { margin: 8px 0; padding: 8px 10px; font-size: 12.5px; line-height: 1.7;
+  border-radius: 6px; background: var(--red-soft); color: var(--red); border: 1px solid var(--red-line); }
+.pap-pick { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.pap-pick label { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ink-2); }
+.pap-tab { width: 100%; border-collapse: collapse; font-size: 12px; }
+.pap-tab th, .pap-tab td { border: 1px solid var(--line); padding: 4px 8px; text-align: left; }
+.pap-tab th { background: var(--panel-3); font-weight: 600; color: var(--ink-2); }
+.pap-ansbox { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12.5px; }
+.pap-ans { color: var(--ink-2); }
+.pap-ans b { color: var(--ink); }
+.pap-none { color: var(--ink-3); font-size: 12px; }
+.pap-unread { margin: 0; padding-left: 18px; font-size: 12px; color: var(--ink-2); line-height: 1.8; }
+.pap-foot { display: flex; align-items: center; gap: 8px; padding: 11px 16px;
+  border-top: 1px solid var(--line); background: var(--panel-2, #fff); }
+
+/* ---- 详情页里：答题卡按钮条 ---- */
+.papareabar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 8px; border-top: 1px dashed var(--line); padding-top: 8px; }
+
+/* ---- 待核对状态用的黄色 chip（.chip.warn） ---- */
+.chip.warn { background: var(--amber-soft); color: var(--amber); border-color: var(--amber-line); }
+
+/* ---- 到期中的复习计划 ---- */
+.planmid { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 2px 0 9px; }
+.planmid-k { font-size: 12.5px; color: var(--ink-2); }
+.planmid input[type="date"] { padding: 3px 7px; font-size: 12.5px;
+  border: 1px solid var(--line); border-radius: 6px; }
+.planhead { font-size: 12.5px; line-height: 1.7; color: var(--ink); margin-bottom: 8px; }
+.planhead .hint-inline { display: block; margin-top: 2px; }
+.planlist { display: flex; flex-direction: column; gap: 7px; margin-bottom: 10px; }
+.planrow { display: flex; align-items: flex-start; gap: 8px; padding: 7px 9px;
+  border: 1px solid var(--line); border-radius: 7px; background: var(--panel-2, #fff); }
+.planrow.done { opacity: .58; }
+.planrow.done .plan-content { text-decoration: line-through; }
+.planck { flex: none; padding-top: 1px; }
+.plan-period { flex: none; width: 88px; font-size: 11.5px; color: var(--amber); font-weight: 600; }
+.plan-main { flex: 1; min-width: 0; }
+.plan-content { font-size: 12.5px; color: var(--ink); line-height: 1.6; }
+.plan-how { font-size: 12px; color: var(--ink-2); line-height: 1.65; margin-top: 2px; }
+.plan-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 4px;
+  font-size: 11px; color: var(--ink-3); }
+
+/* ---- 侧栏「答题卡」总览页 ---- */
+.pap-page { padding: 2px 0 24px; }
+.pap-midbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin: 9px 0 12px; padding: 9px 12px; background: var(--panel);
+  border: 1px solid var(--line); border-radius: var(--radius); }
+.pap-mid-k { font-size: 12.5px; color: var(--ink-2); }
+.pap-midbar input[type="date"] { padding: 3px 7px; font-size: 12.5px;
+  border: 1px solid var(--line); border-radius: 6px; }
+.pap-empty { padding: 30px 18px; text-align: center; font-size: 13px; line-height: 2.1;
+  color: var(--ink-2); background: var(--panel); border: 1px dashed var(--line);
+  border-radius: var(--radius); }
+.pap-list { display: flex; flex-direction: column; gap: 6px; }
+.pap-row { display: flex; align-items: center; gap: 9px; padding: 8px 11px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 7px;
+  cursor: pointer; flex-wrap: wrap; }
+.pap-row:hover { border-color: var(--accent); background: var(--accent-soft); }
+.pap-name { flex: none; width: 84px; font-size: 13px; font-weight: 600; }
+.pap-exam { flex: 1; min-width: 110px; font-size: 12.5px; color: var(--ink-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pap-date { flex: none; width: 92px; font-size: 11.5px; color: var(--ink-3); }
+.pap-score { flex: none; width: 72px; font-size: 12.5px; color: var(--ink); text-align: right; }
+
+@media (max-width: 820px) {
+  .pap-body { flex-direction: column; overflow: auto; }
+  .pap-left { width: auto; border-right: none; border-bottom: 1px solid var(--line); }
+  .plan-period { width: auto; }
+}
 </style>
 </head>
 <body>
@@ -1619,6 +1727,11 @@ input[type=range] { accent-color: var(--accent); }
        * 一旦真的导进/载入了名单就清掉，下次没数据时该回引导页还是回。
        */
       noRoster: false,
+      /**
+       * 最近一次要考的「大考」日期，复习计划按它从今天排到那天。
+       * 例：{ midterm: "2025-11-06" }。空 = 没设，排计划时按 4 周估算。
+       */
+      examTarget: { midterm: "" },
     };
   }
 
@@ -2334,6 +2447,8 @@ input[type=range] { accent-color: var(--accent); }
     headCompact: false,
     // 离开独立页面（打卡/成绩/电联）后该回到哪个列表模式：卡片 / 表格 / 待跟进
     listMode: "cards",
+    // 答题卡核对页：{ sid, eid }（null = 没打开）
+    paperOpen: null,
   };
   // 详情面板的滚动位置（面板很长，重绘时要放回原位）
   let _detScroll = 0;
@@ -3005,6 +3120,7 @@ input[type=range] { accent-color: var(--accent); }
               <button data-mode="checkin" class="${view.mode === "checkin" ? "on" : ""}">语文打卡</button>
               <button data-mode="score" class="${view.mode === "score" ? "on" : ""}">成绩</button>
               <button data-mode="call" class="${view.mode === "call" ? "on" : ""}">电联</button>
+              <button data-mode="paper" class="${view.mode === "paper" ? "on" : ""}">答题卡</button>
             </div>
             <button class="btn primary" id="btnQuick">快速录入</button>
             <button class="btn" id="btnChat">导入聊天</button>
@@ -3091,6 +3207,13 @@ input[type=range] { accent-color: var(--accent); }
       <span style="display:flex;align-items:center;min-width:0"><span class="dot" style="background:#c47f17"></span><span>电联</span></span>
       <span class="n">${callBatches}</span></button>`;
 
+    // 答题卡入口（常驻）：交答题卡 → 识别 → 核对 → 按板块分析 → 排到期中计划
+    const pQ = paperQueue();
+    const pPending = pQ.filter((x) => x.st === "todo" || x.st === "review").length;
+    html += `<button class="nav ck-nav ${view.mode === "paper" ? "on" : ""}" data-paper="1">
+      <span style="display:flex;align-items:center;min-width:0"><span class="dot" style="background:#8b5cf6"></span><span>答题卡</span></span>
+      <span class="n">${pPending ? pPending : pQ.length}</span></button>`;
+
     if (hasLevels()) {
       html += `<h3>等级</h3>` + DB.config.levels.map((l) =>
         row("level", l.key, l.label + (l.label.length <= 2 ? " 级" : ""), S.filter((s) => levelOf(s) === l.key).length, l.color)).join("");
@@ -3131,9 +3254,10 @@ input[type=range] { accent-color: var(--accent); }
       if (el.dataset.ck) { enterCheckin(); return; }
       if (el.dataset.score) { enterScore(); return; }
       if (el.dataset.call) { enterCall(); return; }
-      // 侧栏这些筛选全是「学员列表」的东西。停在打卡/成绩/电联页时，光改 filter 是没用的
+      if (el.dataset.paper) { enterPaper(); return; }
+      // 侧栏这些筛选全是「学员列表」的东西。停在打卡/成绩/电联/答题卡页时，光改 filter 是没用的
       // （那几页根本不看 filter），点下去像没反应——所以先把 mode 放回列表页再筛。
-      if (view.mode === "checkin" || view.mode === "score" || view.mode === "call") {
+      if (view.mode === "checkin" || view.mode === "score" || view.mode === "call" || view.mode === "paper") {
         view.mode = view.listMode;
         view.checkinTask = null; view.callBatch = null; view.scoreExam = null;
         syncSeg();
@@ -3298,6 +3422,7 @@ input[type=range] { accent-color: var(--accent); }
     if (view.mode === "checkin") { closeDetailIfNotSelected(); renderCheckin(); return; }
     if (view.mode === "score") { closeDetailIfNotSelected(); renderScorePage(); return; }
     if (view.mode === "call") { closeDetailIfNotSelected(); renderCallPage(); return; }
+    if (view.mode === "paper") { closeDetailIfNotSelected(); renderPaperPage(); return; }
 
     // 今日队列为空就自动排 5 个（必须在 visible() 之前，否则筛出来是空的）
     if (view.filter.kind === "today") {
@@ -3563,6 +3688,7 @@ input[type=range] { accent-color: var(--accent); }
           <input type="number" class="exfull" data-ex="full" value="${typeof e.full === "number" ? e.full : ""}" placeholder="满分">
         </div>
         ${attStripHtml(e)}
+        ${paperBlockHtml(s, e)}
         ${aiBlockHtml(s, e)}
       </div>`).join("");
   }
@@ -3865,6 +3991,750 @@ input[type=range] { accent-color: var(--accent); }
     </div>`;
   }
 
+  /* ==================== 答题卡：识别 → 核对 → 分析 → 复习计划 ====================
+   * 需求来源：用户 m16203。四条硬规矩，动这块之前先读一遍：
+   *   1. 识别结果先进核对页，**未确认前不写成绩、不生成分析**；
+   *   2. 图上没有的、看不清的，一律进 unreadable，**不猜、不补估分数**；
+   *   3. 姓名对不上或重名 → 让老师手动选人，**不做模糊匹配自动归档**；
+   *   4. 没有标准答案/评分细则 → 分析必须写明局限，不许写成「精准诊断」。
+   *
+   * 识别和生成都走已有的 DeepSeek 通道（老师自己的 key，浏览器直连）。
+   * 没填 key 时走**演示数据**，界面上会明确标出来 —— 不许假装已经接入。
+   */
+
+  /** 核对页里逐项核对的字段（数组顺序 = 显示顺序） */
+  const PAPER_FIELDS = [
+    ["student_name", "姓名", "text"],
+    ["class_name", "班级", "text"],
+    ["exam_name", "考试名称", "text"],
+    ["exam_date", "考试日期", "date"],
+    ["full_score", "满分", "num"],
+    ["total_score", "总分", "num"],
+  ];
+
+  /** 答题卡 = 这次考试下面传的图片，最多 6 张（跟已有的试卷分析口径一致） */
+  const paperCards = (e) => (e.attachments || []).filter(isImageAtt).slice(0, 6);
+  const paperHas = (e) => !!(e.paper && e.paper.ocr);
+  const paperDone = (e) => !!(e.paper && e.paper.status === "confirmed");
+  const isMockPaper = (e) => !!(e.paper && e.paper.mock);
+
+  const numOrNull = (v) => {
+    if (v === null || v === undefined || v === "") return null;
+    const n = Number(String(v).replace(/[^0-9.\-]/g, ""));
+    return isNaN(n) ? null : n;
+  };
+
+  /**
+   * 底层调用：sys + userContent（字符串，或 [{type:"text"|"image_url"}] 数组）。
+   * 注意 two 个坑：
+   *   1. 思考模式默认开着且 effort=high，思维链和正文共用 max_tokens，传几张图就能把正文挤成空；
+   *      这里一律显式关掉。
+   *   2. 模型名只能是 deepseek-flash —— 官方只有它吃图片。
+   */
+  async function dsCall(sys, userContent, opts) {
+    const o = opts || {};
+    const key = aiKey();
+    if (!key) throw new Error("还没填 API key");
+    const body = {
+      model: aiModel(),
+      messages: [{ role: "system", content: sys }, { role: "user", content: userContent }],
+      thinking: { type: "disabled" },
+      max_tokens: o.maxTokens || 6000,
+      stream: false,
+    };
+    if (o.json) body.response_format = { type: "json_object" };
+
+    let r;
+    try {
+      r = await fetch(DS_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+        body: JSON.stringify(body),
+      });
+    } catch (err) {
+      throw new Error("连不上 DeepSeek（" + err.message + "）。检查网络，或确认没被代理/防火墙拦了。");
+    }
+    let j = null;
+    try { j = await r.json(); } catch {}
+    if (!r.ok) {
+      const m = (j && j.error && (j.error.message || j.error.type)) || ("HTTP " + r.status);
+      if (r.status === 401) throw new Error("API key 不对（401）。去 platform.deepseek.com 重新复制一个完整的 key。");
+      if (r.status === 402) throw new Error("账户余额不足（402）。去 platform.deepseek.com 充值。");
+      if (r.status === 429) throw new Error("请求太频繁或额度到顶（429）。等一下再试。");
+      throw new Error("DeepSeek 返回错误：" + m);
+    }
+    const ch = (j.choices && j.choices[0]) || {};
+    const txt = String((ch.message || {}).content == null ? "" : ch.message.content).trim();
+    if (!txt) {
+      throw new Error("DeepSeek 返回了空内容（finish_reason=" + (ch.finish_reason || "无") + "）。"
+        + "先确认「设置 → AI 分析」里的模型名是 deepseek-flash —— 它是唯一能看图的。");
+    }
+    return { text: txt, usage: j.usage || {}, model: body.model };
+  }
+
+  const PAPER_SYS = "你是帮老师把答题卡录进系统的助理。只依据图片说话。"
+    + "看不清、被遮住、或图上根本没有的信息，一律记进 unreadable，绝不猜测、绝不按分值补估。"
+    + "你宁可说「无法确认」，也不许编一个看起来合理的数字。";
+
+  function paperAsk(n) {
+    return [
+      `请把这 ${n} 张答题卡图片提取成 JSON，只输出 JSON，不要解释、不要 markdown 代码块。`,
+      "结构：",
+      `{"student_name":string|null,"class_name":string|null,"exam_name":string|null,`,
+      ` "exam_date":"YYYY-MM-DD"|null,"full_score":number|null,"total_score":number|null,`,
+      ` "sections":[{"no":string,"name":string,"score":number|null,"full":number|null,"page":number}],`,
+      ` "answers":[{"no":string,"answer":string,"page":number}],`,
+      ` "confidence":{"字段名":0~1},`,
+      ` "unreadable":[{"page":number,"field_or_no":string,"reason":string}]}`,
+      "规则：",
+      "1. 只有图上明确写出的才填，否则一律 null；",
+      "2. 分数只能是图上实际出现的数字，**不许按分值推算、不许凑总分**；",
+      "3. 每个填了值的字段都在 confidence 里给一个 0~1 的把握度；",
+      "4. answers 只记学生实际作答（选择题记涂黑的字母）；**卡上没印 A/B/C/D 这类选项字母时，不许按第几列去猜字母**——那种情况写进 unreadable，reason 写「选项没印字母，认不出是哪个选项」；",
+      "5. 板块名和题号以试卷原文为准，别自己编一套；",
+      "6. 任何一页有任何地方读不出来，都要在 unreadable 里**逐条**写明（第几页、哪一项、为什么）。",
+    ].join("\n");
+  }
+
+  /** 没填 key 时的演示数据。它**不是**识别结果，界面上会挂「演示」标记 */
+  function mockPaper(s, e) {
+    return {
+      student_name: s.name,
+      class_name: DB.config.className || "",
+      exam_name: e.name || "",
+      exam_date: e.date || "",
+      full_score: typeof e.full === "number" ? e.full : null,
+      total_score: hasScore(e) ? e.score : null,
+      sections: [],
+      answers: [],
+      confidence: {},
+      unreadable: [{
+        page: 1, field_or_no: "全部",
+        reason: "没有填 API key，这条是演示数据，不是真的识别结果 —— 填上 key（设置 → AI 分析）再点一次才是真的认。",
+      }],
+    };
+  }
+
+  /** 点「识别答题卡」：读图 → 调 DeepSeek → 存成 draft，等老师核对 */
+  async function recognizePaper(s, e, btn) {
+    const cards = paperCards(e);
+    if (!cards.length) return toast("先在这次考试下面传答题卡图片（可以多张）");
+
+    if (!aiKey()) {
+      e.paper = {
+        status: "draft", at: new Date().toISOString(), model: "（演示，未接入）",
+        mock: true, ocr: mockPaper(s, e), checks: {},
+      };
+      save(); renderDetail(); openPaperReview(s.id, e.id);
+      return toast("没填 API key，先用演示数据把流程走一遍", 6000);
+    }
+
+    const old = btn ? btn.innerHTML : null;
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="busy"></span> 识别中…'; }
+    try {
+      const urls = [];
+      for (const a of cards) {
+        const blob = await FB().get(a.id);
+        if (!blob) continue;
+        if (blob.size > 20 * 1024 * 1024) continue;
+        urls.push(await blobToDataUrl(blob, 1600, 0.85));
+      }
+      if (!urls.length) throw new Error("图片读不出来（可能存储里已经没了），重新传一次");
+      const r = await dsCall(PAPER_SYS, [
+        { type: "text", text: paperAsk(urls.length) },
+        ...urls.map((u) => ({ type: "image_url", image_url: { url: u } })),
+      ], { json: true, maxTokens: 4000 });
+      let ocr = null;
+      try { ocr = JSON.parse(r.text); }
+      catch { throw new Error("识别结果不是合法 JSON，再点一次试试；老这样就把这张卡的清晰度提高点。"); }
+      e.paper = {
+        status: "draft", at: new Date().toISOString(), model: r.model,
+        mock: false, ocr, checks: {}, usage: r.usage,
+      };
+      save(); renderDetail(); openPaperReview(s.id, e.id);
+      toast("识别好了 —— 逐项核对完再确认写入");
+    } catch (err) {
+      console.error(err);
+      toast(err.message, 7000);
+      if (btn) { btn.disabled = false; btn.innerHTML = old; }
+    }
+  }
+
+  /* ---- 核对页（未确认前绝不写库） ---------------------------------- */
+
+  function openPaperReview(sid, eid) {
+    view.paperOpen = { sid, eid };
+    renderPaperReview();
+  }
+
+  function closePaperReview() {
+    view.paperOpen = null;
+    const el = $("paperOv");
+    if (el) el.remove();
+  }
+
+  function paperReviewCtx() {
+    const o = view.paperOpen;
+    if (!o) return null;
+    const s = DB.students.find((x) => x.id === o.sid);
+    if (!s) return null;
+    const e = (s.exams || []).find((x) => x.id === o.eid);
+    if (!e || !paperHas(e)) return null;
+    return { s, e, ocr: e.paper.ocr };
+  }
+
+  /** 姓名匹配：只做**精确**比对，模糊的绝不自动归档 */
+  function matchByName(name) {
+    const n = String(name || "").trim();
+    if (!n) return { kind: "empty", list: [] };
+    const list = DB.students.filter((x) => String(x.name || "").trim() === n);
+    if (!list.length) return { kind: "none", list: [] };
+    if (list.length > 1) return { kind: "dup", list };
+    return { kind: "one", list };
+  }
+
+  function confChip(v) {
+    if (typeof v !== "number") return "";
+    const pct = Math.round(v * 100);
+    const cls = v >= 0.9 ? "ok" : v >= 0.7 ? "ex" : "no";
+    return `<span class="chip ${cls}" title="模型自己给的把握度">${pct}%</span>`;
+  }
+
+  function renderPaperReview() {
+    const ctx = paperReviewCtx();
+    const old = $("paperOv");
+    if (!ctx) { if (old) old.remove(); return; }
+    const { s, e, ocr } = ctx;
+    const conf = ocr.confidence || {};
+    const cards = paperCards(e);
+    const mm = matchByName(ocr.student_name);
+    const cardTotal = numOrNull(ocr.total_score);
+    const cardFull = numOrNull(ocr.full_score);
+    const diff = cardTotal !== null && hasScore(e) && cardTotal !== e.score;
+
+    const fieldRows = PAPER_FIELDS.map(([k, label, kind]) => {
+      const v = ocr[k];
+      const shown = v === null || v === undefined ? "" : String(v);
+      const missing = shown === "";
+      return `<div class="pap-row">
+        <label class="pap-ck"><input type="checkbox" data-papck="${k}" ${missing ? "" : "checked"} ${missing ? "disabled" : ""}></label>
+        <span class="pap-k">${esc(label)}</span>
+        <input class="pap-v" data-papv="${k}" type="${kind === "num" ? "number" : kind === "date" ? "date" : "text"}"
+          value="${esc(shown)}" placeholder="${missing ? "图上没读到" : ""}">
+        ${confidenceOf(conf, k)}
+        ${missing ? `<span class="chip no" title="图上没有明确信息">图上没读到</span>` : ""}
+      </div>`;
+    }).join("");
+
+    const secRows = (ocr.sections || []).length
+      ? (ocr.sections || []).map((x) => `<tr>
+          <td>${esc(String(x.no || ""))}</td>
+          <td>${esc(String(x.name || ""))}</td>
+          <td>${x.score === null || x.score === undefined ? "—" : esc(String(x.score))}</td>
+          <td>${x.full === null || x.full === undefined ? "—" : esc(String(x.full))}</td>
+          <td>${esc(String(x.page || 1))}</td></tr>`).join("")
+      : `<tr><td colspan="5" class="pap-none">这次没读到板块分（卷子上可能就是没有）</td></tr>`;
+
+    const ansRows = (ocr.answers || []).length
+      ? (ocr.answers || []).map((x) => `<span class="pap-ans">${esc(String(x.no || "?"))}. <b>${esc(String(x.answer || "?"))}</b></span>`).join("")
+      : `<span class="pap-none">没读到作答</span>`;
+
+    const unread = (ocr.unreadable || []).length
+      ? (ocr.unreadable || []).map((u) => `<li>第 ${esc(String(u.page || "?"))} 页 · ${esc(String(u.field_or_no || "—"))}
+          <span class="hint-inline">${esc(String(u.reason || ""))}</span></li>`).join("")
+      : `<li class="pap-none">没有报「读不出来」的项</li>`;
+
+    let nameBox = "";
+    if (mm.kind === "one" && mm.list[0].id === s.id) {
+      nameBox = `<div class="pap-ok">✓ 卡上的姓名「${esc(ocr.student_name)}」和当前学生一致。</div>`;
+    } else if (mm.kind === "dup") {
+      nameBox = `<div class="pap-warn">⚠ 名单里有 ${mm.list.length} 个叫「${esc(ocr.student_name)}」的，<b>必须你自己选</b>这次算谁的：
+        <div class="pap-pick"><label><input type="radio" name="papSid" value="${esc(s.id)}" checked> 还是记在现在这个「${esc(s.name)}」身上</label>
+        ${mm.list.filter((x) => x.id !== s.id).map((x) =>
+          `<label><input type="radio" name="papSid" value="${esc(x.id)}"> 记在「${esc(x.name)}」身上</label>`).join("")}
+        </div></div>`;
+    } else if (mm.kind === "none") {
+      nameBox = `<div class="pap-warn">⚠ 卡上的姓名「${esc(ocr.student_name)}」在名单里<b>找不到</b>。确认一下是不是这个学生，别稀里糊涂归错人：
+        <div class="pap-pick"><label><input type="radio" name="papSid" value="${esc(s.id)}" checked> 就是他，继续</label>
+          <label><input type="radio" name="papSid" value=""> 先别写，我去看看</label></div></div>`;
+    } else {
+      nameBox = `<div class="pap-warn">⚠ 卡上没读到姓名（或者姓名被挡住了）。按你打开的这个学生「${esc(s.name)}」归：
+        <div class="pap-pick"><label><input type="radio" name="papSid" value="${esc(s.id)}" checked> 就是他</label>
+          <label><input type="radio" name="papSid" value=""> 先别写</label></div></div>`;
+    }
+
+    const diffBox = diff ? `<div class="pap-warn">⚠ 总分离对不上：这次考试原来记的是 <b>${e.score}</b>${typeof e.full === "number" ? "/" + e.full : ""}，卡上是 <b>${cardTotal}</b>${cardFull === null ? "" : "/" + cardFull}。
+      <div class="pap-pick">
+        <label><input type="radio" name="papDiff" value="card" checked> 用卡上的 ${cardTotal}</label>
+        <label><input type="radio" name="papDiff" value="keep"> 保留原来的 ${e.score}</label>
+      </div></div>` : "";
+
+    const mockBox = isMockPaper(e)
+      ? `<div class="pap-mock">🚧 <b>这是演示数据，不是真的识别结果</b> —— 你没填 API key，所以程序没联网。
+        填上 key（设置 → AI 分析）再点一次「重新识别」才是真的认。</div>`
+      : "";
+
+    const html = `<div class="pap-ov" id="paperOv">
+      <div class="pap-dlg">
+        <div class="pap-head">
+          <b>答题卡核对</b>
+          <span class="hint-inline">${esc(s.name)} · ${esc(e.name || "未命名考试")} · ${esc(String(e.paper.at || "").slice(0, 16).replace("T", " "))} · ${esc(String(e.paper.model || ""))}</span>
+          <span style="flex:1"></span>
+          <button class="btn ghost" id="papX">关闭</button>
+        </div>
+        <p class="pap-tip">下面是程序从图上读出来的东西。<b>核对无误再点「确认并写入」</b>——没确认之前，不会动这个学生的任何成绩，也不会生成分析。读错的、图上没有的，直接改或删。</p>
+        ${mockBox}
+        <div class="pap-body">
+          <div class="pap-left">
+            <h5>原图（${cards.length} 张，点开看大图）</h5>
+            <div class="pap-thumbs">${cards.map((a) => `<img class="pap-thumb" data-papimg="${esc(a.id)}" src="${esc(a.thumb || "")}" alt="${esc(a.name || "")}" title="${esc(a.name || "")}">`).join("")}</div>
+          </div>
+          <div class="pap-right">
+            <h5>识别字段（勾了才会写进去）</h5>
+            ${fieldRows}
+            ${nameBox}
+            ${diffBox}
+            <h5>板块得分</h5>
+            <table class="pap-tab"><thead><tr><th>题号</th><th>板块</th><th>得分</th><th>满分</th><th>页</th></tr></thead><tbody>${secRows}</tbody></table>
+            <h5>作答</h5>
+            <div class="pap-ansbox">${ansRows}</div>
+            <h5>无法确认的项</h5>
+            <ul class="pap-unread">${unread}</ul>
+          </div>
+        </div>
+        <div class="pap-foot">
+          <button class="btn ghost" id="papCancel">取消</button>
+          <span style="flex:1"></span>
+          <button class="btn" id="papAgain">重新识别</button>
+          <button class="btn primary" id="papOk">确认并写入</button>
+        </div>
+      </div>
+    </div>`;
+
+    if (old) old.outerHTML = html; else document.body.insertAdjacentHTML("beforeend", html);
+
+    const ov = $("paperOv");
+    $("papX").onclick = closePaperReview;
+    $("papCancel").onclick = closePaperReview;
+    $("papAgain").onclick = async () => {
+      const b = $("papAgain");
+      await recognizePaper(s, e, b);
+      if (paperHas(e)) renderPaperReview();
+    };
+    $("papOk").onclick = () => confirmPaper();
+    ov.onclick = (ev) => { if (ev.target === ov) closePaperReview(); };
+    ov.querySelectorAll("[data-papimg]").forEach((img) => img.onclick = async () => {
+      const blob = await FB().get(img.dataset.papimg);
+      if (!blob) return toast("这张图在存储里找不到了");
+      const u = URL.createObjectURL(blob);
+      const w = window.open(u, "_blank");
+      if (!w) toast("浏览器拦了新窗口 —— 允许一下弹窗就能看大图");
+      setTimeout(() => URL.revokeObjectURL(u), 60000);
+    });
+  }
+
+  function confidenceOf(conf, k) {
+    return confChip(conf[k]);
+  }
+
+  /**
+   * 确认写入。规矩：
+   *   - 只写老师勾了的字段；
+   *   - 姓名匹配选了「先别写」就整单不落库；
+   *   - 采纳的那个 sid 决定写到谁身上（重名时老师自己选的那个）。
+   */
+  function confirmPaper() {
+    const ctx = paperReviewCtx();
+    if (!ctx) return;
+    const { s, e } = ctx;
+    const ov = $("paperOv");
+    if (!ov) return;
+
+    const sidEl = ov.querySelector('input[name="papSid"]:checked');
+    const sid = sidEl ? sidEl.value : s.id;
+    if (!sid) { closePaperReview(); return toast("好，先不写。核对好了再点一次"); }
+
+    const target = DB.students.find((x) => x.id === sid);
+    if (!target) return toast("选的人找不到了，重开一次核对页");
+
+    // 这次考试：目标是本人就用当前这条；换了人就在目标学生下面新建一条同名的考试
+    let ex = e;
+    if (target.id !== s.id) {
+      ex = (target.exams ||= []).find((x) => String(x.name || "").trim() === String(e.name || "").trim());
+      if (!ex) {
+        ex = { id: uid(), name: e.name || "", date: e.date || "", attachments: [] };
+        (target.exams ||= []).push(ex);
+      }
+      ex.paper = e.paper;
+    }
+
+    const checks = {};
+    let wrote = [];
+    ov.querySelectorAll("[data-papck]").forEach((cb) => { if (cb.checked && !cb.disabled) checks[cb.dataset.papck] = true; });
+    const valOf = (k) => {
+      const el = ov.querySelector('[data-papv="' + k + '"]');
+      return el ? String(el.value || "").trim() : "";
+    };
+
+    if (checks.exam_name && valOf("exam_name")) {
+      const v = valOf("exam_name");
+      if (v !== (ex.name || "")) { ex.name = v; wrote.push("考试名称"); }
+    }
+    if (checks.exam_date && valOf("exam_date")) {
+      const v = valOf("exam_date");
+      if (v !== (ex.date || "")) { ex.date = v; wrote.push("日期"); }
+    }
+    if (checks.full_score && valOf("full_score")) {
+      const v = numOrNull(valOf("full_score"));
+      if (v !== null && v !== ex.full) { ex.full = v; wrote.push("满分"); }
+    }
+    if (checks.total_score && valOf("total_score")) {
+      const v = numOrNull(valOf("total_score"));
+      const dEl = ov.querySelector('input[name="papDiff"]:checked');
+      const keep = dEl && dEl.value === "keep";
+      if (!keep && v !== null && v !== ex.score) { ex.score = v; wrote.push("总分"); }
+      else if (keep) wrote.push("总分（保留原值）");
+    }
+
+    if (checks.student_name && valOf("student_name") && target.name !== valOf("student_name")) {
+      // 只提醒，不自动改名 —— 卡上的字未必比老师手上的准
+      toast("卡上的姓名是「" + valOf("student_name") + "」，没动你名单里的名字", 5000);
+    }
+
+    ex.paper = Object.assign({}, ex.paper, {
+      status: "confirmed", confirmedAt: new Date().toISOString(), checks,
+    });
+    delete ex.paper.analysis;
+
+    save();
+    renderStats(); renderSide(); renderStage(); renderDetail(); closePaperReview();
+    toast(wrote.length ? "已写入：" + wrote.join("、") + "（可以点「AI 分析」了）" : "确认好了，没改任何成绩（可以点「AI 分析」了）", 6000);
+  }
+
+  /* ---- 按板块分析（只有核对确认过才允许生成） ---------------------- */
+
+  const PAPER_ANA_SYS = "你是一位有经验的初中语文老师，正在帮同事分析一个学生这次考试的答题卡。"
+    + "铁律：只依据图片和给出的数据说话。"
+    + "必须把「图上能直接确认的事实」「根据作答表现作出的推测」「材料不足、无法判断的」三类严格分开写，不许混着说。"
+    + "系统里没有标准答案、也没有评分细则，所以你只能从「哪块丢分多、作答里出现了什么表现」去推，"
+    + "不许把推测写成诊断，不许编造这个学生为什么做错。"
+    + "禁止「不答全」「答不深」「基础不扎实」这类没有出处的空形容词 —— 每句话都要能指到题号或板块。";
+
+  function paperAnaAsk(s, e, ocr) {
+    const secs = (ocr.sections || []).map((x) =>
+      `- ${x.no || ""} ${x.name || "未命名板块"}：${x.score === null || x.score === undefined ? "未读到" : x.score}${x.full === null || x.full === undefined ? "" : "/" + x.full}`).join("\n");
+    const ans = (ocr.answers || []).map((x) => `${x.no || "?"}.${x.answer || "?"}`).join("  ");
+    return [
+      aiContext(s),
+      "",
+      "【这次考试】",
+      `名称：${anonymize(String(e.name || ""), s.name) || "未命名"}　日期：${e.date || "未记"}　`
+        + (hasScore(e) ? `总分 ${e.score}${typeof e.full === "number" ? "/" + e.full : ""}` : "总分未记"),
+      secs ? "【卷面板块得分（老师已核对）】\n" + secs : "【板块得分】卷面上没读到",
+      ans ? "【作答】" + ans : "【作答】没读到",
+      "",
+      "请严格按下面四段输出，哪段没材料就写「材料不足」，不要凑字数：",
+      "1. 【图上能直接确认的事实】只写图里看得见的：哪块扣了多少、哪几题是什么情况，带上题号。",
+      "2. 【据作答表现的推测】每条都必须写出「依据是什么」，并明确用「推测」这个词；推不出来就别写。",
+      "3. 【材料不足、无法判断的】逐条写明缺什么材料（比如缺标准答案、缺主观题作答内容），以及缺了它就没法判断什么。",
+      "4. 【分析局限 + 下一步最该补的三件事】先说清这份分析只能到什么程度，再给最多三条下周就能动手的具体动作，每条带可验收的标准。",
+    ].join("\n");
+  }
+
+  async function runPaperAnalysis(s, e, btn) {
+    if (!paperDone(e)) return toast("先把答题卡核对完、点过「确认并写入」，才能生成分析");
+    const old = btn ? btn.innerHTML : null;
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="busy"></span> 分析中…'; }
+    try {
+      const urls = [];
+      for (const a of paperCards(e)) {
+        const blob = await FB().get(a.id);
+        if (!blob || blob.size > 20 * 1024 * 1024) continue;
+        urls.push(await blobToDataUrl(blob, 1600, 0.85));
+      }
+      if (!urls.length) throw new Error("答题卡的图读不出来了，重新传一次再分析");
+      const r = await dsCall(PAPER_ANA_SYS, [
+        { type: "text", text: paperAnaAsk(s, e, e.paper.ocr) },
+        ...urls.map((u) => ({ type: "image_url", image_url: { url: u } })),
+      ], { maxTokens: 6000 });
+      e.paper.analysis = { text: r.text, at: new Date().toISOString(), model: r.model, imgs: urls.length, usage: r.usage };
+      save(); renderDetail();
+      toast("分析好了" + (r.usage && r.usage.total_tokens ? `（用了 ${r.usage.total_tokens} token）` : ""));
+    } catch (err) {
+      console.error(err);
+      toast(err.message, 7000);
+      if (btn) { btn.disabled = false; btn.innerHTML = old; }
+    }
+  }
+
+  /* ---- 到期中的复习计划 -------------------------------------------- */
+
+  function targetDate() {
+    DB.config.examTarget = DB.config.examTarget || { midterm: "" };
+    return String(DB.config.examTarget.midterm || "").trim();
+  }
+
+  const planOf = (s) => (s.plan && (s.plan.items || []).length ? s.plan : null);
+
+  const PLAN_SYS = "你是一位初中语文老师，正在给一个具体的学生排「从现在到期中考试」的复习计划。"
+    + "每一条任务必须能直接执行，必须写清六件事：日期或周期、练什么（具体到题型/篇目/册数）、怎么做、预计用时、完成标准、怎么复查。"
+    + "任务量要适合一个初中生，宁少而能做完，不要堆一堆做不完的。"
+    + "禁止「加强阅读」「多做练习」这种空话。"
+    + "不同学生的计划必须依据各自的失分点来排，不许只换名字。"
+    + "只依据给的材料，材料里没有的不要编；缺什么就在 notes 里说缺什么。";
+
+  function planAsk(s, e) {
+    const ocr = e.paper.ocr || {};
+    const secs = (ocr.sections || []).map((x) =>
+      `- ${x.name || "未命名板块"}：${x.score === null || x.score === undefined ? "未读到" : x.score}${x.full === null || x.full === undefined ? "" : "/" + x.full}`).join("\n");
+    const mid = targetDate();
+    const prev = planOf(s);
+    const prevLine = prev
+      ? "【上一次的计划与完成情况】\n" + prev.items.map((it) => `- ${it.period || ""} ${it.content || ""} → ${it.done ? "已完成" : "**没做完**"}`).join("\n")
+      : "【上一次的计划】没有（这是第一次排）";
+    const ana = e.paper.analysis && e.paper.analysis.text ? "【上次这份答题卡的分析】\n" + e.paper.analysis.text.slice(0, 2500) : "";
+    return [
+      aiContext(s),
+      "",
+      "【这次考试】",
+      `名称：${anonymize(String(e.name || ""), s.name) || "未命名"}　日期：${e.date || "未记"}　`
+        + (hasScore(e) ? `总分 ${e.score}${typeof e.full === "number" ? "/" + e.full : ""}` : "总分未记"),
+      secs ? "【卷面板块得分（老师已核对）】\n" + secs : "【板块得分】没读到",
+      ana,
+      "",
+      prevLine,
+      "",
+      mid ? `【期中考试日期】${mid}（计划要排到这一天为止）` : "【期中考试日期】老师还没设置 —— 请按「大约 4 周」的节奏排，并在 notes 里提醒老师把日期设上。",
+      "",
+      "只输出 JSON，不要解释、不要 markdown 代码块。结构：",
+      `{"summary":"一句话说清这份计划针对什么、重点补哪块",`,
+      ` "items":[{"period":"日期或周期，如 10-16~10-18","content":"练什么，具体到题型/篇目/册数","how":"具体怎么做","minutes":20,"standard":"做到什么算完成","review":"怎么复查"}],`,
+      ` "notes":"要提醒老师的话（比如还缺什么材料）"}`,
+      "items 排 6~10 条，按时间从近到远；如果上次有没做完的，这次要先把它们排进来或者明确说明为什么放弃。",
+    ].join("\n");
+  }
+
+  async function runPlan(s, e, btn) {
+    if (!paperDone(e)) return toast("先把这次考试的答题卡核对完，再排计划");
+    const mid = targetDate();
+    if (!mid) toast("还没设期中考试日期 —— 这次先按 4 周排，排完记得把日期填上", 6000);
+    const old = btn ? btn.innerHTML : null;
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="busy"></span> 排计划中…'; }
+    try {
+      const r = await dsCall(PLAN_SYS, planAsk(s, e), { json: true, maxTokens: 5000 });
+      let j = null;
+      try { j = JSON.parse(r.text); }
+      catch { throw new Error("计划返回的不是合法 JSON，再点一次试试"); }
+      const items = (Array.isArray(j.items) ? j.items : []).map((it) => ({
+        period: String(it.period || ""), content: String(it.content || ""),
+        how: String(it.how || ""), minutes: numOrNull(it.minutes),
+        standard: String(it.standard || ""), review: String(it.review || ""),
+        done: false,
+      }));
+      if (!items.length) throw new Error("模型没给出任何任务，再点一次试试");
+      s.plan = {
+        at: new Date().toISOString(), examId: e.id, examName: e.name || "", midterm: mid,
+        summary: String(j.summary || ""), notes: String(j.notes || ""), items, model: r.model,
+      };
+      save(); renderDetail();
+      toast("计划排好了（" + items.length + " 条）—— 做完一条勾一条，下次重排会照着调");
+    } catch (err) {
+      console.error(err);
+      toast(err.message, 7000);
+      if (btn) { btn.disabled = false; btn.innerHTML = old; }
+    }
+  }
+
+  /* ---- 详情页里的两块 UI ------------------------------------------- */
+
+  /** 考试卡片下面那一条：答题卡识别入口 + 分析结果 */
+  function paperBlockHtml(s, e) {
+    const cards = paperCards(e);
+    const has = paperHas(e);
+    const done = paperDone(e);
+    let bar = "";
+    let extra = "";
+    if (!cards.length) {
+      bar = `<button class="btn" data-attpick="${e.id}">📷 传答题卡图片</button>
+        <span class="hint-inline">传答题卡（可以多张），识别完先给你核对，确认了才写进去</span>`;
+    } else if (!has) {
+      bar = `<button class="btn" data-paprec="${e.id}">🔍 识别答题卡（${cards.length} 张）</button>
+        <span class="hint-inline">${aiKey() ? "读完先进核对页，没确认不会动成绩" : "还没填 API key —— 点了走演示数据"}</span>`;
+    } else if (!done) {
+      bar = `<button class="btn primary" data-paprev="${e.id}">📋 继续核对（还没确认）</button>
+        <span class="hint-inline">识别于 ${esc(String(e.paper.at || "").slice(0, 16).replace("T", " "))}${isMockPaper(e) ? " · <b>演示数据</b>" : ""}</span>`;
+    } else {
+      bar = `<span class="chip ok">✅ 答题卡已核对</span>
+        <button class="btn ghost" data-paprev="${e.id}">看识别结果</button>
+        <button class="btn aibtn" data-papana="${e.id}">🤖 按板块分析</button>
+        <button class="btn ghost" data-paprec="${e.id}">重新识别</button>`;
+      const an = e.paper.analysis;
+      if (an && an.text) {
+        extra = `<div class="aibox" style="border-top:none;padding-top:0;margin-top:4px">
+          <div class="aihead"><b>🤖 答题卡分析</b>
+            <span class="hint-inline">${esc(an.model || "")} · ${esc(String(an.at || "").slice(0, 16).replace("T", " "))}${an.imgs ? " · " + an.imgs + " 张图" : ""}</span>
+            <span style="flex:1"></span>
+            <span class="x" data-papanadel="${e.id}" title="删掉这段分析">✕</span></div>
+          <div class="aitext">${mdLite(an.text)}</div>
+          <div class="aifoot">分析是 AI 给的，只能当参考 —— 它对不对你比我清楚，不合适就删掉。</div></div>`;
+      } else {
+        extra = `<p class="hint" style="margin:5px 0 0">核对好了。点「按板块分析」让它逐块看一遍 —— 要是你还没传主观题的作答，它会直接告诉你哪块判断不了。</p>`;
+      }
+    }
+    return `<div class="papareabar">${bar}</div>${extra}`;
+  }
+
+  /** 详情页里那块「到期中的复习计划」 */
+  function planBoxHtml(s) {
+    const mid = targetDate();
+    const p = planOf(s);
+    const confirmed = (s.exams || []).filter(paperDone);
+    const last = confirmed.length ? confirmed[confirmed.length - 1] : null;
+
+    const midCtl = `<div class="planmid">
+      <span class="planmid-k">期中考试日期</span>
+      <input type="date" id="planMid" value="${esc(mid)}">
+      ${mid ? `<span class="hint-inline">计划排到这一天</span>` : `<span class="chip ex">未设置</span>`}
+    </div>`;
+
+    if (!last) {
+      return `<div class="box"><h4>到期中的复习计划</h4>${midCtl}
+        <p class="hint">还没有「已核对」的答题卡。先去某场考试下面传答题卡、核对完点「确认并写入」，再回来排计划。</p></div>`;
+    }
+
+    const list = p ? p.items.map((it, i) => `<div class="planrow ${it.done ? "done" : ""}">
+        <label class="planck"><input type="checkbox" data-plandone="${i}" ${it.done ? "checked" : ""} title="这条做完了"></label>
+        <span class="plan-period">${esc(it.period || "")}</span>
+        <div class="plan-main">
+          <div class="plan-content">${esc(it.content || "")}</div>
+          ${it.how ? `<div class="plan-how">${esc(it.how)}</div>` : ""}
+          <div class="plan-meta">
+            ${it.minutes ? `<span>约 ${esc(String(it.minutes))} 分钟</span>` : ""}
+            ${it.standard ? `<span>做到：${esc(it.standard)}</span>` : ""}
+            ${it.review ? `<span>复查：${esc(it.review)}</span>` : ""}
+          </div>
+        </div></div>`).join("") : "";
+
+    return `<div class="box"><h4>到期中的复习计划</h4>${midCtl}
+      ${p ? `<div class="planhead">${esc(p.summary || "")}
+          <span class="hint-inline">排于 ${esc(String(p.at || "").slice(0, 10))}${p.examName ? " · 依据「" + esc(p.examName) + "」" : ""}</span></div>
+        <div class="planlist">${list}</div>
+        ${p.notes ? `<p class="hint">${esc(p.notes)}</p>` : ""}` : ""}
+      <button class="btn" id="planGo" data-exam="${esc(last.id)}" style="width:100%">${p ? "🔄 按最近一次考试重排" : "📅 排一份复习计划"}</button>
+      <p class="hint">排之前先勾一下上次做完没做完 —— 重排的时候它会照着调整。</p></div>`;
+  }
+
+  /* ---- 答题卡总览页（侧栏「答题卡」） ------------------------------- */
+
+  /** none = 没传卡 / todo = 传了没识别 / review = 识别了没核对 / confirmed / analyzed */
+  function paperState(e) {
+    if (!paperHas(e)) return paperCards(e).length ? "todo" : "none";
+    if (!paperDone(e)) return "review";
+    return (e.paper.analysis && e.paper.analysis.text) ? "analyzed" : "confirmed";
+  }
+
+  const PAPER_ST = {
+    todo: { t: "待识别", c: "ex" },
+    review: { t: "待核对", c: "warn" },
+    confirmed: { t: "已核对", c: "ok" },
+    analyzed: { t: "已分析", c: "ok" },
+  };
+
+  /** 全班所有沾了答题卡的考试；「要赶紧办的」排前面 */
+  function paperQueue() {
+    const out = [];
+    for (const s of DB.students) {
+      for (const e of (s.exams || [])) {
+        const st = paperState(e);
+        if (st === "none") continue;
+        out.push({ s, e, st });
+      }
+    }
+    const rank = { todo: 0, review: 1, confirmed: 2, analyzed: 3 };
+    out.sort((a, b) => (rank[a.st] - rank[b.st])
+      || String(b.e.date || "").localeCompare(String(a.e.date || "")));
+    return out;
+  }
+
+  function enterPaper() {
+    view.mode = "paper";
+    view.selected = null;
+    syncSeg();
+    render();
+  }
+
+  function paperMidBar() {
+    const mid = targetDate();
+    return `<div class="pap-midbar">
+      <span class="pap-mid-k">期中考试日期</span>
+      <input type="date" id="papMid" value="${esc(mid)}">
+      ${mid ? `<span class="hint-inline">复习计划从今天排到这一天</span>`
+            : `<span class="chip ex">未设置 —— 排计划时按 4 周估算</span>`}
+    </div>`;
+  }
+
+  function renderPaperPage() {
+    const stage = $("stage");
+    if (!stage) return;
+    const q = paperQueue();
+    const n = { todo: 0, review: 0, confirmed: 0, analyzed: 0 };
+    for (const x of q) n[x.st] = (n[x.st] || 0) + 1;
+    const plans = DB.students.filter((s) => planOf(s)).length;
+
+    const head = `<div class="sc-detail-h"><b>答题卡</b>
+      <span class="hint-inline">${q.length
+        ? `共 ${q.length} 场 · 待识别 ${n.todo} · 待核对 ${n.review} · 已核对 ${n.confirmed + n.analyzed} · 已排计划 ${plans} 人`
+        : "交上来 → 识别 → 核对 → 按板块分析 → 排到期中"}</span></div>`;
+
+    if (!q.length) {
+      stage.innerHTML = `<div class="pap-page">${head}${paperMidBar()}
+        <div class="pap-empty">
+          还没有任何答题卡。<br>
+          进某个学生 → 拉到「考试成绩」→ 在那次考试下面点 <b>📷 传答题卡图片</b>，
+          然后点「识别答题卡」；识别完会进核对页，<b>核对确认前不会动成绩</b>。<br>
+          <span class="hint-inline">核对确认之后，才能点「按板块分析」和排复习计划。</span>
+        </div></div>`;
+      bindPaperPage();
+      return;
+    }
+
+    stage.innerHTML = `<div class="pap-page">${head}${paperMidBar()}
+      <div class="pap-list">${q.map(({ s, e, st }) => {
+        const meta = PAPER_ST[st] || { t: st, c: "" };
+        const an = e.paper && e.paper.analysis;
+        return `<div class="pap-row" data-papgo="${esc(s.id)}" data-papex="${esc(e.id)}" title="点开这个学生的详情">
+          <span class="pap-name">${esc(s.name)}</span>
+          <span class="pap-exam">${esc(e.name || "未命名考试")}</span>
+          <span class="pap-date">${esc(e.date || "")}</span>
+          <span class="pap-score">${hasScore(e) ? esc(String(e.score)) + (typeof e.full === "number" ? "/" + e.full : "") : ""}</span>
+          <span class="chip ${meta.c}">${meta.t}</span>
+          ${isMockPaper(e) ? `<span class="chip ex">演示</span>` : ""}
+          ${an && an.text ? `<span class="chip ok">已分析</span>` : ""}
+          ${planOf(s) ? `<span class="chip ok">有计划</span>` : ""}
+        </div>`;
+      }).join("")}</div>
+      <p class="hint" style="margin:8px 2px 0">点任意一行直接进这个学生的详情，答题卡就在那场考试下面。</p>
+    </div>`;
+    bindPaperPage();
+  }
+
+  function bindPaperPage() {
+    const stage = $("stage");
+    if (!stage) return;
+    const midEl = $("papMid");
+    if (midEl) midEl.onchange = () => {
+      DB.config.examTarget = DB.config.examTarget || { midterm: "" };
+      DB.config.examTarget.midterm = midEl.value;
+      save(); renderStage();
+      toast(midEl.value ? "期中考试日期记下了" : "期中日期清空了");
+    };
+    stage.querySelectorAll("[data-papgo]").forEach((row) => row.onclick = () => {
+      view.selected = row.dataset.papgo;
+      view.scrollExam = row.dataset.papex || null;
+      renderDetail();
+    });
+  }
+
   /**
    * 独立页面（打卡 / 成绩）不渲染学员列表，所以详情面板是本页**唯一**要单独管的东西。
    *
@@ -3963,6 +4833,8 @@ input[type=range] { accent-color: var(--accent); }
         <div id="dTrend">${examTrendHtml(s)}</div>
       </div>
 
+      ${planBoxHtml(s)}
+
       <div class="box"><h4>聊天记录（${chats.length}）</h4>
         ${chats.length ? `<div class="chats">${chats.map((c, i) => `<div class="msg">
           <div class="meta"><span class="sp">${esc(c.speaker || "—")}</span><span>${esc(c.time || "无时间")}</span>
@@ -3981,6 +4853,18 @@ input[type=range] { accent-color: var(--accent); }
     const myId = s.id;
     d.scrollTop = keepTop;
     d.onscroll = () => { if (_detId === myId) _detScroll = d.scrollTop; };
+
+    // 从「答题卡」总览页点进来时，直接滚到那场考试上（不然还得自己找）
+    if (view.scrollExam) {
+      const target = d.querySelector(`[data-eid="${view.scrollExam}"]`);
+      view.scrollExam = null;
+      if (target) {
+        requestAnimationFrame(() => {
+          d.scrollTop = Math.max(0, target.offsetTop - 12);
+          _detScroll = d.scrollTop;
+        });
+      }
+    }
 
     $("dClose").onclick = () => { view.selected = null; renderStage(); };
 
@@ -4194,6 +5078,55 @@ input[type=range] { accent-color: var(--accent); }
       delete ex.ai;
       commit("已删掉这段分析");
     });
+
+    /* ---- 答题卡：识别 / 核对 / 板块分析 ---- */
+    d.querySelectorAll("[data-paprec]").forEach((el) => el.onclick = () => {
+      const ex = findExam(el.dataset.paprec);
+      if (!ex) return toast("找不到那场考试了");
+      if (!aiKey()) { toast("没填 API key —— 先用演示数据走一遍流程", 6000); }
+      recognizePaper(s, ex, el);
+    });
+    d.querySelectorAll("[data-paprev]").forEach((el) => el.onclick = () => {
+      const ex = findExam(el.dataset.paprev);
+      if (ex && paperHas(ex)) openPaperReview(s.id, ex.id);
+    });
+    d.querySelectorAll("[data-papana]").forEach((el) => el.onclick = () => {
+      const ex = findExam(el.dataset.papana);
+      if (!ex) return toast("找不到那场考试了");
+      if (!aiKey()) return toast("还没填 API key —— 去「设置 → AI 分析」填一个", 6500);
+      runPaperAnalysis(s, ex, el);
+    });
+    d.querySelectorAll("[data-papanadel]").forEach((el) => el.onclick = () => {
+      const ex = findExam(el.dataset.papanadel);
+      if (!ex || !ex.paper) return;
+      if (!confirm("删掉这段答题卡分析？（识别核对的结果还在）")) return;
+      delete ex.paper.analysis;
+      commit("已删掉这段分析");
+    });
+
+    /* ---- 到期中的复习计划 ---- */
+    const planMidEl = $("planMid");
+    if (planMidEl) planMidEl.onchange = () => {
+      DB.config.examTarget = DB.config.examTarget || { midterm: "" };
+      DB.config.examTarget.midterm = planMidEl.value;
+      save(); renderDetail();
+      toast(planMidEl.value ? "期中考试日期记下了" : "期中日期清空了");
+    };
+    d.querySelectorAll("[data-plandone]").forEach((cb) => cb.onchange = () => {
+      const p = planOf(s);
+      if (!p) return;
+      const i = Number(cb.dataset.plandone);
+      if (!p.items[i]) return;
+      p.items[i].done = !!cb.checked;
+      save(); renderDetail();
+    });
+    const planGoBtn = $("planGo");
+    if (planGoBtn) planGoBtn.onclick = () => {
+      const ex = findExam(planGoBtn.dataset.exam);
+      if (!ex) return toast("找不到那场考试了 —— 重新确认一次答题卡");
+      if (!aiKey()) return toast("还没填 API key —— 去「设置 → AI 分析」填一个", 6500);
+      runPlan(s, ex, planGoBtn);
+    };
 
     /* ---- 附件 ---- */
     d.querySelectorAll(".attstrip").forEach((strip) => {
