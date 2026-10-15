@@ -2438,7 +2438,8 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       else { el.dispatchEvent(new Event("input", { bubbles: true })); el.dispatchEvent(new Event("change", { bubbles: true })); }
     };
 
-    el.addEventListener("input", () => { active = -1; show(); });
+    // 组字中的半截拼音不是名字，别拿去联想（见 renderStage 上面那段「输入法保护」）
+    el.addEventListener("input", (e) => { if (e.isComposing || imeBusy()) return; active = -1; show(); });
     el.addEventListener("focus", show);
     el.addEventListener("blur", () => setTimeout(close, 150));
     el.addEventListener("keydown", (e) => {
@@ -2563,7 +2564,9 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     };
 
     el.setAttribute("autocomplete", "off");
-    el.addEventListener("input", () => { active = -1; show(); });
+    // 同上：输入法组字期间不联想。否则刚敲一个 y 就跳出「没有叫「y」的学生」，
+    // 看着像搜索坏了 —— 其实那串拼音还没上屏，根本不该拿去筛名字。
+    el.addEventListener("input", (e) => { if (e.isComposing || imeBusy()) return; active = -1; show(); });
     el.addEventListener("focus", () => { _nsFocusId = myId; show(); });
     el.addEventListener("blur", () => setTimeout(close, 180));
     window.addEventListener("resize", place);
@@ -4786,6 +4789,8 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     scQ: "", scSort: "", scDir: 1, scPage: 1, scQFocus: false,
     // 电联侧栏：选中的批次 id（null = 全部）/ 当前结果筛选
     callBatch: null, callStatus: "未联系",
+    // 电联页的姓名搜索：跟「结果筛选」叠加，都只筛名单、不动上面的统计
+    callQ: "", callQFocus: false,
     // 成绩页/电联页可以「收起顶栏」，把工具栏那一条高度也让给名单
     headCompact: false,
     // 离开独立页面（打卡/成绩/电联）后该回到哪个列表模式：卡片 / 表格 / 待跟进
@@ -5783,7 +5788,41 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     if (b) b.onclick = () => { view.headCompact = !view.headCompact; renderStage(); };
   }
 
+  /* -------------------------------------------------- 输入法保护（IME）
+   * 这个看板是「一按键就整块重画」的：各页的 oninput 直接调 renderStage()，
+   * 而 renderStage 会把 stage.innerHTML 整个换掉 —— **输入框本身也跟着变成新元素**。
+   * 用拼音这类输入法时这是致命的：正在组字的那串字母挂在旧元素上，
+   * 元素一被摘掉浏览器当场取消组字，拼音整串作废。表现就是「打不了字」：
+   * 敲 y u a n，框里只剩一个 y（2026-10-15 用户报的就是这个）。
+   * 所以组字期间（compositionstart ~ compositionend）一律不重画，等上屏了再补一次。
+   */
+  let _imeLock = 0;      // >0 = 有输入法正在组字
+  let _imeEl = null;     // 正在组字的那个元素（它没了 = 这次组字已经废了）
+  let _imeAt = 0;        // 最后一次组字事件的时间（兜底，免得锁死）
+  let _imePend = false;  // 组字期间攒下的重画，上屏后补
+
+  /** 现在能不能重画？组字中 = 不能，重画会把正在敲的拼音打断。 */
+  function imeBusy() {
+    if (!_imeLock) return false;
+    // 元素已被移出文档 / 太久没有组字动静 = 这次组字早没了，别一直锁着
+    if (!_imeEl || !_imeEl.isConnected || Date.now() - _imeAt > 8000) { _imeLock = 0; _imeEl = null; return false; }
+    return true;
+  }
+
+  document.addEventListener("compositionstart", (e) => { _imeLock++; _imeEl = e.target; _imeAt = Date.now(); }, true);
+  document.addEventListener("compositionupdate", () => { _imeAt = Date.now(); }, true);
+  document.addEventListener("compositionend", () => {
+    _imeLock = Math.max(0, _imeLock - 1);
+    _imeAt = Date.now();
+    if (_imeLock) return;
+    // 上屏之后紧跟的那次 input 会自己重画；万一没有（输入法直接吞掉），这里补一次
+    setTimeout(() => { if (!imeBusy() && _imePend) renderStage(); }, 0);
+  }, true);
+
   function renderStage(keepDetail) {
+    // 输入法正在组字：这一画先攒着，等上屏（compositionend）再补 —— 理由见上面那段
+    if (imeBusy()) { _imePend = true; return; }
+    _imePend = false;
     // 只有「里面是一张固定高度表格」的页面才 solo（成绩页两种视图都是；
     // 电联页只有「全部」那张跨批次表是，单轮视图是普通列表，得让内容区自己滚）。
     const solo = view.mode === "score" || (view.mode === "call" && !view.callBatch);
@@ -10456,6 +10495,16 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
 
     const curId = view.callBatch && batches.some((b) => callBatchId(b) === view.callBatch) ? view.callBatch : null;
     const cur = curId ? batches.find((b) => callBatchId(b) === curId) : null;
+    // 姓名搜索：搜的是**整份名单**（不是屏幕上已经画出来那几行），跟成绩页同一套
+    const q = String(view.callQ || "").trim();
+    const hitName = (s) => !q || String(s.name || "").includes(q);
+    // 搜索框那一行。跟成绩页长得一样（.sc-q / .sc-hit），老师不用重新学
+    const qTools = (hit, total) => `
+        <div class="sc-tools">
+          <input class="sc-q" id="clQ" placeholder="搜姓名…" autocomplete="off" value="${esc(view.callQ)}">
+          <span class="sc-hit">${q ? `筛出 ${hit} / ${total} 人` : ""}</span>
+          <span style="flex:1"></span>
+        </div>`;
 
     // 批次标签：全部 + 每一轮（带日期和接通数，一眼能比）
     const tabs = `<button class="nav sc-tab ${!cur ? "on" : ""}" data-calltab="">全部 <span class="n">${batches.length}</span></button>` +
@@ -10475,15 +10524,17 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
 
     if (!cur) {
       // 「全部」= 跨批次总表：行是学生（全班都列，没打过的人格子留「—」），列是每一轮
-      const anyone = DB.students;
+      const all = DB.students;
+      const anyone = all.filter(hitName);
       const statRow = (label, fn) =>
         `<tr class="stat-row"><td class="sticky-l">${esc(label)}</td>${
           batches.map((b) => `<td>${esc(fn(callBatchStats(callBatchId(b))))}</td>`).join("")}</tr>`;
       stage.innerHTML = `
         <div class="sc-tabs">${tabs}</div>
+        ${qTools(anyone.length, all.length)}
         <div class="wrap-table cap-md"><table class="grid"><thead><tr>
           <th class="sticky-l">姓名</th>${batches.map((b) => `<th>${esc(b.name)}</th>`).join("")}<th>沟通次数</th><th>最近一次</th></tr></thead>
-          <tbody>${anyone.map((s) => {
+          <tbody>${anyone.length ? anyone.map((s) => {
             const cc = callCountOf(s.id);
             return `<tr data-id="${s.id}">
             <td class="sticky-l"><b>${esc(s.name)}</b></td>
@@ -10494,18 +10545,19 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
             }).join("")}
             <td>${cc.n ? `<b>${cc.n}</b>` : `<span class="none">—</span>`}</td>
             <td>${callLastCellHtml(s)}</td>
-          </tr>`; }).join("")}</tbody>
+          </tr>`; }).join("") : `<tr><td class="sc-nohit" colspan="${batches.length + 3}">没有名字含「${esc(q)}」的人</td></tr>`}</tbody>
           <tfoot>
             ${statRow("沟通上", (st) => st["已沟通"])}
             ${statRow("未接听", (st) => st["未接听"])}
             ${statRow("接通率", (st) => st.total ? Math.round(st["已沟通"] / st.total * 100) + "%" : "—")}
           </tfoot></table></div>`;
-      if (!anyone.length) stage.innerHTML = `<div class="sc-tabs">${tabs}</div><div class="empty-hint">还没有学生名单</div>`;
+      if (!all.length) stage.innerHTML = `<div class="sc-tabs">${tabs}</div><div class="empty-hint">还没有学生名单</div>`;
     } else {
       // 单轮：统计 + 名单（按结果筛选）+ 每个学生一行五个按钮
       const st = callBatchStats(curId);
       const inStatus = (s) => callStatusOf(curId, s.id) === view.callStatus;
-      const list = DB.students.filter(inStatus);
+      const rostered = DB.students.filter(inStatus);
+      const list = rostered.filter(hitName);   // 搜索跟「结果筛选」叠加，两个都只筛名单
       const doneRatio = st.total ? Math.round(st["已沟通"] / st.total * 100) : 0;
       const statCell = (label, val, sub) =>
         `<div class="sc-stat"><span class="k">${esc(label)}</span><b>${esc(val)}</b>${sub ? `<span class="s">${esc(sub)}</span>` : ""}</div>`;
@@ -10541,6 +10593,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
           <button class="btn" id="clExport">导出当前筛选 CSV</button>
           <button class="btn" id="clExportFull">导出全班名单</button>
         </div>
+        ${qTools(list.length, rostered.length)}
         <div class="ck-tabs">${statusTabs}</div>
         <div class="ck-list">${list.length
           ? list.map((s) => {
@@ -10555,13 +10608,21 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
                 `<button class="chip ${ss === view.callStatus ? "on" : ""}" data-cset="${esc(ss)}" data-sid="${s.id}" ${ss === view.callStatus ? "disabled" : ""}>${esc(ss)}</button>`).join("")}
               </span>
             </div>`; }).join("")
-          : `<div class="empty-hint">这个结果下没有学生</div>`}</div>`;
+          : `<div class="empty-hint">${q
+            ? (DB.students.some(hitName)
+              // 人在，只是不挂在这个「结果」标签下 —— 说清楚，别让老师以为名单里没这个人
+              ? `「${esc(q)}」不在「${esc(view.callStatus)}」里 —— 换个结果标签，或者点上面的姓名联想直接选他`
+              : `没有名字含「${esc(q)}」的学生`)
+            : "这个结果下没有学生"}</div>`}</div>`;
     }
 
     // 标签切换
     stage.querySelectorAll("[data-calltab]").forEach((b) => b.onclick = () => {
       view.callBatch = b.dataset.calltab || null;
       view.callStatus = "未联系";
+      // 上一轮的搜索对下一轮没意义（跟成绩页切考试清搜索一个道理），
+      // 留着的话切过去可能是一片空白，看着像坏了
+      view.callQ = ""; view.callQFocus = false;
       renderStage();
     });
     // 表格行点击 → 学生详情
@@ -10572,6 +10633,31 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     const a = $("clAdd");
     if (a) a.onclick = addCallBatch;
     bindHeadCompact("clCompact");
+
+    // 搜姓名：只筛名单，不动统计（统计始终是全场 / 这一轮的，跟成绩页一个口径）
+    const cqEl = $("clQ");
+    if (cqEl) {
+      cqEl.oninput = () => {
+        view.callQ = cqEl.value; view.callQFocus = true; renderStage();
+      };
+      cqEl.onblur = () => { view.callQFocus = false; };
+      if (view.callQFocus) {
+        cqEl.focus();
+        try { cqEl.setSelectionRange(cqEl.value.length, cqEl.value.length); } catch { /* 某些浏览器不支持，忽略 */ }
+      }
+      // 边打边联想：↑↓ 选、Enter 确认、Esc 关、点一下选中 —— 跟成绩页、答题卡同一套
+      nameSearchBox(cqEl, {
+        onPick: (s) => {
+          // 从联想里点了一个人：他要是落在别的「结果」标签下，就把标签切过去。
+          // 不切的话老师点了他的大名、名单还是空的，看着就像搜索坏了。
+          if (s && curId) {
+            const stt = callStatusOf(curId, s.id);
+            if (stt && stt !== view.callStatus) view.callStatus = stt;
+          }
+          view.callQFocus = true; renderStage();
+        },
+      });
+    }
 
     if (!cur) return;
 
