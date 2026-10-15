@@ -455,6 +455,9 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 20px 60px;
   border-radius: 6px; background: var(--panel-3); color: var(--ink-2); border: 1px solid var(--line); }
 .chip.ok { background: var(--green-soft); color: var(--green); border-color: var(--green-line); }
 .chip.no { background: var(--red-soft); color: var(--red); border-color: var(--red-line); }
+/* 暖橘芯片：用在「还没做」这类**需要关注但不算异常**的状态上（未打卡 / 未电联）。
+   红色（.chip.no）留给真异常 —— 逾期、短板、读不出来。见 app.js 里 flagText 那处注释。 */
+.chip.act { background: var(--accent-2-soft); color: var(--accent-2); border-color: var(--accent-2-line); }
 .chip.ex { background: var(--amber-soft); color: var(--amber); border-color: var(--amber-line); }
 .chip.tag { background: var(--tag-bg); color: var(--tag-ink); }
 /* 家长类型：颜色由 JS 按标签给（内联），这里只定形状 —— 比问题标签厚一点，
@@ -5771,7 +5774,11 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       const raw = (s.flags || {})[f.key] || {};
       // 「其它」状态（原表里写的"没时间"这种）既不算完成也不算未完成，单独用琥珀色
       const other = flagType(f) === "yesno" && raw.status === "other";
-      out.push(`<span class="chip ${done ? "ok" : other ? "ex" : "no"}">${esc(flagText(s, f))}</span>`);
+      // 2026-10-16 混搭改版：未完成从红色（.chip.no = 红底红字）改成暖橘（.chip.act）。
+      // 73 人的班里「今天还没打卡 / 还没电联」是**常态**，一屏几十个粉红色芯片
+      // 看着像全班都出事了、也把真正要报警的红色淹掉了。红色现在只留给
+      // 「待跟进逾期」和「短板」这类真异常；未完成只是「还没做」，用暖橘提醒即可。
+      out.push(`<span class="chip ${done ? "ok" : other ? "ex" : "act"}">${esc(flagText(s, f))}</span>`);
     }
     for (const t of tagsOf(s)) out.push(`<span class="chip tag">${esc(t)}</span>`);
     // 家长类型用左上角一个小圆点区分，一眼能看出「这条是关于家长的，不是学生的问题」
