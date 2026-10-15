@@ -327,11 +327,26 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 15px 18px 60px;
    卡片/表格页照旧（那边 wrap-table 的 max-height 正好填满，不会多出一条）。 */
 /* 保留 overflow-y:auto —— 正常情况内容正好铺满、不会出条；万一窗口特别矮
    （标签行 + 统计卡 + 表格最小高度挤不下），宁可多出一条兜底也不要被裁掉看不全。 */
-section.list.solo { display: flex; flex-direction: column; padding-bottom: 18px; }
+section.list.solo { display: flex; flex-direction: column; padding-top: 10px; padding-bottom: 10px; }
 section.list.solo > #stage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 /* 表格铺满剩下的高度自己滚：标题、统计卡、表头都留在原地不动，只有名单在滚。
    人数少时表格盒子也不会缩成一条（有背景，看起来就是一张空白的成绩单）。 */
 section.list.solo .wrap-table { flex: 1 1 auto; min-height: 60px; max-height: none; background: var(--panel); }
+
+/* 内部滚动条的代价：顶栏、标签行、表头都占着不走，一眼能看见的人就少了
+   （2026-10-15 用户反馈「一次性展示出来的学生名单比较少」）。
+   所以成绩页/电联页单独用紧凑行高 + 收紧上下留白，把省下来的高度还给名单。
+   只作用于这两页 —— 卡片页、表格页不跟着变。 */
+section.list.solo .listbar { margin-bottom: 8px; }
+section.list.solo .sc-tabs { margin-bottom: 8px; }
+section.list.solo .sc-stats { margin-bottom: 8px; }
+section.list.solo table.grid th,
+section.list.solo table.grid td { padding: 5px 10px; font-size: 12.5px; line-height: 1.25; }
+
+/* 「收起顶栏」：把整条工具栏的高度也让给名单（按钮只放在成绩页/电联页）。
+   收起后名单按钮还在 listbar 里，随时点得回来，不会把人困住。 */
+body.head-compact header.top { display: none; }
+
 table.grid { width: 100%; border-collapse: collapse; background: var(--panel); }
 table.grid th, table.grid td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; font-size: 13px; white-space: nowrap; }
 table.grid th { background: var(--panel-2); font-weight: 650; color: var(--ink-2); position: sticky; top: 0; z-index: 1; cursor: pointer; user-select: none; }
@@ -2305,6 +2320,10 @@ input[type=range] { accent-color: var(--accent); }
     scoreExam: null,
     // 电联侧栏：选中的批次 id（null = 全部）/ 当前结果筛选
     callBatch: null, callStatus: "未联系",
+    // 成绩页/电联页可以「收起顶栏」，把工具栏那一条高度也让给名单
+    headCompact: false,
+    // 离开独立页面（打卡/成绩/电联）后该回到哪个列表模式：卡片 / 表格 / 待跟进
+    listMode: "cards",
   };
   // 详情面板的滚动位置（面板很长，重绘时要放回原位）
   let _detScroll = 0;
@@ -2989,7 +3008,8 @@ input[type=range] { accent-color: var(--accent); }
       if (view.mode === "follow") view.filter = { kind: "follow" };
       if (view.mode !== "checkin") view.checkinTask = null;
       if (view.mode !== "call") view.callBatch = null;
-      $("seg").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+      setListMode(view.mode);
+      syncSeg();
       renderSide(); renderStage();
     });
     $("btnChat").onclick = () => { $("chatResult").textContent = ""; $("mChat").classList.add("open"); $("chatText").focus(); };
@@ -3087,6 +3107,13 @@ input[type=range] { accent-color: var(--accent); }
       if (el.dataset.ck) { enterCheckin(); return; }
       if (el.dataset.score) { enterScore(); return; }
       if (el.dataset.call) { enterCall(); return; }
+      // 侧栏这些筛选全是「学员列表」的东西。停在打卡/成绩/电联页时，光改 filter 是没用的
+      // （那几页根本不看 filter），点下去像没反应——所以先把 mode 放回列表页再筛。
+      if (view.mode === "checkin" || view.mode === "score" || view.mode === "call") {
+        view.mode = view.listMode;
+        view.checkinTask = null; view.callBatch = null; view.scoreExam = null;
+        syncSeg();
+      }
       view.filter = { kind: el.dataset.kind, v: el.dataset.v || null };
       renderSide(); renderStage();
     });
@@ -3207,10 +3234,40 @@ input[type=range] { accent-color: var(--accent); }
     if (sec) sec.classList.toggle("solo", !!on);
   }
 
+  /** 记住「列表模式」（卡片/表格/待跟进）：从打卡/成绩/电联页回来时要用 */
+  function setListMode(m) {
+    if (m === "cards" || m === "table" || m === "follow") view.listMode = m;
+  }
+
+  /** 顶栏 seg 的高亮跟着 view.mode 走（切模式的地方有好几处，别各自抄一份） */
+  function syncSeg() {
+    $("seg").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x.dataset.mode === view.mode));
+  }
+
+  /**
+   * 「收起顶栏」按钮 + 绑定：成绩页 / 电联页共用。
+   *
+   * 为什么要有它：内部滚动条把工具栏、标签行、表头全钉在屏幕上，名单能看见的行数就少了。
+   * 想让这张表尽量长的时候，点一下把顶栏收掉，多出来的高度全给名单；
+   * 按钮留在 listbar 里，随时点得回来，不会把人困住。
+   */
+  function headCompactBtn(id) {
+    return `<button class="btn ghost" id="${id}" title="把顶部工具栏收起来，名单能多看见几行">${
+      view.headCompact ? "⌄ 显示顶栏" : "⌃ 收起顶栏"}</button>`;
+  }
+  function bindHeadCompact(id) {
+    const b = $(id);
+    if (b) b.onclick = () => { view.headCompact = !view.headCompact; renderStage(); };
+  }
+
   function renderStage(keepDetail) {
     // 只有「里面是一张固定高度表格」的页面才 solo（成绩页两种视图都是；
     // 电联页只有「全部」那张跨批次表是，单轮视图是普通列表，得让内容区自己滚）。
-    setListSolo(view.mode === "score" || (view.mode === "call" && !view.callBatch));
+    const solo = view.mode === "score" || (view.mode === "call" && !view.callBatch);
+    setListSolo(solo);
+    // 「收起顶栏」只在 solo 页生效；一旦离开（点侧栏、回卡片页），顶栏必须自己回来，
+    // 否则用户会被困在一个没有工具栏的页面上。
+    document.body.classList.toggle("head-compact", solo && !!view.headCompact);
     // 独立页面（打卡 / 成绩 / 电联）不渲染学员列表，但**必须处理详情面板的开关**。
     // 否则在成绩页点开某个学生后按「关闭」，view.selected 清了、面板却没人去关，
     // 看上去就是「关闭按钮点不掉」。
@@ -4790,7 +4847,7 @@ input[type=range] { accent-color: var(--accent); }
   function enterCheckin() {
     view.mode = "checkin";
     view.checkinTask = null;
-    $("seg").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x.dataset.mode === "checkin"));
+    syncSeg();
     renderSide(); renderStage();
   }
 
@@ -5031,7 +5088,7 @@ input[type=range] { accent-color: var(--accent); }
   function enterScore() {
     view.mode = "score";
     view.scoreExam = null;
-    $("seg").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x.dataset.mode === "score"));
+    syncSeg();
     renderSide(); renderStage();
   }
 
@@ -5169,12 +5226,13 @@ input[type=range] { accent-color: var(--accent); }
     const names = examNameList();
 
     if (!names.length) {
-      listbar.innerHTML = `<b>成绩</b> · 0 场考试`;
+      listbar.innerHTML = `<b>成绩</b> · 0 场考试<span style="flex:1"></span>${headCompactBtn("scCompact")}`;
       stage.innerHTML = `<div class="empty-hint">还没有成绩记录。<br><br>
         <button class="btn primary" id="scoreGoAdd">＋ 加一场考试</button>
         <button class="btn" id="scoreGoImport" style="margin-left:8px">导入成绩</button></div>`;
       const a = $("scoreGoAdd"); if (a) a.onclick = addExam;
       const b = $("scoreGoImport"); if (b) b.onclick = openScore;
+      bindHeadCompact("scCompact");
       return;
     }
 
@@ -5192,6 +5250,7 @@ input[type=range] { accent-color: var(--accent); }
     listbar.innerHTML = `<b>成绩</b> · ${names.length} 场考试${
       curSt && curSt.n ? ` · ${esc(cur)}平均 <b>${esc(fmtScore(curSt.avg))}</b>` : ""}
       <span style="flex:1"></span>
+      ${headCompactBtn("scCompact")}
       <button class="btn" id="scAdd">＋ 加考试</button>
       <button class="btn ghost" id="scImport">导入成绩</button>`;
 
@@ -5297,6 +5356,7 @@ input[type=range] { accent-color: var(--accent); }
     // 加 / 导入 / 改名 / 删
     const a = $("scAdd"); if (a) a.onclick = addExam;
     const b = $("scImport"); if (b) b.onclick = openScore;
+    bindHeadCompact("scCompact");
     const ex1 = $("scExportX"); if (ex1) ex1.onclick = () => exportScoreXlsx(cur);
     const ex2 = $("scExportP"); if (ex2) ex2.onclick = () => printScore(cur);
     const rn = $("scRename");
@@ -5322,7 +5382,7 @@ input[type=range] { accent-color: var(--accent); }
   function enterCall() {
     view.mode = "call";
     view.callBatch = null;
-    $("seg").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x.dataset.mode === "call"));
+    syncSeg();
     renderSide(); renderStage();
   }
 
@@ -5418,6 +5478,7 @@ input[type=range] { accent-color: var(--accent); }
     listbar.innerHTML = `<b>电联</b> · ${batches.length} 轮${
       cur ? ` · ${esc(cur.name)}沟通上 ${callBatchStats(curId)["已沟通"]} 人` : ""}
       <span style="flex:1"></span>
+      ${cur ? "" : headCompactBtn("clCompact")}
       <button class="btn" id="clAdd">＋ 新建一轮</button>`;
 
     if (!cur) {
@@ -5513,6 +5574,7 @@ input[type=range] { accent-color: var(--accent); }
     });
     const a = $("clAdd");
     if (a) a.onclick = addCallBatch;
+    bindHeadCompact("clCompact");
 
     if (!cur) return;
 
