@@ -424,6 +424,31 @@ table.grid td.diff.down { color: #c0392b; }
 .pp-f select { padding: 5px 8px; border: 1px solid var(--line-strong); border-radius: 7px;
   background: var(--panel); color: var(--ink); font-size: var(--fs-cell); }
 .pp-stu { width: 190px; }
+
+/* ---------- 批量答题卡：批量入口 + 待确认区（2026-10-16 加） ---------- */
+.pp-batch { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.pp-batch .hint-inline { color: var(--ink-3); }
+.pp-confirm { margin-top: 14px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--panel); overflow: hidden; }
+.ppc-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 13px; background: var(--panel-2); border-bottom: 1px solid var(--line); }
+.ppc-list { max-height: 340px; overflow: auto; }
+/* 「能直接确认」的行用白底；「要你拿主意」的行用琥珀底 —— 一眼看出哪几行必须先处理 */
+.ppc-row { display: flex; align-items: center; gap: 10px; padding: 7px 13px;
+  border-bottom: 1px solid var(--line); font-size: var(--fs-cell); }
+.ppc-row:last-child { border-bottom: 0; }
+.ppc-row.hold { background: var(--amber-soft); }
+.ppc-row img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px;
+  border: 1px solid var(--line); flex: none; }
+.ppc-file { flex: 1 1 190px; min-width: 120px; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; color: var(--ink-2); }
+.ppc-why { flex: 0 1 210px; font-size: var(--fs-aux); color: var(--ink-3); }
+.ppc-row.hold .ppc-why { color: var(--amber); font-weight: 600; }
+.ppc-pick { flex: 0 0 auto; }
+.ppc-pick select { padding: 4px 8px; border: 1px solid var(--line-strong); border-radius: 7px;
+  background: var(--panel); color: var(--ink); font-size: var(--fs-cell); }
+.ppc-exam { font-size: var(--fs-aux); color: var(--ink-3); flex: none; }
 .ck-copybar { display: flex; gap: 10px; margin-top: 14px; }
 
 /* ---------- 电联记录（学生详情面板里那一小块） ---------- */
@@ -455,6 +480,47 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 20px 60px;
   border-left: 3px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
 .card:hover { transform: translateY(-1px); border-color: var(--line-strong); box-shadow: var(--shadow-hover); }
 .card.sel { border-color: var(--accent-2); box-shadow: 0 0 0 2px var(--accent-2-soft), var(--shadow-card); }
+
+/* ---------- 批量勾选 + 批量操作条（2026-10-16 加） ---------- */
+/* 勾选框：平时低调，别跟姓名抢注意力；勾上的人用浅绿底+绿边一眼看出来 */
+.cbsel { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer;
+  flex: none; margin: 0 2px 0 0; vertical-align: -2px; }
+.card.checked { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft), var(--shadow-card); }
+.grid tr.rowsel td { background: var(--accent-soft); }
+.batchbar { border: 1px solid var(--accent); border-radius: var(--radius);
+  background: var(--accent-soft); margin-bottom: 12px; overflow: hidden; }
+.bb-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 9px 13px; border-bottom: 1px solid var(--accent-line, var(--line)); }
+.bb-top b { color: var(--accent-2); }
+.bb-names { font-size: var(--fs-aux); color: var(--ink-2); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; max-width: 46%; }
+.bb-acts { display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+  padding: 9px 13px; background: var(--panel-solid); }
+.bb-grp { display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+  font-size: var(--fs-aux); color: var(--ink-3); }
+.bb-sep { width: 1px; height: 20px; background: var(--line); }
+.bb-in { width: 118px; padding: 4px 8px; border: 1px solid var(--line-strong);
+  border-radius: 7px; background: var(--panel); color: var(--ink); font-size: var(--fs-cell); }
+/* 批量派下来的跟进任务：在详情里明确露出来 */
+.ftask { margin-top: 8px; padding: 7px 10px; border-radius: 8px;
+  background: var(--amber-soft); color: var(--amber); font-size: var(--fs-cell); font-weight: 600; }
+
+/* ---------- 待处理队列（2026-10-16 加） ---------- */
+.qd-list { border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--panel-solid); overflow: hidden; }
+.qd-row { display: flex; align-items: center; gap: 11px; padding: 10px 14px;
+  border-bottom: 1px solid var(--line); font-size: var(--fs-cell); }
+.qd-row:last-child { border-bottom: 0; }
+.qd-row:hover { background: var(--panel-2); }
+.qd-tag { flex: none; font-size: var(--fs-mini); padding: 2px 8px; border-radius: 999px;
+  background: var(--tag-bg); color: var(--ink-2); font-weight: 600; }
+.qd-tag.t-paper { background: var(--amber-soft); color: var(--amber); }
+.qd-tag.t-conflict { background: var(--red-soft); color: var(--red); }
+.qd-tag.t-chat { background: var(--accent-soft); color: var(--accent-2); }
+.qd-name { flex: none; min-width: 66px; }
+.qd-why { flex: 1; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 侧栏上「只有需要关注的数量」才用强调色 */
+.nav .n .hot { color: var(--accent-2); font-weight: 700; }
 .card .row1 { display: flex; align-items: center; gap: 8px; }
 .card .nm { font-weight: 700; font-size: 15.5px; letter-spacing: .2px; }
 .lv { font-size: var(--fs-mini); font-weight: 700; padding: 2px 7px; border-radius: 6px;
@@ -1332,14 +1398,17 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       <textarea id="scoreText" style="min-height:130px"
         placeholder="董佳泽 115&#10;张递铢 132&#10;高一铄 128&#10;宋承洋 119"></textarea>
       <div class="rowset" style="margin-top:10px">
+        <button class="btn" id="scorePickFile">📄 选 Excel / CSV 文件</button>
         <button class="btn primary" id="scoreParse">解析</button>
         <span class="hint" style="margin:0" id="scoreHint">写完点「解析」，下面会列出识别结果。</span>
+        <input type="file" id="scoreFile" accept=".xlsx,.xlsm,.csv,.txt" hidden>
       </div>
+      <p class="hint" id="scoreFileHint" style="margin:8px 0 0"></p>
       <div class="sect" style="margin-top:12px">
         <h4>写到哪次考试</h4>
         <div class="rowset">
           <label class="hint" style="margin:0">考试名称
-            <input type="text" id="scoreExamName" placeholder="第一次月考" style="width:150px;margin-left:6px;padding:5px 8px;border:1px solid var(--line);border-radius:7px">
+            <input type="text" id="scoreExamName" list="tplExams" placeholder="第一次月考" style="width:150px;margin-left:6px;padding:5px 8px;border:1px solid var(--line);border-radius:7px">
           </label>
           <label class="hint" style="margin:0">日期
             <input type="date" id="scoreDate" style="margin-left:6px;padding:5px 8px;border:1px solid var(--line);border-radius:7px">
@@ -1350,6 +1419,8 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         </div>
         <p class="hint" style="margin:8px 0 0" id="scoreMode"></p>
       </div>
+      <!-- 考试信息模板：用过的考试名自动进候选，下次不用重敲（2026-10-16 加） -->
+      <datalist id="tplExams"></datalist>
       <div id="scorePreview"></div>
     </div>
     <footer>
@@ -4857,6 +4928,8 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
   const view = {
     filter: { kind: "all" }, query: "", mode: "cards",
     selected: null, sort: { key: "total", dir: 1 }, followTop: 5,
+    // 批量选择（2026-10-16 加）：选中的学生 id 列表 + 批量操作面板开不开
+    selIds: [], batchOpen: false,
     // 语文打卡：选中的任务 id 与当前展示的状态筛选
     checkinTask: null, checkinStatus: "未打卡",
     sideCollapsed: { follow: false, tag: true, ptag: true },
@@ -4905,6 +4978,239 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   };
+
+  /* ---- 批量操作 + 撤销（2026-10-16 加）
+   *
+   * 老师最怕的是「一键改了 40 个人，发现改错了」。所以每一次批量操作，
+   * **动手之前先把整份数据拍一张快照**；撤销就是把快照放回去。
+   *
+   * 只快照「会改数据」的操作（打卡/标签/任务/分数…），且最多留 5 步 ——
+   * 73 人的数据是一百多 KB，留太多会吃内存；5 步足够覆盖「刚改错了」这个场景。
+   * 快照只存内存，刷新页面就没了：撤销是「手抖的后悔药」，不是版本历史。
+   */
+  const UNDO_MAX = 5;
+  let UNDO_STACK = [];   // [{ label, at, data }]
+
+  /* ---- 模板：把常用输入自动记下来，下次不用重敲（2026-10-16 加）
+   *
+   * 老师的输入高度重复：考试名就那几个、「周五前收作业」每周都要写一遍。
+   * 做法是**自动记住**而不是让老师手动建模板 —— 用过的值直接进候选，
+   * 第二次输入就有下拉可选，老师什么都不用做。
+   * 上限 12 条、最近用的排最前，不会无限堆积。
+   */
+  function tplStore() {
+    if (!DB.config.tpl || typeof DB.config.tpl !== "object") DB.config.tpl = {};
+    const t = DB.config.tpl;
+    if (!Array.isArray(t.exams)) t.exams = [];
+    if (!Array.isArray(t.tasks)) t.tasks = [];
+    return t;
+  }
+
+  /** 记住一次考试（名称 + 满分），最近的排前面 */
+  function rememberExam(name, full) {
+    const n = String(name || "").trim();
+    if (!n) return;
+    const t = tplStore();
+    t.exams = t.exams.filter((x) => x && x.name !== n);
+    t.exams.unshift({ name: n, full: typeof full === "number" && full > 0 ? full : null });
+    if (t.exams.length > 12) t.exams.length = 12;
+  }
+
+  /** 记住一句常用任务 */
+  function rememberTask(txt) {
+    const s = String(txt || "").trim();
+    if (!s) return;
+    const t = tplStore();
+    t.tasks = t.tasks.filter((x) => x !== s);
+    t.tasks.unshift(s);
+    if (t.tasks.length > 12) t.tasks.length = 12;
+  }
+
+  /** 生成一个 datalist（原生下拉候选，零 JS 依赖） */
+  function tplDatalist(id, items, render) {
+    if (!items || !items.length) return "";
+    return `<datalist id="${esc(id)}">${items.map((x) => `<option value="${esc(render(x))}"></option>`).join("")}</datalist>`;
+  }
+
+  /** 动手前拍快照。label 会显示在「撤销」按钮上，让老师知道撤的是什么 */
+  function snapshot(label) {
+    try {
+      UNDO_STACK.push({ label: String(label || "批量操作"), at: Date.now(), data: JSON.stringify(DB) });
+      while (UNDO_STACK.length > UNDO_MAX) UNDO_STACK.shift();
+    } catch (e) { console.warn("快照失败", e); }
+  }
+
+  function canUndo() { return UNDO_STACK.length > 0; }
+  function undoLabel() { return UNDO_STACK.length ? UNDO_STACK[UNDO_STACK.length - 1].label : ""; }
+
+  /** 撤销上一步：把快照放回去 */
+  function undoBatch() {
+    const last = UNDO_STACK.pop();
+    if (!last) return toast("没有可以撤销的操作");
+    try {
+      const back = JSON.parse(last.data);
+      // 整体替换（DB 是 let 变量，直接换引用最干净）
+      DB = back;
+      save();
+      view.selIds = [];
+      view.batchOpen = false;
+      renderStats(); renderSide(); renderStage();
+      toast(`已撤销「${last.label}」—— 数据回到动手之前`, 4000);
+    } catch (e) {
+      console.error(e);
+      toast("撤销失败：" + e.message, 5000);
+    }
+  }
+
+  /** 批量操作统一入口：拍快照 → 改数据 → 存盘 → 重画 */
+  function batchApply(label, fn) {
+    const ids = view.selIds.slice();
+    if (!ids.length) return toast("先勾几个学生");
+    const studs = ids.map((id) => DB.students.find((s) => s.id === id)).filter(Boolean);
+    if (!studs.length) return toast("选中的学生找不到了");
+    snapshot(label);
+    const n = fn(studs) || studs.length;
+    save();
+    renderStats(); renderSide(); renderStage();
+    return n;
+  }
+
+  /**
+   * 批量操作条（2026-10-16 加）。
+   * 设计原则：**操作前先说清楚会影响谁**，做完永远留一颗「撤销」。
+   * 没勾人的时候不占地方（返回空串）。
+   */
+  function batchBarHtml() {
+    const ids = view.selIds || [];
+    if (!ids.length) return "";
+    const studs = ids.map((id) => DB.students.find((s) => s.id === id)).filter(Boolean);
+    const names = studs.map((s) => s.name);
+    const flags = DB.config.flags || [];
+    const ptags = DB.config.parentTags || [];
+    return `<div class="batchbar" id="batchBar">
+      <div class="bb-top">
+        <b>已选 ${studs.length} 人</b>
+        <span class="bb-names" title="${esc(names.join("、"))}">${esc(names.slice(0, 8).join("、"))}${names.length > 8 ? " 等" : ""}</span>
+        <span style="flex:1"></span>
+        <button class="btnmini" data-bb="all">全选当前 ${(view._listAll || []).length} 人</button>
+        <button class="btnmini" data-bb="none">取消选择</button>
+        ${canUndo() ? `<button class="btnmini" data-bb="undo" title="把数据恢复到上一次批量操作之前">↩ 撤销「${esc(undoLabel())}」</button>` : ""}
+      </div>
+      <div class="bb-acts">
+        <span class="bb-grp">跟进项：${flags.map((f) =>
+          `<button class="btnmini" data-bbflag="${esc(f.key)}" data-bbval="done" title="把这些人的「${esc(f.label)}」标成完成">✓ ${esc(f.label)}</button>`
+        ).join("") || "<span class='hint-inline'>（还没配跟进项）</span>"}</span>
+        <span class="bb-sep"></span>
+        <span class="bb-grp">加家长标签：${ptags.slice(0, 6).map((t) =>
+          `<button class="btnmini" data-bbptag="${esc(t.label)}">＋${esc(t.label)}</button>`
+        ).join("") || "<span class='hint-inline'>（还没配标签）</span>"}
+          <input class="bb-in" id="bbPtagNew" placeholder="自己写一个" maxlength="12">
+          <button class="btnmini" data-bbptagnew="1">加</button></span>
+        <span class="bb-sep"></span>
+        <span class="bb-grp">分任务：<input class="bb-in" id="bbTask" list="tplTasks" placeholder="例：周五前收作业" maxlength="30">
+          <button class="btnmini" data-bbtask="1">派给这 ${studs.length} 人</button></span>
+        ${tplDatalist("tplTasks", tplStore().tasks, (x) => x)}
+        <span class="bb-sep"></span>
+        <button class="btnmini" data-bbcopy="1">复制名单</button>
+        <button class="btnmini" data-bbexport="1">导出这 ${studs.length} 人</button>
+      </div>
+    </div>`;
+  }
+
+  /** 绑定批量操作条上的所有按钮 */
+  function bindBatchBar(stage) {
+    const bar = $("batchBar");
+    if (!bar) return;
+    const studs = () => (view.selIds || []).map((id) => DB.students.find((s) => s.id === id)).filter(Boolean);
+    const done = (msg, n) => { toast(msg, 4000); view.selIds = []; view.batchOpen = false; save(); renderStats(); renderSide(); renderStage(); return n; };
+
+    bar.querySelectorAll("[data-bb]").forEach((b) => b.onclick = () => {
+      const k = b.dataset.bb;
+      if (k === "none") { view.selIds = []; renderStage(); return; }
+      if (k === "all") { view.selIds = (view._listAll || []).map((s) => s.id); renderStage(); return; }
+      if (k === "undo") { undoBatch(); return; }
+    });
+    // ① 批量标记打卡 / 电联（以及任何是「是/否」型的跟进项）
+    bar.querySelectorAll("[data-bbflag]").forEach((b) => b.onclick = () => {
+      const key = b.dataset.bbflag;
+      const f = (DB.config.flags || []).find((x) => x.key === key);
+      const list = studs();
+      if (!list.length) return;
+      const type = flagType(f);
+      if (type !== "yesno") {
+        // 次数/日期/文字型不能「一键标完成」——那种批量改会把老师手工记的详情冲掉
+        return toast(`「${f.label}」是${type === "count" ? "次数" : type === "date" ? "日期" : "文字"}型，不能一键标记 —— 到详情里逐个填更稳`, 6000);
+      }
+      if (!confirm(`把这 ${list.length} 个人的「${f.label}」标成已完成？\n\n${list.map((s) => s.name).join("、")}`)) return;
+      const n = batchApply(`标记${f.label}`, (arr) => {
+        for (const s of arr) {
+          s.flags ||= {};
+          s.flags[key] = { ...(s.flags[key] || {}), status: "done", raw: (s.flags[key] || {}).raw || "批量标记" };
+        }
+        return arr.length;
+      });
+      done(`已把 ${n} 人的「${f.label}」标成完成 —— 改错了点「撤销」`, n);
+    });
+    // ② 批量加家长标签
+    const addPtag = (label) => {
+      const t = String(label || "").trim();
+      if (!t) return;
+      const list = studs();
+      if (!list.length) return;
+      if (!confirm(`给这 ${list.length} 个人加上「${t}」标签？\n\n${list.map((s) => s.name).join("、")}`)) return;
+      const n = batchApply(`加标签「${t}」`, (arr) => {
+        for (const s of arr) {
+          s.parentTags ||= [];
+          if (!s.parentTags.includes(t)) s.parentTags.push(t);
+        }
+        return arr.length;
+      });
+      done(`已给 ${n} 人加上「${t}」—— 改错了点「撤销」`, n);
+    };
+    bar.querySelectorAll("[data-bbptag]").forEach((b) => b.onclick = () => addPtag(b.dataset.bbptag));
+    const pn = bar.querySelector("[data-bbptagnew]");
+    if (pn) pn.onclick = () => { const el = $("bbPtagNew"); addPtag(el ? el.value : ""); };
+    // ③ 批量分派跟进任务
+    const bt = bar.querySelector("[data-bbtask]");
+    if (bt) bt.onclick = () => {
+      const el = $("bbTask");
+      const txt = String(el ? el.value : "").trim();
+      if (!txt) { if (el) el.focus(); return toast("先写一句任务内容，比如「周五前收作业」", 5000); }
+      const list = studs();
+      if (!list.length) return;
+      if (!confirm(`给这 ${list.length} 个人派任务「${txt}」？\n\n${list.map((s) => s.name).join("、")}\n\n（会把他们标成「待跟进」，你可以在待跟进里逐条跟进）`)) return;
+      // 先记模板、再拍快照改数据 —— 顺序不能反：batchApply 内部会拍「动手前」的快照，
+      // 如果 rememberTask 放在它后面，撤销时会把刚记住的模板一起回滚掉（2026-10-16 实测踩到）。
+      rememberTask(txt);
+      const n = batchApply("分派跟进任务", (arr) => {
+        for (const s of arr) s.followUp = { done: false, at: new Date().toISOString().slice(0, 10), text: txt };
+        return arr.length;
+      });
+      save();
+      done(`已给 ${n} 人派了任务「${txt}」—— 改错了点「撤销」`, n);
+    };
+    // ④ 复制名单
+    const cp = bar.querySelector("[data-bbcopy]");
+    if (cp) cp.onclick = async () => {
+      const txt = studs().map((s) => s.name).join("、");
+      try {
+        await navigator.clipboard.writeText(txt);
+        toast(`已复制 ${studs().length} 个姓名到剪贴板`, 4000);
+      } catch {
+        // 有些环境不给用剪贴板 —— 退化成让老师自己选中
+        window.prompt("复制下面这段名单：", txt);
+      }
+    };
+    // ⑤ 导出这 N 人
+    const ex = bar.querySelector("[data-bbexport]");
+    if (ex) ex.onclick = () => {
+      const list = studs();
+      if (!list.length) return;
+      snapshot("导出名单");
+      exportCsvFor(list);
+      toast(`已导出这 ${list.length} 人 —— 撤销可恢复选择状态`, 5000);
+    };
+  }
 
   function ensureDaily() {
     if (!DB.daily) DB.daily = { date: "", ids: [], done: [] };
@@ -5689,7 +5995,15 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       DB.config.flags.map((fl) => row("flag", fl.key, "还没" + fl.label, S.filter((s) => !flagDone(s, fl)).length)).join("") +
       DB.config.dims.map((d) => row("risk", d.key, d.label + " ≤" + DB.config.riskAt, S.filter((s) => risksOf(s).includes(d.label)).length)).join("");
     html += groupHead("follow", "待办与筛选");
-    if (isOpen("follow")) html += todoRows;
+    if (isOpen("follow")) {
+      // 「待处理」放这一组最前面（2026-10-16 加）：它是「有异常等你拿主意」，
+      // 比普通筛选更要紧。数字 >0 才用强调色 —— 0 的时候低调成灰色。
+      const qn = pendingQueue().length;
+      html += `<button class="nav ${view.mode === "queue" ? "on" : ""}" data-queue="1">
+        <span class="nav-l"><span class="nav-t">待处理</span></span>
+        <span class="n">${qn ? `<span class="hot">${qn}</span>` : 0}</span></button>`;
+      html += todoRows;
+    }
 
     /* ---- 问题标签 / 家长类型：保持现在的可折叠行为（默认折起） ----
        「更多筛选」那个改法先搁置（2026-10-16 用户明确说「明天再说」），
@@ -5715,9 +6029,10 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       if (el.dataset.score) { enterScore(); return; }
       if (el.dataset.call) { enterCall(); return; }
       if (el.dataset.paper) { enterPaper(); return; }
+      if (el.dataset.queue) { enterQueue(); return; }
       // 侧栏这些筛选全是「学员列表」的东西。停在打卡/成绩/电联/答题卡页时，光改 filter 是没用的
       // （那几页根本不看 filter），点下去像没反应——所以先把 mode 放回列表页再筛。
-      if (view.mode === "checkin" || view.mode === "score" || view.mode === "call" || view.mode === "paper") {
+      if (view.mode === "checkin" || view.mode === "score" || view.mode === "call" || view.mode === "paper" || view.mode === "queue") {
         view.mode = view.listMode;
         view.checkinTask = null; view.callBatch = null; view.scoreExam = null;
         syncSeg();
@@ -5816,6 +6131,8 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       out.push(`<span class="chip">📝 ${ex.count} 次</span>`);
     }
     if (s.chats?.length) out.push(`<span class="chip">💬 ${s.chats.length}</span>`);
+    // 批量派的任务要能一眼看见 —— 派了却看不见等于白派（2026-10-16 加）
+    if (s.followUp?.text && !s.followUp?.done) out.push(`<span class="chip no" title="待跟进：${esc(s.followUp.text)}">📌 ${esc(s.followUp.text)}</span>`);
     if (s.followUp?.done) out.push(`<span class="chip ok">已跟进</span>`);
     return `<div class="chips">${out.join("")}</div>`;
   }
@@ -5841,9 +6158,13 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
   function card(s) {
     const lv = levelOf(s);
     const pe = cardPaperExam(s);
-    return `<div class="card ${view.selected === s.id ? "sel" : ""}" data-id="${s.id}"
+    const on = (view.selIds || []).includes(s.id);
+    return `<div class="card ${view.selected === s.id ? "sel" : ""}${on ? " checked" : ""}" data-id="${s.id}"
       style="border-left-color:${lv ? levelColor(lv) : "var(--line)"}">
-      <div class="row1"><span class="nm">${esc(s.name)}</span>${levelBadge(s)}</div>
+      <div class="row1">
+        <input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${on ? "checked" : ""}
+          title="勾上可以批量操作（打卡、加标签、派任务…）">
+        <span class="nm">${esc(s.name)}</span>${levelBadge(s)}</div>
       ${scoreBox(s)}${chipsOf(s)}
       <div class="cons ${s.cons ? "" : "empty"}">${s.cons ? "⚠ " + esc(s.cons) : "（未记录问题）"}</div>
       ${pe ? `<div class="cardfoot">
@@ -5945,6 +6266,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     if (view.mode === "score") { closeDetailIfNotSelected(); renderScorePage(); return; }
     if (view.mode === "call") { closeDetailIfNotSelected(); renderCallPage(); return; }
     if (view.mode === "paper") { closeDetailIfNotSelected(); renderPaperPage(); return; }
+    if (view.mode === "queue") { closeDetailIfNotSelected(); renderQueuePage(); return; }
 
     // 今日队列为空就自动排 5 个（必须在 visible() 之前，否则筛出来是空的）
     if (view.filter.kind === "today") {
@@ -5964,6 +6286,14 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       : f.kind === "follow" ? "待跟进" : "";
 
     const total = list.length;
+    // 批量操作要用「当前筛出来的这批人」（全选按钮按这个算）—— 记一份备查
+    view._listAll = list;
+    // 清掉已经不在当前列表里的选中项，避免「撤销后还勾着看不见的人」
+    if (view.selIds && view.selIds.length) {
+      const alive = new Set(list.map((s) => s.id));
+      view.selIds = view.selIds.filter((id) => alive.has(id));
+    }
+    const selSet = new Set(view.selIds || []);
     let topBar = "";
     let tailBar = "";
 
@@ -6043,10 +6373,13 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
           title="点一下切换">${txt}</button></td>`;
       };
       const stickyFor = (k) => (k === "name") ? " sticky-l" : (k === "level") ? " sticky-l sticky-2" : "";
-      stage.innerHTML = `<div class="wrap-table"><table class="grid"><thead><tr>${
-        cols.map(([k, l]) => `<th data-key="${k}" class="${stickyFor(k)}">${esc(l)}${view.sort.key === k ? (view.sort.dir > 0 ? " ↑" : " ↓") : ""}</th>`).join("")
-      }</tr></thead><tbody>${list.map((s) => `<tr data-id="${s.id}">
-        <td class="sticky-l"><b>${esc(s.name)}</b></td>
+      const allOn = list.length > 0 && list.every((s) => selSet.has(s.id));
+      stage.innerHTML = batchBarHtml() + `<div class="wrap-table"><table class="grid"><thead><tr>${
+        cols.map(([k, l]) => `<th data-key="${k}" class="${stickyFor(k)}">${
+          k === "name" ? `<input type="checkbox" class="cbsel cball" data-cball="1" ${allOn ? "checked" : ""} title="全选/取消这 ${list.length} 人"> ` : ""
+        }${esc(l)}${view.sort.key === k ? (view.sort.dir > 0 ? " ↑" : " ↓") : ""}</th>`).join("")
+      }</tr></thead><tbody>${list.map((s) => `<tr data-id="${s.id}"${selSet.has(s.id) ? ' class="rowsel"' : ""}>
+        <td class="sticky-l"><input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${selSet.has(s.id) ? "checked" : ""} title="勾上可以批量操作"> <b>${esc(s.name)}</b></td>
         ${hasLevels() ? `<td class="sticky-l sticky-2">${esc(levelOf(s))}${DB.config.levelAuto && !s.levelManual ? `<i class="lva" title="按评分自动算出">ⓐ</i>` : ""}</td>` : ""}
         ${DB.config.dims.map((d) => scoreCell(s, d)).join("")}
         ${hasDims() ? `<td class="num">${scoreTotal(s)}</td>` : ""}
@@ -6099,11 +6432,14 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         renderStage();
       });
     } else if (view.mode === "follow" || isToday) {
-      stage.innerHTML = `<div class="cards">${list.map((s) => {
+      stage.innerHTML = batchBarHtml() + `<div class="cards">${list.map((s) => {
         const reasons = [...pendingFlags(s).map((f2) => "还没" + f2.label), ...risksOf(s).map((r) => r + "≤" + DB.config.riskAt)];
         if (!s.cons) reasons.push("未记录问题");
-        return `<div class="card" data-id="${s.id}" style="border-left-color:${levelOf(s) ? levelColor(levelOf(s)) : "var(--line)"}">
-          <div class="row1"><span class="nm">${esc(s.name)}</span>${levelBadge(s)}
+        const on = selSet.has(s.id);
+        return `<div class="card${on ? " checked" : ""}" data-id="${s.id}" style="border-left-color:${levelOf(s) ? levelColor(levelOf(s)) : "var(--line)"}">
+          <div class="row1">
+            <input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${on ? "checked" : ""} title="勾上可以批量操作">
+            <span class="nm">${esc(s.name)}</span>${levelBadge(s)}
             <span style="flex:1"></span>
             <span class="chip ${s.followUp?.done ? "ok" : "no"}">${s.followUp?.done ? "已跟进" : "待跟进"}</span></div>
           ${scoreBox(s)}
@@ -6112,7 +6448,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
           ${isToday ? `<button class="btn primary" data-done="${s.id}" style="width:100%">✓ 联系过了</button>` : ""}</div>`;
       }).join("")}</div>`;
     } else {
-      stage.innerHTML = `<div class="cards">${list.map(card).join("")}</div>`;
+      stage.innerHTML = batchBarHtml() + `<div class="cards">${list.map(card).join("")}</div>`;
     }
 
     // 「联系过了」按钮在卡片内部，必须阻止冒泡，否则会连带打开详情
@@ -6123,6 +6459,29 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       const ds = dailyStats();
       toast(ds.left.length ? `已记录，还剩 ${ds.left.length} 个` : "今天的 5 个做完了 👍");
     });
+
+    // 批量勾选（2026-10-16 加）：点勾选框只切换选中，**绝不能顺带打开详情** ——
+    // 勾选框在卡片/行里面，不阻止冒泡就会连到 [data-id] 的 onclick 上。
+    stage.querySelectorAll("[data-cbsel]").forEach((cb) => {
+      cb.onclick = (ev) => ev.stopPropagation();
+      cb.onchange = (ev) => {
+        ev.stopPropagation();
+        const id = cb.dataset.cbsel;
+        view.selIds ||= [];
+        if (cb.checked) { if (!view.selIds.includes(id)) view.selIds.push(id); }
+        else view.selIds = view.selIds.filter((x) => x !== id);
+        renderStage();
+      };
+    });
+    stage.querySelectorAll("[data-cball]").forEach((cb) => {
+      cb.onclick = (ev) => ev.stopPropagation();
+      cb.onchange = (ev) => {
+        ev.stopPropagation();
+        view.selIds = cb.checked ? list.map((s) => s.id) : [];
+        renderStage();
+      };
+    });
+    bindBatchBar(stage);
 
     stage.querySelectorAll("[data-id]").forEach((el) => el.onclick = () => {
       view.selected = el.dataset.id; renderStage(); renderDetail();
@@ -7756,6 +8115,13 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     return out;
   }
 
+  function enterQueue() {
+    view.mode = "queue";
+    view.selected = null;
+    syncSeg();
+    render();
+  }
+
   function enterPaper() {
     view.mode = "paper";
     view.selected = null;
@@ -7907,6 +8273,10 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
    */
   const PAPER_STAGE = [];   // [{key, file, url}]
   let _ppSid = null;        // 归属给谁（学生 id）
+  // 批量传答题卡时的「文件名匹配结果」（2026-10-16 加）。
+  // 只在这里放建议，**进库必须老师点确认** —— 见 matchPaperFiles 的说明。
+  let PP_MATCH = [];        // [{file, url, name, sid, examName, level, why}]
+  let PP_VIEW = "stage";    // stage = 选图那一步；confirm = 待确认区
 
   const ppKey = () => "pp" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
@@ -7927,6 +8297,75 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     if (!it) return;
     try { URL.revokeObjectURL(it.url); } catch { /* 忽略 */ }
     PAPER_STAGE.splice(i, 1);
+    renderStage();
+  }
+
+  /* ---- 批量传答题卡：一次多张 / 整个文件夹（2026-10-16 加）
+   *
+   * 老师考完一次，手上是 73 张图（手机导的、扫描的、按人名命名的都有）。
+   * 一个个点「选图 → 给谁 → 哪一场 → 确认」是 73 轮，一轮 15 秒就是一节课。
+   * 现在：一次全拖进来 → 按文件名认人 → 有把握的一键确认，没把握的进待确认区。
+   *
+   * **铁律：认不准绝不入库**。只有 level==="ok"（唯一命中）才能批量确认，
+   * 重名（dup）和认不出（none）一律进待确认区等老师点选 —— 认错人比认不出危险得多。
+   */
+  function ppAddBatch(files, examName) {
+    const arr = [...(files || [])];
+    const imgs = arr.filter((f) => f && /^image\//.test(f.type || "") && f.size > 0);
+    if (!imgs.length) { toast("这些都不是图片 —— 答题卡只收图片", 5000); return; }
+    const res = matchPaperFiles(imgs, examName);
+    for (const r of res) r.url = URL.createObjectURL(r.file);
+    PP_MATCH = PP_MATCH.concat(res);
+    const ok = res.filter((r) => r.level === "ok").length;
+    const dup = res.filter((r) => r.level === "dup").length;
+    const none = res.filter((r) => r.level === "none").length;
+    PP_VIEW = "confirm";
+    renderStage();
+    toast(`收下 ${res.length} 张：能认出 ${ok} 张${dup ? `，重名 ${dup} 张` : ""}${none ? `，没认出 ${none} 张` : ""}`
+      + (ok ? " —— 点「批量确认」一次入库" : " —— 需要你逐个指定"), 7000);
+  }
+
+  /** 批量确认：只把 level==="ok" 的写进去 */
+  async function ppConfirmAll() {
+    const oks = PP_MATCH.filter((r) => r.level === "ok" && r.sid);
+    if (!oks.length) return toast("没有能直接确认的 —— 先把下面标黄的那些指定好", 5000);
+    const names = oks.map((r) => r.name).join("、");
+    if (!confirm(`把这 ${oks.length} 张挂到对应学生的答题卡上？\n\n${names}\n\n`
+      + `（只追加、不覆盖已有的答题卡；识别还要到核对页另点一次，没核对确认的内容不会写进成绩）`)) return;
+    const batches = examBatches();
+    const byExamStu = new Map();
+    for (const r of oks) {
+      const b = batches.find((x) => x.name === r.examName) || { name: r.examName, date: "", full: null };
+      const s = DB.students.find((x) => x.id === r.sid);
+      if (!s) continue;
+      const e = ensureBatchExam(s, b);
+      const k = e.id;
+      if (!byExamStu.has(k)) byExamStu.set(k, { e, files: [] });
+      byExamStu.get(k).files.push(r.file);
+    }
+    for (const { e, files } of byExamStu.values()) await addAttachments(files, e.id, "paper");
+    // 入库成功的从待确认区拿走，没成功的（dup/none）留着让老师接着处理
+    for (const r of oks) { try { URL.revokeObjectURL(r.url); } catch { /* 忽略 */ } }
+    PP_MATCH = PP_MATCH.filter((r) => r.level !== "ok");
+    PP_VIEW = PP_MATCH.length ? "confirm" : "stage";
+    save(); renderStage();
+    toast(`挂好了 ${oks.length} 张 —— 去核对页点「识别答题卡」`, 7000);
+  }
+
+  function ppMatchDrop(key) {
+    const it = PP_MATCH.find((x) => x.file.name === key || x.url === key);
+    const i = PP_MATCH.indexOf(it);
+    if (i < 0) return;
+    try { URL.revokeObjectURL(PP_MATCH[i].url); } catch { /* 忽略 */ }
+    PP_MATCH.splice(i, 1);
+    if (!PP_MATCH.length) PP_VIEW = "stage";
+    renderStage();
+  }
+
+  function ppClearMatch() {
+    for (const r of PP_MATCH) { try { URL.revokeObjectURL(r.url); } catch { /* 忽略 */ } }
+    PP_MATCH = [];
+    PP_VIEW = "stage";
     renderStage();
   }
 
@@ -7957,6 +8396,68 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     const items = [...((ev.clipboardData && ev.clipboardData.items) || [])];
     return items.filter((i) => i.kind === "file" && /^image\//.test(i.type || ""))
       .map((i) => i.getAsFile()).filter(Boolean);
+  }
+
+  /* ---- 批量答题卡：按文件名认人（2026-10-16 加）
+   *
+   * 老师从手机/扫描仪导出来的答题卡，文件名通常带着名字：
+   *   「董佳泽_答题卡.jpg」「董佳泽-第一次月考-1.jpg」「IMG_2301.jpg」
+   * 前两种能零成本认出是谁，第三种认不出来 —— **认不出就进待确认，绝不瞎猜**。
+   *
+   * 为什么只做文件名、不从图上认字：从图上认姓名要调识别服务（联网 + 按量付费）。
+   * 用户 2026-10-16 明确选了「只按文件名匹配（不额外花钱）」，
+   * 图上姓名走已有的「识别答题卡」流程，识别完回填进待确认区一起处理。
+   */
+  const IMG_EXT_RE = /\.(jpe?g|png|webp|gif|bmp|heic)$/i;
+
+  /** 从文件名里剥出「可能是姓名」的部分：去扩展名、去序号、去常见后缀词 */
+  function nameFragFromFile(filename) {
+    let s = String(filename || "");
+    s = s.replace(IMG_EXT_RE, "");
+    // 扫描/手机导出的通用名，直接判为认不出（别拿 IMG 去跟名单硬碰）
+    if (/^(img|image|scan|photo|dsc|wx_camera|mmexport|screenshot|微信图片)[\s_-]*\d*$/i.test(s)) return "";
+    // 去掉常见的后缀词与页码
+    s = s.replace(/(答题卡|答题纸|试卷|考卷|第\s*\d+\s*页|page\s*\d+|_\d+|-\d+|\d+)/gi, " ");
+    // 分隔符统一成空格后，逐段试探（姓名一般不跨段）
+    return s.replace(/[_\-·—+()（）\[\]【】]+/g, " ").replace(/\s+/g, " ").trim();
+  }
+
+  /**
+   * 给一批文件做「谁·哪一场」的初步匹配。**只给建议，不写库**。
+   * 返回 [{ file, name, sid, s, examName, level, why }]
+   *   level: "ok"   = 有把握（唯一命中，可以直接批量确认）
+   *          "dup"  = 重名，候选多个 → 待确认
+   *          "none" = 认不出人 → 待确认
+   */
+  function matchPaperFiles(files, examName) {
+    const batches = examBatches();
+    const exam = examName || (batches[0] || {}).name || "";
+    return [...(files || [])].map((f) => {
+      const frag = nameFragFromFile(f.name);
+      if (!frag) return { file: f, name: "", sid: "", s: null, examName: exam, level: "none", why: "文件名里没有姓名（IMG/微信图片这类通用名）" };
+      // 逐段试：先整段，再按空格切开的每一段（「董佳泽 第一次月考」两段都能试）
+      const parts = [frag, ...frag.split(" ")];
+      let hit = null, hitCount = 0, cands = [];
+      for (const p of parts) {
+        const fm = p && p.length >= 2 ? bestNameMatch(p) : null;
+        if (fm) { hit = fm; break; }
+      }
+      // 重名检测：这一份片段能对上的人不止一个 → 必须让老师选
+      if (hit) {
+        const q = normalizeNamePart(frag);
+        cands = DB.students.filter((s) => {
+          const full = normalizeNamePart(s.name);
+          const core = normalizeNamePart(coreName(s.name));
+          return (full && q.includes(full)) || (core && q.includes(core));
+        });
+        hitCount = cands.length;
+      }
+      if (!hit) return { file: f, name: "", sid: "", s: null, examName: exam, level: "none", why: "文件名对不上名单里任何人" };
+      if (hitCount > 1) {
+        return { file: f, name: hit.s.name, sid: "", s: null, examName: exam, level: "dup", why: `名单里有 ${hitCount} 个人都像，需要你选`, cands: cands.map((x) => x.id) };
+      }
+      return { file: f, name: hit.s.name, sid: hit.s.id, s: hit.s, examName: exam, level: "ok", why: "文件名命中" };
+    });
   }
 
   function ppPickedStudent() {
@@ -7999,6 +8500,14 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         <span class="hint-inline">多页答题卡就一张张连着粘，会按顺序排成第 1、2、3… 页</span>
         <input type="file" id="ppFile" accept="image/*" multiple hidden>
       </div>
+      <div class="pp-batch">
+        <b>⚡ 批量：</b>
+        <button class="btnmini" data-ppbatch="1">一次选多张</button>
+        <button class="btnmini" data-ppdir="1">选整个文件夹</button>
+        <span class="hint-inline">按<b>文件名</b>认人（如「董佳泽_答题卡.jpg」）；认不准的会进待确认区，不会瞎分</span>
+        <input type="file" id="ppBatch" accept="image/*" multiple hidden>
+        <input type="file" id="ppDir" accept="image/*" multiple webkitdirectory directory hidden>
+      </div>
       ${thumbs}
       <div class="pp-foot">
         <label class="pp-f">给谁：
@@ -8015,7 +8524,50 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         图停在这儿<b>不会自己进库</b>：确认归属才写进那条考试记录，而且只追加、不覆盖已有的答题卡。
         识别还要在核对页上另点一次 —— 没核对确认的内容不会写进成绩。
       </p>
+    </div>${ppMatchHtml()}`;
+  }
+
+  /**
+   * 待确认区：批量传图后，把「要老师拿主意」的集中列出来（2026-10-16 加）。
+   * 三档：ok（有把握，可批量确认）/ dup（重名，必须选）/ none（认不出，必须选）。
+   * **ok 之外的都不允许自动入库** —— 这条是整个功能的安全底线。
+   */
+  function ppMatchHtml() {
+    if (!PP_MATCH.length) return "";
+    const ok = PP_MATCH.filter((r) => r.level === "ok");
+    const dup = PP_MATCH.filter((r) => r.level === "dup");
+    const none = PP_MATCH.filter((r) => r.level === "none");
+    const opts = (sel) => DB.students.map((s) =>
+      `<option value="${esc(s.id)}" ${s.id === sel ? "selected" : ""}>${esc(s.name)}</option>`).join("");
+    const head = `<div class="pp-confirm">
+      <div class="ppc-top">
+        <b>🗂 待确认区</b>
+        <span class="hint-inline">收下 ${PP_MATCH.length} 张：能直接确认 <b>${ok.length}</b> 张`
+          + `${dup.length ? ` · 重名 <b style="color:var(--amber)">${dup.length}</b> 张` : ""}`
+          + `${none.length ? ` · 认不出 <b style="color:var(--amber)">${none.length}</b> 张` : ""}</span>
+        <span style="flex:1"></span>
+        ${ok.length ? `<button class="btn primary" id="ppcAll">批量确认这 ${ok.length} 张</button>` : ""}
+        <button class="btn ghost" id="ppcClear">全部清掉</button>
+      </div>
+      <div class="ppc-list">${PP_MATCH.map((r, i) => {
+        const cls = r.level === "ok" ? "ok" : "hold";
+        return `<div class="ppc-row ${cls}">
+          <img src="${esc(r.url)}" alt="">
+          <span class="ppc-file" title="${esc(r.file.name)}">${esc(r.file.name)}</span>
+          <span class="ppc-why">${r.level === "ok" ? "✅ " : "⚠ "}${esc(r.why)}</span>
+          <span class="ppc-pick">${r.level === "ok"
+            ? `<b>${esc(r.name)}</b>`
+            : `<select data-ppc="${i}"><option value="">— 选学生 —</option>${opts(r.sid)}</select>`}</span>
+          <span class="ppc-exam">${esc(r.examName)}</span>
+          <button class="btnmini danger" data-ppcdel="${i}" title="不要这张">✕</button>
+        </div>`;
+      }).join("")}</div>
+      <p class="hint" style="margin:6px 2px 0">
+        <b>认不准的一律停在这里，不会自己进库</b> —— 认错人比认不出危险得多。
+        指定好之后点「批量确认」，图才会挂到对应学生的答题卡上（只追加、不覆盖）。
+      </p>
     </div>`;
+    return head;
   }
 
   /** 确认归属：把待归属区的图写进「某学生 · 某场考试」，然后进核对页（不自动识别） */
@@ -8058,14 +8610,43 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       drop.focus();
     };
     if (file) file.onchange = () => { ppAdd(file.files); file.value = ""; };
+    // 批量入口（2026-10-16）：一次多张 / 整个文件夹 —— 走文件名匹配，不花钱
+    const ppB = $("ppBatch");
+    if (ppB) ppB.onchange = () => { ppAddBatch(ppB.files, ($("ppExam") || {}).value); ppB.value = ""; };
+    const ppD = $("ppDir");
+    if (ppD) ppD.onchange = () => { ppAddBatch(ppD.files, ($("ppExam") || {}).value); ppD.value = ""; };
     if (drop) {
       drop.ondragover = (ev) => { ev.preventDefault(); drop.classList.add("over"); };
       drop.ondragleave = () => drop.classList.remove("over");
       drop.ondrop = (ev) => {
         ev.preventDefault(); drop.classList.remove("over");
-        ppAdd([...((ev.dataTransfer || {}).files || [])]);
+        const fs = [...((ev.dataTransfer || {}).files || [])];
+        // 拖进来超过 1 张 → 认为是批量（按文件名认人）；就 1 张还是老流程（手动指定）
+        if (fs.length > 1) ppAddBatch(fs, ($("ppExam") || {}).value);
+        else ppAdd(fs);
       };
     }
+    stage.querySelectorAll("[data-ppbatch]").forEach((b) => b.onclick = (ev) => {
+      ev.stopPropagation(); if (ppB) { ppB.value = ""; ppB.click(); }
+    });
+    stage.querySelectorAll("[data-ppdir]").forEach((b) => b.onclick = (ev) => {
+      ev.stopPropagation(); if (ppD) { ppD.value = ""; ppD.click(); }
+    });
+    // 待确认区：把「认不准的那些」指定给人
+    stage.querySelectorAll("[data-ppc]").forEach((sel) => sel.onchange = () => {
+      const r = PP_MATCH[+sel.dataset.ppc];
+      if (!r) return;
+      const s = DB.students.find((x) => x.id === sel.value);
+      if (s) { r.sid = s.id; r.name = s.name; r.level = "ok"; r.why = "你指定的"; }
+      renderStage();
+    });
+    stage.querySelectorAll("[data-ppcdel]").forEach((b) => b.onclick = (ev) => {
+      ev.stopPropagation(); ppMatchDrop(PP_MATCH[+b.dataset.ppcdel] && PP_MATCH[+b.dataset.ppcdel].url);
+    });
+    const ppcAll = $("ppcAll");
+    if (ppcAll) ppcAll.onclick = () => ppConfirmAll();
+    const ppcClear = $("ppcClear");
+    if (ppcClear) ppcClear.onclick = () => ppClearMatch();
 
     stage.querySelectorAll("[data-ppmv]").forEach((b) => b.onclick = (ev) => {
       ev.stopPropagation(); ppMove(+b.dataset.ppmv, +b.dataset.d);
@@ -8101,6 +8682,110 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     if (exEl) exEl.onchange = () => { /* 只是选归属，不用重画 */ };
     const go = $("ppGo");
     if (go) go.onclick = () => { ppCommit(); };
+  }
+
+  /* ---- 待处理队列（2026-10-16 加）
+   *
+   * 老师最怕的不是活多，是「有件事没处理，但我忘了」。以前得挨个页面翻：
+   * 答题卡页看谁待核对、聊天页看哪条没归类、成绩页看谁重复了。
+   * 这里一次算出来，点一下直达。
+   *
+   * **全部现算，不另存一份清单** —— 存了就会和真实数据失同步，
+   * 那种「列表说有事、点进去没事」的假清单比没有更糟。
+   */
+  const QTYPE = { paper: "答题卡", conflict: "成绩", chat: "聊天" };
+
+  function pendingQueue() {
+    const out = [];
+    // ① 答题卡：传了图、还没核对完的
+    for (const b of examBatches()) {
+      for (const s of DB.students) {
+        const e = batchExamOf(s, b.name);
+        if (e && paperState(e) === "review") {
+          out.push({
+            type: "paper", sid: s.id, eid: e.id, name: s.name, batch: b.name,
+            label: "答题卡待核对", why: `「${b.name}」传了图还没核对完`,
+            at: (e.paper && e.paper.at) || 0,
+          });
+        }
+      }
+    }
+    // ② 聊天记录：导入时没认出是谁
+    for (const u of (DB.unmatched || [])) {
+      out.push({
+        type: "chat", name: u.name || u.who || "（没写名字）",
+        label: "聊天没归类", why: String(u.text || "").replace(/\s+/g, " ").slice(0, 42) || "导入时没认出来是谁",
+        at: u.importedAt || 0,
+      });
+    }
+    // ③ 成绩：同一场考试攒了两条以上（多半是重复导入）
+    for (const s of DB.students) {
+      const byName = new Map();
+      for (const e of (s.exams || [])) {
+        const k = batchKeyOf(e);
+        byName.set(k, (byName.get(k) || 0) + 1);
+      }
+      for (const [k, n] of byName) {
+        if (n > 1) out.push({
+          type: "conflict", sid: s.id, name: s.name,
+          label: "成绩有两条", why: `「${k}」有 ${n} 条记录，可能是重复导入`,
+          at: 0,
+        });
+      }
+    }
+    // 先按类型要紧程度，再按时间新的在前
+    const rank = { paper: 0, conflict: 1, chat: 2 };
+    out.sort((a, b) => (rank[a.type] ?? 9) - (rank[b.type] ?? 9) || (b.at || 0) - (a.at || 0));
+    return out;
+  }
+
+  function renderQueuePage() {
+    const stage = $("stage");
+    if (!stage) return;
+    const list = pendingQueue();
+    const cnt = {};
+    for (const it of list) cnt[it.type] = (cnt[it.type] || 0) + 1;
+    const head = `<div class="sc-detail-h"><b>待处理</b>
+      <span class="hint-inline">${list.length
+        ? `共 ${list.length} 件事等你拿主意 · ${Object.keys(cnt).map((k) => (QTYPE[k] || k) + " " + cnt[k]).join(" · ")}`
+        : "一件事都没有"}</span></div>`;
+    stage.innerHTML = `<div class="pap-page">${head}
+      ${list.length ? `<div class="qd-list">${list.map((it, i) => `
+        <div class="qd-row">
+          <span class="qd-tag t-${esc(it.type)}">${esc(QTYPE[it.type] || it.type)}</span>
+          <b class="qd-name">${esc(it.name || "")}</b>
+          <span class="qd-why">${esc(it.why || "")}</span>
+          <button class="btn ghost" data-qgo="${i}">去处理</button>
+        </div>`).join("")}</div>`
+        : `<div class="pap-empty">太好了，没有待处理的事。<br>
+             <span class="hint-inline">答题卡核对完、聊天归好类、成绩没有重复 —— 这里就会是空的。<br>
+             平时不用特意来看，侧栏上数字是 0 就说明没事。</span></div>`}
+    </div>`;
+    stage.querySelectorAll("[data-qgo]").forEach((b) => b.onclick = () => {
+      const it = list[+b.dataset.qgo];
+      if (!it) return;
+      if (it.type === "paper" && it.sid) {
+        view.mode = "paper";
+        view.paperBatch = it.batch || null;
+        view.paperFilter = "all";
+        view.paperStudent = it.sid;
+        view.selected = null;
+        syncSeg(); render();
+        return;
+      }
+      if (it.sid) {
+        // 必须先把 mode 切回列表页 —— 否则 renderStage 还在渲染队列页，
+        // 点了「去处理」看着像没反应（2026-10-16 实测踩到）。
+        view.mode = view.listMode || "cards";
+        view.selected = it.sid;
+        syncSeg();
+        render();
+        renderDetail();
+        return;
+      }
+      // 聊天没归类：把人带到一个能处理的地方（快速录入）
+      openQuick();
+    });
   }
 
   function renderPaperPage() {
@@ -8747,7 +9432,9 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         <div class="follow">
           <button class="btn ${s.followUp?.done ? "" : "primary"}" id="dFollow">${s.followUp?.done ? "取消已跟进" : "标记已联系家长"}</button>
           <span class="when">${s.followUp?.done && s.followUp.at ? "上次：" + esc(s.followUp.at) : "还没标记"}</span>
-        </div></div>
+        </div>
+        ${s.followUp?.text ? `<div class="ftask">📌 ${esc(s.followUp.text)}</div>` : ""}
+      </div>
 
       <div class="box"><h4>电联记录（聊上 ${callCountOf(s.id).n} 次${callLogCount(s.id) ? " · 逐次记录 " + callLogCount(s.id) + " 条" : ""}）</h4>
         <div class="rowset" style="margin:0 0 10px">
@@ -9696,6 +10383,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     $("scoreText").value = "";
     $("scorePreview").innerHTML = "";
     $("scoreResult").textContent = "";
+    if ($("scoreFileHint")) $("scoreFileHint").innerHTML = "";
     SC = [];
 
     // 默认沿用上一次考试的名字/满分：连着录同一门课时不用每次重敲
@@ -9705,8 +10393,172 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     $("scoreDate").value = todayStr();
     $("scoreHint").textContent = "写完点「解析」，下面会列出识别结果。";
     $("scoreMode").innerHTML = "";
+    // 填「考试名」候选：以前用过的自动进模板，选一下就有（2026-10-16 加）
+    const dl = $("tplExams");
+    if (dl) {
+      try {
+        dl.innerHTML = tplStore().exams
+          .map((x) => `<option value="${esc(x.name)}">${x.full ? "上次满分 " + x.full : ""}</option>`).join("");
+      } catch { dl.innerHTML = ""; }
+    }
     $("mScore").classList.add("open");
     $("scoreText").focus();
+  }
+
+  /* ---- 成绩：从 Excel / CSV 直接读（2026-10-16 加）
+   *
+   * 老师手上的成绩本来是 xlsx（学校发的、别人传的），以前得先打开表格、
+   * 复制成「姓名 分数」两列文本再粘进来 —— 多一步就多一次出错机会。
+   * 现在直接选文件：程序自己找「哪列是姓名、哪列是分数」。
+   *
+   * 原则和粘贴那套完全一致：**只给建议，写入前必须老师看预览**。
+   * 认不出人的行不猜（交给老师在下拉里指），重复导入不产生两场考试。
+   */
+  const NAME_COL_HINT = /姓名|名字|学生|name|student/i;
+  const SCORE_COL_HINT = /分数|成绩|得分|总分|语文|数学|英语|score|total|分$/i;
+  const FULL_COL_HINT = /满分|full|max/i;
+  // 「序号 / 排名 / 学号」这类列数字很多，但**不是分数** —— 必须排除，
+  // 否则一表多列数字时分数列会被序号抢走（2026-10-16 实测踩到）。
+  const CODE_COL_HINT = /序号|编号|学号|考号|名次|排名|index|no\.?$|^id$/i;
+
+  /** 猜表头：返回 { headRow, nameCol, scoreCol, fullCol } */
+  function guessScoreCols(rows) {
+    // 表头不一定在第 1 行（学校表格常有标题行、空行）—— 扫前 10 行找最像表头的一行。
+    // 判据：里面有「姓名」字样；分数列优先取「分数/成绩」，其次取紧跟其后的数字列。
+    let fallback = null;
+    for (let i = 0; i < Math.min(10, rows.length); i++) {
+      const r = rows[i] || [];
+      let nc = -1, sc = -1, fc = -1, explicitScore = -1;
+      r.forEach((cell, j) => {
+        const t = String(cell == null ? "" : cell).trim();
+        if (!t) return;
+        if (/[\d]/.test(t) && !/[\u4e00-\u9fa5]/.test(t)) return;   // 纯数字的格子不是表头
+        if (nc < 0 && NAME_COL_HINT.test(t)) nc = j;
+        else if (fc < 0 && FULL_COL_HINT.test(t)) fc = j;
+        else if (explicitScore < 0 && /分数|成绩|得分|score|total/i.test(t)) explicitScore = j;
+        else if (sc < 0 && SCORE_COL_HINT.test(t)) sc = j;
+      });
+      if (nc < 0) continue;
+      if (explicitScore >= 0 || sc >= 0) {
+        const pick = explicitScore >= 0 ? explicitScore : sc;
+        return { headRow: i, nameCol: nc, scoreCol: pick, fullCol: fc };
+      }
+      // 只有「姓名」没有分数列名：记下来当兜底（等会儿用数值推断补）
+      if (!fallback) fallback = { headRow: i, nameCol: nc, fullCol: fc };
+    }
+    // 有表头但没分数列名 → 用「谁的数字最像分数」在表头**之后**的行里推断
+    if (fallback) {
+      const body = rows.slice(fallback.headRow + 1);
+      const w = Math.max(...rows.map((x) => (x || []).length), 0);
+      let bestScore = -1, bestN = -1;
+      for (let j = 0; j < w; j++) {
+        if (j === fallback.nameCol) continue;
+        const head = String((rows[fallback.headRow] || [])[j] == null ? "" : (rows[fallback.headRow] || [])[j]).trim();
+        if (CODE_COL_HINT.test(head)) continue;                    // 序号/学号不算分
+        let n = 0;
+        for (const r of body) { const t = String((r || [])[j] == null ? "" : (r || [])[j]).trim(); if (/^\d+(\.\d+)?$/.test(t)) n++; }
+        if (n > bestN) { bestN = n; bestScore = j; }
+      }
+      return { headRow: fallback.headRow, nameCol: fallback.nameCol, scoreCol: Math.max(0, bestScore), fullCol: fallback.fullCol };
+    }
+    // 没表头：按「哪一列像姓名、哪一列像分数」推
+    const sample = rows.slice(0, 20);
+    const w = Math.max(...rows.map((r) => (r || []).length), 0);
+    let bestName = 0, bestScore = -1, bestScoreVal = -1;
+    for (let j = 0; j < w; j++) {
+      let txt = 0, num = 0;
+      for (const r of sample) {
+        const t = String((r || [])[j] == null ? "" : (r || [])[j]).trim();
+        if (!t) continue;
+        if (/[\u4e00-\u9fa5]/.test(t)) txt++;
+        else if (/^\d+(\.\d+)?$/.test(t)) num++;
+      }
+      if (txt > 0 && txt >= num && txt > (sample.length * 0.3)) bestName = j;
+      if (num > bestScoreVal) { bestScoreVal = num; bestScore = j; }
+    }
+    return { headRow: -1, nameCol: bestName, scoreCol: Math.max(0, bestScore), fullCol: -1 };
+  }
+
+  /** 把表格（二维数组）变成 parseScoreRows 能吃的文本，再走同一套解析 */
+  function scoreRowsToText(rows, cols) {
+    const out = [];
+    for (let i = 0; i < rows.length; i++) {
+      if (i <= cols.headRow) continue;                 // 跳过表头
+      const r = rows[i] || [];
+      const nm = String(cols.nameCol >= 0 ? (r[cols.nameCol] == null ? "" : r[cols.nameCol]) : "").trim();
+      const scRaw = cols.scoreCol >= 0 ? r[cols.scoreCol] : "";
+      const sc = String(scRaw == null ? "" : scRaw).trim();
+      if (!nm && !sc) continue;
+      const fl = String(cols.fullCol >= 0 ? (r[cols.fullCol] == null ? "" : r[cols.fullCol]) : "").trim();
+      // 有满分的写成「姓名 分数/满分」，让 parseScoreRows 顺带把满分也记住
+      const num = sc.match(/\d+(?:\.\d+)?/);
+      if (nm && num) out.push(`${nm} ${num[0]}${fl && /\d/.test(fl) ? "/" + (fl.match(/\d+(?:\.\d+)?/) || [""])[0] : ""}`);
+      else if (nm) out.push(nm);
+    }
+    return out.join("\n");
+  }
+
+  /**
+   * 自己拆 CSV/TSV（只给成绩导入用，不碰公共的 XlsxLite.parseDelimited）。
+   * 稳在两点：① 按**整份文本**里谁出现得多来定分隔符，不是只看第一行；
+   *          ② 遵守引号规则（"a,b" 里的逗号不算分隔）。
+   */
+  function parseCsvRows(text) {
+    const t = String(text || "").replace(/^\uFEFF/, "");
+    const countOut = (ch) => (t.match(new RegExp("\\" + ch, "g")) || []).length;
+    const tabs = countOut("\t"), commas = countOut(","), semis = countOut(";");
+    const delim = tabs >= commas && tabs >= semis ? "\t" : (commas >= semis ? "," : ";");
+    const rows = [];
+    let row = [], cell = "", q = false;
+    for (let i = 0; i < t.length; i++) {
+      const ch = t[i];
+      if (q) {
+        if (ch === '"') { if (t[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+        else cell += ch;
+      } else if (ch === '"') q = true;
+      else if (ch === delim) { row.push(cell.trim()); cell = ""; }
+      else if (ch === "\n") { row.push(cell.trim()); rows.push(row); row = []; cell = ""; }
+      else if (ch !== "\r") cell += ch;
+    }
+    row.push(cell.trim());
+    if (row.some((c) => c !== "")) rows.push(row);
+    // 去掉尾部的空列
+    return rows.map((r) => { const a = [...r]; while (a.length && a[a.length - 1] === "") a.pop(); return a; });
+  }
+
+  /** 读一个 xlsx / csv 文件 → 填进导入框 → 直接解析预览 */
+  async function scoreFromFile(file) {
+    if (!file) return;
+    const name = String(file.name || "").toLowerCase();
+    try {
+      let rows = null;
+      if (/\.(xlsx|xlsm|xls)$/.test(name)) {
+        const buf = await file.arrayBuffer();
+        const wb = await globalThis.XlsxLite.readXlsx(buf);
+        if (!wb.sheets.length) return toast("这个文件里没有工作表");
+        rows = wb.sheets[0].rows;
+      } else {
+        // csv / txt。**不能用 XlsxLite.parseDelimited** —— 它只看第一行猜分隔符，
+        // 而学校导出的 csv 常有标题行/空行开头（第一行是空或是「七年级语文成绩单」），
+        // 那样会把逗号猜成分号、整行拆不开（2026-10-16 实测踩到）。
+        // 这里自己按「竖着数哪列最齐」拆，稳当且不影响别处。
+        const txt = await file.text();
+        rows = parseCsvRows(txt);
+      }
+      if (!rows || !rows.length) return toast("这个文件里没读到内容");
+      const cols = guessScoreCols(rows);
+      const text = scoreRowsToText(rows, cols);
+      if (!text.trim()) return toast("没在文件里认出行和分数 —— 确认一下是不是成绩表");
+      $("scoreText").value = text;
+      SC = parseScoreRows(text);
+      $("scoreFileHint").innerHTML = `已读「${esc(file.name)}」：`
+        + `姓名在第 ${cols.nameCol + 1} 列、分数在第 ${cols.scoreCol + 1} 列`
+        + `${cols.fullCol >= 0 ? `、满分在第 ${cols.fullCol + 1} 列` : ""} —— <b>下面核对无误再点「写入」</b>`;
+      renderScorePreview();
+    } catch (err) {
+      console.error(err);
+      toast("读文件失败：" + err.message, 5000);
+    }
   }
 
   function scoreParse() {
@@ -9800,6 +10652,8 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       else { s.exams.push({ id: uid(), name: t.name, date: t.date, score: r.score, full }); nAdd++; }
     }
 
+    // 把这次考试记进模板：下次导同一场成绩，考试名直接有下拉可选（2026-10-16 加）
+    rememberExam(t.name, t.full);
     save();
     renderStats(); renderSide(); renderStage();
     const done = nAdd + nUpd;
@@ -11791,6 +12645,13 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     });
 
     const sp = $("scoreParse"); if (sp) sp.onclick = scoreParse;
+    // 选 xlsx / csv 文件直接读（2026-10-16 加）
+    const spy = $("scorePickFile");
+    const spf = $("scoreFile");
+    if (spy && spf) {
+      spy.onclick = () => { spf.value = ""; spf.click(); };
+      spf.onchange = () => { const f = spf.files && spf.files[0]; spf.value = ""; if (f) scoreFromFile(f); };
+    }
     const ss = $("scoreSave"); if (ss) ss.onclick = scoreSave;
     const st = $("scoreText");
     if (st) st.addEventListener("keydown", (e) => {
@@ -11801,7 +12662,14 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     // 改考试名/日期会直接影响「几条更新、几条新增」，得跟着刷新预览
     for (const id of ["scoreExamName", "scoreDate"]) {
       const el = $(id);
-      if (el) el.addEventListener("change", () => { if (SC.length) renderScorePreview(); });
+      if (el) el.addEventListener("change", () => {
+        // 选了模板里的考试名 → 顺手把满分也带出来，少敲一次（2026-10-16 加）
+        if (id === "scoreExamName") {
+          const hit = tplStore().exams.find((x) => x.name === el.value.trim());
+          if (hit && hit.full) { const f = $("scoreFull"); if (f) f.value = hit.full; }
+        }
+        if (SC.length) renderScorePreview();
+      });
     }
 
     // 语文打卡：文件选择 + 导入
@@ -11820,7 +12688,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     document.querySelectorAll("[data-close]").forEach((el) => el.onclick = () => $(el.dataset.close).classList.remove("open"));
     document.querySelectorAll(".mask").forEach((m) => m.onclick = (e) => { if (e.target === m) m.classList.remove("open"); });
 
-    const ex = $("expCsv"); if (ex) ex.onclick = exportCsv;
+    const ex = $("expCsv"); if (ex) ex.onclick = () => exportCsv();
     const ej = $("expJson"); if (ej) ej.onclick = exportBackup;
     const ij = $("impJsonBtn"); if (ij) ij.onclick = () => $("impJsonFile").click();
     const ijf = $("impJsonFile"); if (ijf) ijf.onchange = (e) => {
@@ -11843,7 +12711,9 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     }
   }
 
-  function exportCsv() {
+  /** 导出 CSV。给了 list 就只导这些人（批量导出用），否则导全班 */
+  function exportCsv(list) {
+    const only = Array.isArray(list) && list.length ? list : null;
     const c = DB.config;
     const head = ["姓名", ...(hasLevels() ? ["等级"] : []),
       ...c.dims.map((d) => d.label), ...(hasDims() ? ["合计"] : []),
@@ -11851,7 +12721,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       "最近成绩", "比上次", "考试次数", "历次成绩",
       "优点", "问题", "跟进状态", "最近联系", "聊天条数", "家长类型", "备注"];
     const rows = [head];
-    for (const s of DB.students) {
+    for (const s of (only || DB.students)) {
       const ex = examInfo(s);
       const history = examsSorted(s).filter(hasScore)
         .map((e) => `${e.name || e.date || "?"} ${e.score}${typeof e.full === "number" ? "/" + e.full : ""}`)
@@ -11866,9 +12736,13 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
         s.pros, s.cons, s.followUp?.done ? "已跟进" : "待跟进",
         s.lastContact || "", (s.chats || []).length, parentTagsOf(s).join("、"), s.note]);
     }
-    download((c.className || "学员") + "_名单.csv", "\ufeff" + rows.map((r) => r.map(csvCell).join(",")).join("\r\n"), "text/csv;charset=utf-8");
-    toast("已导出 CSV");
+    const tag = only ? `_选中${only.length}人` : "_名单";
+    download((c.className || "学员") + tag + ".csv", "\ufeff" + rows.map((r) => r.map(csvCell).join(",")).join("\r\n"), "text/csv;charset=utf-8");
+    toast(only ? `已导出选中的 ${only.length} 人` : "已导出 CSV");
   }
+
+  /** 批量导出：只导选中的学生（复用 exportCsv 的列） */
+  function exportCsvFor(list) { exportCsv(list); }
 
   function downloadBlob(name, blob) {
     const a = document.createElement("a");
