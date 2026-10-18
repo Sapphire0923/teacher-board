@@ -515,7 +515,68 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 20px 60px;
 /* ---------- 待处理队列（2026-10-16 加） ---------- */
 .qd-list { border: 1px solid var(--line); border-radius: var(--radius);
   background: var(--panel-solid); overflow: hidden; }
-.qd-row { display: flex; align-items: center; gap: 11px; padding: 10px 14px;
+
+/* ---------- 工作台（2026-10-18 加） ----------
+   设计意图：老师的眼睛顺着左侧编号往下走，就知道先干哪个。
+   一行一件事，右边一个按钮；不做大色块、不做卡片墙 —— 那是仪表盘，
+   这里要的是「行动清单」，多一个装饰就多一分干扰。
+   强调色只用在第一件（.first）的按钮上：一次只强调一个「现在做这个」。 */
+.wb-page { padding: 6px 0 26px; max-width: 1080px; }
+.wb-hi { font-size: var(--fs-title); font-weight: 700; color: var(--ink);
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.wb-date { font-size: var(--fs-aux); font-weight: 500; color: var(--ink-3); }
+.wb-sub { margin: 6px 0 16px; font-size: var(--fs-cell); color: var(--ink-2); }
+.wb-sub b { color: var(--accent); font-size: 1.15em; padding: 0 2px; }
+
+.wb-list { display: flex; flex-direction: column; gap: 8px; }
+.wb-row { display: flex; align-items: center; gap: 14px; padding: 13px 16px;
+  border: 1px solid var(--line); border-radius: var(--radius-l);
+  background: var(--panel-solid); box-shadow: var(--shadow-card);
+  cursor: pointer; transition: box-shadow .15s, border-color .15s; }
+.wb-row:hover { box-shadow: var(--shadow-hover); border-color: var(--accent-line, var(--line)); }
+.wb-row.first { border-color: var(--accent-2-line); }
+.wb-no { flex: none; width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center; font-size: var(--fs-aux); font-weight: 700;
+  background: var(--tag-bg); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.wb-row.first .wb-no { background: var(--accent-2-soft); color: var(--accent-2); }
+.wb-body { flex: 1; min-width: 0; }
+.wb-t { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+.wb-t b { font-size: var(--fs-cell); color: var(--ink); font-weight: 600; }
+.wb-n { font-size: var(--fs-aux); color: var(--accent); font-weight: 700;
+  font-variant-numeric: tabular-nums; }
+.wb-row.first .wb-n { color: var(--accent-2); }
+.wb-why { margin-top: 3px; font-size: var(--fs-aux); color: var(--ink-3); }
+
+/* 这场考试的流水线 */
+.wb-flow { margin-top: 18px; border: 1px solid var(--line); border-radius: var(--radius-l);
+  background: var(--panel-solid); box-shadow: var(--shadow-card); overflow: hidden; }
+.wb-flow-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  padding: 13px 16px 10px; }
+.wb-flow-h b { font-size: var(--fs-cell); color: var(--ink); }
+.wb-flow-meta { font-size: var(--fs-aux); color: var(--ink-3); }
+.wb-steps { display: flex; border-top: 1px solid var(--line); }
+.wb-step { flex: 1; padding: 11px 12px 13px; cursor: pointer;
+  border-right: 1px solid var(--line); position: relative;
+  display: flex; flex-direction: column; gap: 4px; transition: background .15s; }
+.wb-step:last-child { border-right: 0; }
+.wb-step:hover { background: var(--panel-2); }
+.wb-step.cur { background: var(--accent-2-soft); }
+.wb-step.cur::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+  background: var(--accent-2); }
+.wb-step-i { font-size: var(--fs-mini); color: var(--ink-3); font-weight: 700; }
+.wb-step.done .wb-step-i { color: var(--accent); }
+.wb-step-t { font-size: var(--fs-cell); color: var(--ink); font-weight: 600; }
+.wb-step-n { font-size: var(--fs-aux); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.wb-step.cur .wb-step-t { color: var(--accent-2); }
+.wb-step.cur .wb-step-n { color: var(--accent-2); font-weight: 600; }
+
+.wb-empty { margin-top: 18px; padding: 22px; text-align: center;
+  border: 1px dashed var(--line); border-radius: var(--radius-l);
+  color: var(--ink-3); font-size: var(--fs-cell); }
+.wb-foot { margin-top: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+/* 侧栏那枚「新」小标 */
+.wb-badge { margin-left: 6px; font-size: 10px; padding: 1px 5px; border-radius: 999px;
+  background: var(--accent-2-soft); color: var(--accent-2); font-weight: 700; letter-spacing: .5px; }.qd-row { display: flex; align-items: center; gap: 11px; padding: 10px 14px;
   border-bottom: 1px solid var(--line); font-size: var(--fs-cell); }
 .qd-row:last-child { border-bottom: 0; }
 .qd-row:hover { background: var(--panel-2); }
@@ -2310,6 +2371,334 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
   };
 })(typeof globalThis !== "undefined" ? globalThis : window);
 </script>
+<script>/**
+ * 学员看板 · 多设备同步引擎（前端部分）
+ *
+ * 2026-10-17 用户明确授权：A 方案 · 全部同步（含家长聊天记录）
+ * 云端会存学生真名、成绩、聊天原文 —— 用户知情并指定。
+ *
+ * ┌─ 设计铁律 ────────────────────────────────────────────────┐
+ * │ 1. 本地永远是真老大。同步只做「合并」，从不删本地数据。      │
+ * │ 2. 按业务拆成 4 份独立同步，改打卡不会冲掉成绩。            │
+ * │ 3. 断网、服务挂了、没登录 —— 一律静默，看板照常用。         │
+ * │ 4. 每份数据带 _at 时间戳，按字段合并，谁新谁赢。            │
+ * └───────────────────────────────────────────────────────────┘
+ *
+ * 拆法（对应 DB 的六块顶层数据）：
+ *   roster = students[].{id,name,level,notes,tags,followUp,...} + config
+ *   exams  = students[].exams[]（成绩 + 附件元数据）
+ *   calls  = calls + students[].{calls,chats}
+ *   daily  = daily + checkin
+ *   unmatched = 跟着 roster 走
+ */
+
+const SYNC = (() => {
+  const CFG_KEY = "teacher-board/sync";       // 同步配置（服务地址、token、设备 id）
+  const META_KEY = "teacher-board/sync-meta"; // 每份数据的版本号与时间戳
+
+  /** 同步配置：不含敏感信息以外的计算，只做读写 */
+  function cfg() {
+    try {
+      return JSON.parse(localStorage.getItem(CFG_KEY) || "{}") || {};
+    } catch {
+      return {};
+    }
+  }
+  function setCfg(patch) {
+    const c = Object.assign(cfg(), patch);
+    localStorage.setItem(CFG_KEY, JSON.stringify(c));
+    return c;
+  }
+  function meta() {
+    try {
+      return JSON.parse(localStorage.getItem(META_KEY) || "{}") || {};
+    } catch {
+      return {};
+    }
+  }
+  function setMeta(m) {
+    localStorage.setItem(META_KEY, JSON.stringify(m));
+  }
+
+  /** 设备 id：首次生成后永久固定，用来区分「这台」和「那台」 */
+  function deviceId() {
+    const c = cfg();
+    if (c.deviceId) return c.deviceId;
+    const id = "dev_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+    setCfg({ deviceId: id });
+    return id;
+  }
+
+  const ready = () => {
+    const c = cfg();
+    return !!(c.url && c.token);
+  };
+
+  /* ── HTTP ──────────────────────────────────────────────────────────── */
+
+  async function api(path, opts) {
+    const c = cfg();
+    if (!c.url) throw new Error("还没填同步服务地址");
+    const url = c.url.replace(/\/+$/, "") + path;
+    const init = Object.assign({ method: "GET", headers: {} }, opts || {});
+    init.headers = Object.assign({ "Content-Type": "application/json" }, init.headers);
+    if (c.token) init.headers.Authorization = "Bearer " + c.token;
+    if (init.body && typeof init.body !== "string") init.body = JSON.stringify(init.body);
+
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 20000);
+    let res;
+    try {
+      res = await fetch(url, Object.assign(init, { signal: ctrl.signal }));
+    } finally {
+      clearTimeout(timer);
+    }
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error("服务返回的不是 JSON：" + text.slice(0, 120));
+    }
+    if (!res.ok || data.ok === false) throw new Error(data.error || "请求失败（HTTP " + res.status + "）");
+    return data;
+  }
+
+  /* ── 拆包 / 合并 ───────────────────────────────────────────────────── */
+
+  /**
+   * 把整个 DB 拆成 4 个独立同步单元。
+   * 注意：不复制大字段（附件二进制在 IndexedDB，不在 DB 里），只搬元数据。
+   */
+  function slice(db) {
+    const rosterStudents = (db.students || []).map((s) => {
+      const { exams, calls, chats, ...rest } = s;
+      return rest;
+    });
+    const callStudents = (db.students || []).map((s) => ({
+      id: s.id,
+      calls: s.calls || undefined,
+      chats: s.chats || undefined,
+    }));
+    const examStudents = (db.students || []).map((s) => ({
+      id: s.id,
+      exams: s.exams || undefined,
+    }));
+
+    return {
+      roster: { students: rosterStudents, config: db.config, unmatched: db.unmatched || [] },
+      exams: { students: examStudents },
+      calls: { calls: db.calls || {}, students: callStudents },
+      daily: { daily: db.daily || {}, checkin: db.checkin || {} },
+    };
+  }
+
+  /**
+   * 把云端拉回来的 4 份数据合入本地 DB。
+   *
+   * 合并策略（关键）：
+   *   - 学生按 id 对齐。云端有、本地没有 → 加进来（别的设备新建的）。
+   *   - 本地有、云端没有 → 保留（本地永远不删）。
+   *   - 两边都有 → 逐字段比时间戳，新的覆盖旧的。
+   *
+   * 返回 { added, updated, kept } 供界面展示「这次同步改了什么」。
+   */
+  function merge(db, remote, localMeta) {
+    const stat = { added: 0, updated: 0, kept: 0 };
+    if (!remote) return stat;
+
+    const byId = new Map((db.students || []).map((s) => [s.id, s]));
+
+    /* ── roster ── */
+    if (remote.roster) {
+      const m = localMeta.roster || {};
+      // 只有「云端这份比本地记录的新」才合并整块
+      if (!m.at || (remote.roster._at || 0) > m.at) {
+        for (const rs of remote.roster.students || []) {
+          const local = byId.get(rs.id);
+          if (!local) {
+            const fresh = Object.assign({}, rs);
+            db.students.push(fresh);
+            byId.set(rs.id, fresh);
+            stat.added++;
+          } else {
+            // 逐字段合并：本地字段若无值才用云端的（保守，不覆盖老师的录入）
+            let changed = false;
+            for (const k of Object.keys(rs)) {
+              if (k === "id") continue;
+              if (local[k] === undefined || local[k] === "" || local[k] === null) {
+                local[k] = rs[k];
+                changed = true;
+              }
+            }
+            if (changed) stat.updated++;
+            else stat.kept++;
+          }
+        }
+        if (remote.roster.config) {
+          db.config = Object.assign({}, db.config, remote.roster.config);
+        }
+        if (Array.isArray(remote.roster.unmatched) && remote.roster.unmatched.length) {
+          const seen = new Set((db.unmatched || []).map((u) => u.name + "|" + (u.raw || "")));
+          for (const u of remote.roster.unmatched) {
+            if (!seen.has(u.name + "|" + (u.raw || ""))) (db.unmatched ||= []).push(u);
+          }
+        }
+      }
+    }
+
+    /* ── exams ── */
+    if (remote.exams) {
+      const m = localMeta.exams || {};
+      if (!m.at || (remote.exams._at || 0) > m.at) {
+        for (const re of remote.exams.students || []) {
+          const local = byId.get(re.id);
+          if (!local || !re.exams) continue;
+          const mine = local.exams || [];
+          const myKeys = new Set(mine.map((e) => e.id || e.name));
+          for (const e of re.exams) {
+            const k = e.id || e.name;
+            if (!myKeys.has(k)) {
+              mine.push(e);
+              myKeys.add(k);
+              stat.updated++;
+            }
+          }
+          local.exams = mine;
+        }
+      }
+    }
+
+    /* ── calls ── */
+    if (remote.calls) {
+      const m = localMeta.calls || {};
+      if (!m.at || (remote.calls._at || 0) > m.at) {
+        for (const rc of remote.calls.students || []) {
+          const local = byId.get(rc.id);
+          if (!local) continue;
+          if (rc.calls && rc.calls.length && (!local.calls || rc.calls.length > local.calls.length)) {
+            local.calls = rc.calls;
+            stat.updated++;
+          }
+          if (rc.chats && rc.chats.length && (!local.chats || rc.chats.length > local.chats.length)) {
+            local.chats = rc.chats;
+            stat.updated++;
+          }
+        }
+        if (remote.calls.calls) {
+          db.calls = db.calls || { batches: [], status: {} };
+          const rs = remote.calls.calls.status || {};
+          db.calls.status = Object.assign({}, rs, db.calls.status || {}); // 本地优先
+          const bseen = new Set((db.calls.batches || []).map((b) => b.key || b.name));
+          for (const b of remote.calls.calls.batches || []) {
+            if (!bseen.has(b.key || b.name)) (db.calls.batches ||= []).push(b);
+          }
+        }
+      }
+    }
+
+    /* ── daily ── */
+    if (remote.daily) {
+      const m = localMeta.daily || {};
+      if (!m.at || (remote.daily._at || 0) > m.at) {
+        if (remote.daily.daily) {
+          db.daily = db.daily || { date: "", ids: [], done: [] };
+          // 同一天的打卡取并集，不同天以本地为准
+          if (db.daily.date && remote.daily.daily.date === db.daily.date) {
+            const done = new Set(db.daily.done || []);
+            for (const id of remote.daily.daily.done || []) done.add(id);
+            db.daily.done = [...done];
+            const ids = new Set(db.daily.ids || []);
+            for (const id of remote.daily.daily.ids || []) ids.add(id);
+            db.daily.ids = [...ids];
+          } else if (!db.daily.date) {
+            db.daily = remote.daily.daily;
+          }
+        }
+        if (remote.daily.checkin) {
+          db.checkin = db.checkin || { importedAt: "", tasks: [], status: {} };
+          db.checkin.status = Object.assign(
+            {},
+            remote.daily.checkin.status || {},
+            db.checkin.status || {}
+          ); // 本地优先
+          const tseen = new Set((db.checkin.tasks || []).map((t) => t.id || t.name));
+          for (const t of remote.daily.checkin.tasks || []) {
+            if (!tseen.has(t.id || t.name)) (db.checkin.tasks ||= []).push(t);
+          }
+        }
+      }
+    }
+
+    return stat;
+  }
+
+  /* ── 推送 ──────────────────────────────────────────────────────────── */
+
+  let pushing = false;
+  async function push(db) {
+    if (!ready() || pushing) return null;
+    pushing = true;
+    try {
+      const parts = slice(db);
+      const m = meta();
+      const out = {};
+      for (const key of Object.keys(parts)) {
+        const rec = m[key] || {};
+        const payload = Object.assign({}, parts[key], { _at: Date.now() });
+        const res = await api("/api/push", {
+          method: "POST",
+          body: {
+            docKey: key,
+            version: rec.version || 0,
+            payload,
+            deviceId: deviceId(),
+          },
+        });
+        out[key] = res.version;
+        m[key] = { version: res.version, at: payload._at };
+      }
+      setMeta(m);
+      return out;
+    } catch (e) {
+      console.warn("[同步] 推送失败", e);
+      throw e;
+    } finally {
+      pushing = false;
+    }
+  }
+
+  /* ── 拉取 ──────────────────────────────────────────────────────────── */
+
+  async function pull() {
+    if (!ready()) return null;
+    const m = meta();
+    const maxVer = Math.max(0, ...Object.values(m).map((x) => (x && x.version) || 0));
+    const res = await api("/api/pull?since=" + maxVer);
+    return res;
+  }
+
+  /* ── 登录 ──────────────────────────────────────────────────────────── */
+
+  async function login(email, password, isRegister) {
+    const res = await api(isRegister ? "/api/register" : "/api/login", {
+      method: "POST",
+      body: { email, password },
+    });
+    setCfg({ token: res.token, email, userId: res.userId });
+    return res;
+  }
+
+  function logout() {
+    setCfg({ token: "", userId: "" });
+  }
+
+  return {
+    cfg, setCfg, meta, setMeta, deviceId, ready, api,
+    slice, merge, push, pull, login, logout,
+  };
+})();
+</script>
 <script>/* ==========================================================================
  * 学员看板 —— 纯前端单文件应用
  * 数据只存在 localStorage，默认不联网、无后端、无账号。
@@ -2518,6 +2907,8 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       } catch (e) {
         toast("保存失败：浏览器存储空间可能满了，请先导出备份");
       }
+      // 改了数据就排一次后台同步（没开同步时它什么也不做）
+      try { if (typeof scheduleSyncPush === "function") scheduleSyncPush(); } catch (e) {}
     }, 120);
   }
 
@@ -6004,6 +6395,11 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     const pPending = pB.reduce((a, b) => a + b.todo, 0);
 
     let html = `<h3>工作区</h3>`;
+    // 工作台（2026-10-18 加）：侧栏第一项，但**不抢默认落地页** ——
+    // 用户 2026-10-17 明确要「全部学员」仍是默认（decision #1）。
+    html += `<button class="nav ${view.mode === "workbench" ? "on" : ""}" data-wb="1">
+      <span class="nav-l"><span class="nav-t">工作台</span><span class="wb-badge">新</span></span>
+      <span class="n">${(() => { const w = workbenchStats(); return w.ds.total - w.ds.done + w.paperTodo + w.ckUn + w.pend.length; })()}</span></button>`;
     html += row("all", null, "全部学员", S.length);
     html += `<button class="nav ${view.mode === "checkin" ? "on" : ""}" data-ck="1">
       <span class="nav-l"><span class="nav-t">语文打卡</span></span><span class="n">${ckTasks}</span></button>`;
@@ -6059,6 +6455,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
 
     $("side").innerHTML = html;
     $("side").querySelectorAll(".nav").forEach((el) => el.onclick = () => {
+      if (el.dataset.wb) { enterWorkbench(); return; }
       if (el.dataset.ck) { enterCheckin(); return; }
       if (el.dataset.score) { enterScore(); return; }
       if (el.dataset.call) { enterCall(); return; }
@@ -6066,7 +6463,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       if (el.dataset.queue) { enterQueue(); return; }
       // 侧栏这些筛选全是「学员列表」的东西。停在打卡/成绩/电联/答题卡页时，光改 filter 是没用的
       // （那几页根本不看 filter），点下去像没反应——所以先把 mode 放回列表页再筛。
-      if (view.mode === "checkin" || view.mode === "score" || view.mode === "call" || view.mode === "paper" || view.mode === "queue") {
+      if (view.mode === "checkin" || view.mode === "score" || view.mode === "call" || view.mode === "paper" || view.mode === "queue" || view.mode === "workbench") {
         view.mode = view.listMode;
         view.checkinTask = null; view.callBatch = null; view.scoreExam = null;
         syncSeg();
@@ -6301,6 +6698,7 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     if (view.mode === "call") { closeDetailIfNotSelected(); renderCallPage(); return; }
     if (view.mode === "paper") { closeDetailIfNotSelected(); renderPaperPage(); return; }
     if (view.mode === "queue") { closeDetailIfNotSelected(); renderQueuePage(); return; }
+    if (view.mode === "workbench") { closeDetailIfNotSelected(); renderWorkbench(); return; }
 
     // 今日队列为空就自动排 5 个（必须在 visible() 之前，否则筛出来是空的）
     if (view.filter.kind === "today") {
@@ -8173,6 +8571,210 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
     out.sort((a, b) => String(b.date || "").localeCompare(String(a.date || ""))
       || (order.indexOf(a.name) - order.indexOf(b.name)));
     return out;
+  }
+
+  /* ============================================ 工作台（首页）
+   * 2026-10-18 用户要求：「先更新工作台」。以前看板是个「按数据类型分的档案柜」——
+   * 打卡在哪、成绩在哪、答题卡在哪，全靠老师自己记着去点。
+   * 工作台把「今天该干什么」摆到一屏上，点哪一条就直达那一批人 / 那一批卡。
+   *
+   * 三条死规矩（照用户 2026-10-17 的决定）：
+   *  ① **「全部学员」仍是默认落地页**，工作台只是侧栏第一项，不抢默认（decision #1）；
+   *  ② 批量核对只认「姓名 + 总分」双条件（decision #2）—— 这里只负责**数给老师看**，
+   *     真正的放行逻辑在 ppMatchHtml/ppCommit 里，别在这里另起一套判断；
+   *  ③ **全部现算，不落库、不缓存**。清单一旦存下来就会和真实数据失同步，
+   *     「列表说有事、点进去没事」的假清单比没有更糟（同 pendingQueue 的教训）。
+   */
+
+  /**
+   * 一场考试的流水线进度：导入成绩 → 传答题卡 → 核对 → 分析 → 复习计划。
+   * 每一格都给「已做/共」两个数，让老师自己判断停在哪一步。
+   * @returns {{name,date,full,n,step,rows}|null} 最近一场；没有考试就 null
+   */
+  function examFlowOf(b) {
+    if (!b) return null;
+    const n = DB.students.length;
+    const rows = DB.students.map((s) => ({ s, e: batchExamOf(s, b.name) }));
+    const scored = rows.filter((r) => r.e && hasScore(r.e)).length;
+    const uploaded = rows.filter((r) => r.e && (paperState(r.e) !== "none")).length;
+    const reviewed = rows.filter((r) => r.e && (paperState(r.e) === "confirmed" || paperState(r.e) === "analyzed")).length;
+    const analyzed = rows.filter((r) => r.e && paperState(r.e) === "analyzed").length;
+    const planned = rows.filter((r) => r.e && r.e.paper && r.e.paper.plan && (r.e.paper.plan.items || []).length).length;
+    // 流水线停在哪一格 = 第一个还没做满的
+    let step = "score";
+    if (scored >= n) step = "paper";
+    if (scored >= n && uploaded >= n) step = "review";
+    if (scored >= n && uploaded >= n && reviewed >= n) step = "analyze";
+    if (scored >= n && uploaded >= n && reviewed >= n && analyzed >= n) step = "plan";
+    return { name: b.name, date: b.date, full: b.full, n, scored, uploaded, reviewed, analyzed, planned, step };
+  }
+
+  /** 工作台的四个数：今日跟进 / 答题卡待核对 / 打卡未完成 / 待处理 */
+  function workbenchStats() {
+    const ds = dailyStats();
+    const pend = pendingQueue();
+    const pB = examBatches();
+    const paperTodo = pB.reduce((a, b) => a + b.todo, 0);
+    const ck = DB.checkin?.tasks || [];
+    const ckUn = ck.length ? ck.filter((t) => (t.done || []).length < DB.students.length).length : 0;
+    return { ds, pend, paperTodo, ckUn, ckTotal: ck.length, batches: pB };
+  }
+
+  function enterWorkbench() {
+    view.mode = "workbench";
+    view.selected = null;
+    // 今日名单先排好再画 —— 否则侧栏「工作台」的计数是拿「还没排」的状态算的，
+    // 会显示 0，而页面里明明写着 0/5（2026-10-18 实测踩到）。
+    if (!DB.daily || !DB.daily.ids.length) fillDaily(5);
+    syncSeg();
+    render();
+  }
+
+  /**
+   * 工作台主页面。布局刻意做成「一行一件事」：
+   * 左边序号、中间说明、右边一个按钮 —— 老师的眼睛顺着序号往下走就知道先干哪个。
+   */
+  function renderWorkbench() {
+    const stage = $("stage");
+    if (!stage) return;
+    const S = DB.students;
+    // 今日名单是空的 —— 这时候「0/5」会让人以为坏了。先按紧迫度排 5 个人进来，
+    // 排完再画（fillDaily 会 save()，不会无限递归：ids 一旦非空就走下面正常分支）。
+    if (!DB.daily || !DB.daily.ids.length) fillDaily(5);
+    const wb = workbenchStats();
+    const ds = wb.ds;
+
+    // ① 今日跟进
+    const todayCard = {
+      id: "today", t: "今日跟进", n: ds.done + "/" + ds.total,
+      why: ds.total ? `按粘合度、家长沟通、成绩趋势算出来的，数量固定不重复`
+        : "点一下，自动挑最该聊的几个人",
+      btn: ds.total ? "继续跟" : "开始跟",
+    };
+    // ② 答题卡待核对：没有待核对的时候不能只说「0 张」——
+    //    那看着像没问题，其实可能是一张都没传。分三种话讲清楚。
+    const paperCard = {
+      id: "paper", t: "答题卡待核对",
+      n: wb.paperTodo ? wb.paperTodo + " 张" : (wb.batches.length ? "暂无" : "未开始"),
+      why: wb.paperTodo ? "有一批能一次过，不用点 66 次"
+        : (wb.batches.length ? "这一批都核对完了，有新的再传" : "还没建考试批次，先导入成绩"),
+      btn: wb.paperTodo ? "去核对" : "去看看",
+    };
+    // ③ 打卡未完成
+    const ckCard = {
+      id: "checkin", t: "打卡未完成", n: wb.ckTotal ? wb.ckUn + " 次任务" : "未导入",
+      why: wb.ckTotal ? `共导入 ${wb.ckTotal} 次任务` : "还没导入打卡计划，点这里去导",
+      btn: wb.ckTotal ? "看看是谁" : "去导入",
+    };
+    // ④ 待处理（答题卡例外/聊天没归类/成绩重复）
+    const qn = wb.pend.length;
+    const qby = {};
+    for (const it of wb.pend) qby[it.type] = (qby[it.type] || 0) + 1;
+    const pendCard = {
+      id: "queue", t: "等你拿主意", n: qn + " 件",
+      why: qn ? Object.keys(qby).map((k) => (QTYPE[k] || k) + " " + qby[k]).join(" · ") : "不需要你操心的事，我不会自己猜",
+      btn: qn ? "逐条看" : "看看",
+    };
+
+    const cards = [todayCard, paperCard, ckCard, pendCard];
+    const total = ds.total + wb.paperTodo + wb.ckUn + qn;
+
+    // 这场考试的流水线：取最近一场（examBatches 已按日期倒序）
+    const flow = examFlowOf(wb.batches[0]);
+
+    const greeting = (() => {
+      const h = new Date().getHours();
+      if (h < 6) return "这么晚还在批作业";
+      if (h < 11) return "早上好";
+      if (h < 14) return "中午好";
+      if (h < 18) return "下午好";
+      return "晚上好";
+    })();
+
+    const stepIdx = { score: 0, paper: 1, review: 2, analyze: 3, plan: 4 };
+    const steps = flow ? [
+      { k: "score", t: "导入成绩", now: flow.scored, all: flow.n, unit: "" },
+      { k: "paper", t: "传答题卡", now: flow.uploaded, all: flow.n, unit: "" },
+      { k: "review", t: "核对", now: flow.reviewed, all: flow.n, unit: "" },
+      { k: "analyze", t: "分析", now: flow.analyzed, all: flow.n, unit: "" },
+      { k: "plan", t: "复习计划", now: flow.planned, all: flow.n, unit: "" },
+    ] : [];
+
+    stage.innerHTML = `<div class="wb-page">
+      <div class="listbar"><b>工作台</b><span class="cnt">今天该干什么，一眼看完</span></div>
+      <div class="wb-hi">${esc(greeting)}${DB.config.className ? "，" + esc(DB.config.className) : ""}
+        <span class="wb-date">${todayStr()} · 周${"日一二三四五六"[new Date().getDay()]}</span></div>
+      <div class="wb-sub">今天有 <b>${total}</b> 件事，按序号的顺序做完就行。</div>
+
+      <div class="wb-list">
+        ${cards.map((c, i) => `
+          <div class="wb-row${i === 0 ? " first" : ""}" data-go="${esc(c.id)}">
+            <span class="wb-no">${i + 1}</span>
+            <div class="wb-body">
+              <div class="wb-t"><b>${esc(c.t)}</b><span class="wb-n">${esc(c.n)}</span></div>
+              <div class="wb-why">${esc(c.why)}</div>
+            </div>
+            <button class="btn ${i === 0 && total ? "primary" : ""}" data-go="${esc(c.id)}">${esc(c.btn)} →</button>
+          </div>`).join("")}
+      </div>
+
+      ${flow ? `<div class="wb-flow">
+        <div class="wb-flow-h"><b>这场考试收尾：${esc(flow.name)}</b>
+          <span class="wb-flow-meta">${esc(flow.date || "")}${flow.full ? " · 满分 " + flow.full : ""} · ${flow.n} 人</span>
+        </div>
+        <div class="wb-steps">
+          ${steps.map((st, i) => {
+            const done = st.now >= st.all && st.all > 0;
+            const cur = flow.step === st.k;
+            return `<div class="wb-step${done ? " done" : ""}${cur ? " cur" : ""}" data-step="${esc(st.k)}">
+              <span class="wb-step-i">${done ? "✓" : i + 1}</span>
+              <span class="wb-step-t">${esc(st.t)}</span>
+              <span class="wb-step-n">${st.now}/${st.all}</span>
+            </div>`;
+          }).join("")}
+        </div>
+      </div>` : `<div class="wb-empty">还没导入成绩。先点「导入成绩」建一场考试，这里就会出现流水线。</div>`}
+
+      <div class="wb-foot">
+        <button class="btn ghost" id="wbData">数据总览</button>
+        <span class="hint-inline">全部学员 ${S.length} 人 · 考试 ${wb.batches.length} 场 · 数据都在本地</span>
+      </div>
+    </div>`;
+
+    // 顶部四张卡 + 流水线格子，点击直达
+    stage.querySelectorAll("[data-go]").forEach((el) => el.onclick = (ev) => {
+      ev.stopPropagation();
+      const id = el.dataset.go;
+      if (id === "today") {
+        view.mode = view.listMode || "cards";
+        view.filter = { kind: "today" };
+        ensureDaily();
+        if (!DB.daily.ids.length) fillDaily(5);
+        syncSeg(); renderSide(); renderStage();
+      } else if (id === "paper") enterPaper();
+      else if (id === "checkin") enterCheckin();      else if (id === "queue") enterQueue();
+    });
+    stage.querySelectorAll("[data-step]").forEach((el) => el.onclick = () => {
+      const k = el.dataset.step;
+      if (k === "paper" || k === "review") {
+        view.mode = "paper";
+        view.paperBatch = flow ? flow.name : null;
+        view.paperFilter = k === "review" ? "review" : "all";
+        view.paperStudent = null;
+        view.selected = null;
+        syncSeg(); render();
+      } else if (k === "score") enterScore();
+      else if (k === "analyze" || k === "plan") {
+        view.mode = "paper";
+        view.paperBatch = flow ? flow.name : null;
+        view.paperFilter = k === "analyze" ? "confirmed" : "analyzed";
+        view.paperStudent = null;
+        view.selected = null;
+        syncSeg(); render();
+      }
+    });
+    const gd = $("wbData");
+    if (gd) gd.onclick = () => { view.mode = view.listMode || "cards"; view.filter = { kind: "all" }; syncSeg(); renderSide(); renderStage(); };
   }
 
   function enterQueue() {
@@ -12123,6 +12725,154 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
 
   /* ======================================================== 设置 */
 
+  /* --------------------------------------------------- 多设备同步 */
+
+  /** 设置弹窗里「多设备同步」那一块 */
+  function syncSettingsHtml() {
+    const c = SYNC.cfg();
+    const on = SYNC.ready();
+    const m = SYNC.meta();
+    const lastAt = Math.max(0, ...Object.values(m).map((x) => (x && x.at) || 0));
+    const lastTxt = lastAt ? new Date(lastAt).toLocaleString("zh-CN") : "还没同步过";
+
+    if (!on) {
+      return `
+        <div class="rowset">
+          <label style="flex:0 0 88px;font-size:12px;color:var(--ink-3)">服务地址</label>
+          <input type="text" id="syncUrl" value="${esc(c.url || "")}" placeholder="https://xxx.workers.dev" style="flex:1;min-width:200px" spellcheck="false" autocomplete="off">
+        </div>
+        <div class="rowset">
+          <button class="btn primary" id="syncLoginBtn">登录 / 注册</button>
+          <span class="hint" style="margin:0">同一个邮箱在手机上登一次，两边就通了</span>
+        </div>
+        <div class="aiwarn" style="margin-top:10px">
+          <b>⚠️ 开同步 = 学生数据会上传</b>
+          <ul>
+            <li>学生<b>真实姓名、成绩、家长聊天原文</b>都会存到 Cloudflare 的服务器上。</li>
+            <li>这些是未成年人的隐私。你在 2026-10-17 明确选了「全部同步」。</li>
+            <li>不开同步，数据仍然只留在本机，和以前一模一样。</li>
+          </ul>
+        </div>`;
+    }
+
+    return `
+      <div class="asrstat ok">
+        ✅ <b>同步已开启</b> —— ${esc(c.email || "")} · 上次同步：${esc(lastTxt)}
+      </div>
+      <div class="rowset" style="margin-top:10px">
+        <button class="btn primary" id="syncNow">立即同步</button>
+        <button class="btn" id="syncOut">退出登录</button>
+        <span class="hint" style="margin:0" id="syncState"></span>
+      </div>
+      <p class="desc" style="margin-top:10px">
+        设备标识：<code>${esc(SYNC.deviceId())}</code> —— 每台设备独立的编号，用来区分谁改的。
+      </p>`;
+  }
+
+  /** 绑定同步设置里的事件 */
+  function bindSyncSettings() {
+    const loginBtn = $("syncLoginBtn");
+    if (loginBtn) loginBtn.onclick = () => openSyncLogin();
+
+    const nowBtn = $("syncNow");
+    if (nowBtn) nowBtn.onclick = async () => {
+      nowBtn.disabled = true;
+      const old = nowBtn.textContent;
+      nowBtn.textContent = "同步中…";
+      try {
+        const n = await syncOnce(true);
+        toast(n ? "同步完成，已合并其他设备的改动" : "已是最新", 5000);
+      } catch (e) {
+        toast("同步失败：" + e.message, 12000);
+      }
+      nowBtn.disabled = false;
+      nowBtn.textContent = old;
+      drawSettings();
+    };
+
+    const outBtn = $("syncOut");
+    if (outBtn) outBtn.onclick = () => {
+      if (!confirm("退出同步？\n\n本地数据不会删，只是不再往云端推了。")) return;
+      SYNC.logout();
+      drawSettings();
+      toast("已退出同步，本地数据完好");
+    };
+  }
+
+  /** 登录 / 注册：先存服务地址，再问邮箱密码 */
+  function openSyncLogin() {
+    const urlEl = $("syncUrl");
+    const url = String((urlEl && urlEl.value) || "").trim();
+    if (!url) return toast("先填同步服务地址");
+    SYNC.setCfg({ url });
+
+    const email = prompt("邮箱（登录名）");
+    if (!email) return;
+    const pw = prompt("密码（至少 6 位）");
+    if (!pw) return;
+
+    (async () => {
+      try {
+        try {
+          await SYNC.login(email, pw, false);
+          toast("登录成功");
+        } catch (e) {
+          if (!/注册|不对/.test(e.message)) throw e;
+          if (!confirm("这个邮箱还没注册过。现在就用这个密码建一个新账号？")) return;
+          await SYNC.login(email, pw, true);
+          toast("账号已创建");
+        }
+        drawSettings();
+        await syncOnce(true);
+        toast("同步已开启，本机数据已推上去", 6000);
+      } catch (e) {
+        toast("登录失败：" + e.message, 12000);
+      }
+    })();
+  }
+
+  /**
+   * 跑一次同步：先拉（合并别的设备的改动）再推（把本机改动送上去）。
+   *
+   * 为什么先拉后推：先推的话，本机的旧数据会盖掉别的设备刚改的。
+   * 先拉一次把两边对齐，推上去的才是合并后的完整状态。
+   */
+  let syncBusy = false;
+  async function syncOnce(manual) {
+    if (!SYNC.ready() || syncBusy) return null;
+    syncBusy = true;
+    try {
+      const pulled = await SYNC.pull();
+      let changed = 0;
+      if (pulled && pulled.docs && Object.keys(pulled.docs).length) {
+        const stat = SYNC.merge(DB, pulled.docs, SYNC.meta());
+        changed = stat.added + stat.updated;
+        if (changed) {
+          save();
+          render();
+        }
+      }
+      await SYNC.push(DB);
+      if (manual) toast(changed ? `已合并 ${changed} 处其他设备的改动` : "已是最新", 5000);
+      return changed;
+    } finally {
+      syncBusy = false;
+    }
+  }
+
+  /** 自动同步：改了数据后 6 秒推一次；另外每 5 分钟拉一次 */
+  let syncPushTimer;
+  function scheduleSyncPush() {
+    if (!SYNC.ready()) return;
+    clearTimeout(syncPushTimer);
+    syncPushTimer = setTimeout(() => {
+      syncOnce(false).catch(() => {});
+    }, 6000);
+  }
+  setInterval(() => {
+    if (SYNC.ready() && !document.hidden) syncOnce(false).catch(() => {});
+  }, 5 * 60 * 1000);
+
   function openSettings() {
     $("mSet").classList.add("open");
     drawSettings();
@@ -12340,6 +13090,15 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       </div>
 
       <div class="sect">
+        <h4>多设备同步</h4>
+        <p class="desc">
+          手机、平板、另一台电脑能看到同一份数据。<b>不开也能正常用</b>；开了以后本地数据仍是老大，
+          断网照常操作，联网了自动把改动推上去。
+        </p>
+        ${syncSettingsHtml()}
+      </div>
+
+      <div class="sect">
         <h4>录音与转写</h4>
         <p class="desc">
           电联录音<b>只存在这台电脑的浏览器里</b>，看板不会自己把录音传到哪儿去。
@@ -12520,6 +13279,8 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
       toast(r.msg, r.ok ? 8000 : 12000);
     };
 
+    /* ---- 多设备同步 ---- */
+    bindSyncSettings();
     $("setBody").querySelectorAll("[data-cfg]").forEach((el) => el.onchange = () => {
       const k = el.dataset.cfg;
       c[k] = (k === "riskAt" || k === "maxScore") ? (Number(el.value) || 0) : el.value;
