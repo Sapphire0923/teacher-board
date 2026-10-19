@@ -12511,11 +12511,11 @@ const SYNC = (() => {
           ? list.map((s) => {
             const cc = callCountOf(s.id);
             return `<div class="ck-student">
-              <span class="ck-st-name"><span class="ck-st-link" data-cldetail="1" data-sid="${s.id}" title="看这个学生的学情详情（不离开电联页）">${esc(s.name)}</span></span>
+              <span class="ck-st-name"><span class="ck-st-link" data-clgnew="1" data-sid="${s.id}" title="点名字直接打开录音 / 转写面板（不离开电联页）">${esc(s.name)}</span></span>
               <span class="ck-st-meta">${cc.n > 1 ? `已聊 ${cc.n} 次 · ` : ""}${s.cons ? "⚠ " + esc(s.cons) : ""}</span>
               <span class="ck-st-last">${callLastCellHtml(s)}</span>
               <span class="ck-st-actions">
-                <button class="btn btnmini" data-cldetail="1" data-sid="${s.id}" title="看学情详情">👁 详情</button>
+                <button class="btn btnmini" data-clgnew="1" data-sid="${s.id}" title="打开录音 / 转写面板（就地记一次，不跳页）">🎙 详情</button>
                 <button class="btn btnmini" data-clgnew="1" data-sid="${s.id}">✎ 记一次</button>
                 ${CALL_STATUSES.map((ss) =>
                 `<button class="chip ${ss === view.callStatus ? "on" : ""}" data-cset="${esc(ss)}" data-sid="${s.id}" ${ss === view.callStatus ? "disabled" : ""}>${esc(ss)}</button>`).join("")}
@@ -12547,10 +12547,13 @@ const SYNC = (() => {
     // 「👁 详情」/ 点名字 → 就地打开学情详情，**不跳回名单**
     // 详情面板本来就是全站共用的那个（renderDetail），只是这里保证它一定是打开的；
     // 打开后 renderDetail 会把电联历史、成绩、聊天、优缺点都画出来，电联页本身不动。
+    // 名字和「🎙 详情」都走 data-clgnew：点开来就是**录音 / 转写面板**（就地记一次电联），
+    // 不跳页、也不是旁边那块学情详情 —— 电联页要的就是张嘴就能记。
     stage.querySelectorAll("[data-cldetail]").forEach((el) => el.onclick = (ev) => {
       ev.stopPropagation();
-      // 滚到「电联记录」那一段：从电联页进来的人，要看的就是电联历史
-      openStudentDetail(el.dataset.sid, "call");
+      // 兼容老绑定：万一有残留的 data-cldetail，也走录音面板
+      view.callBatch = curId;
+      openCallLog(el.dataset.sid, curId, "");
     });
     const a = $("clAdd");
     if (a) a.onclick = addCallBatch;
