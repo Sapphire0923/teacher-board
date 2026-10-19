@@ -845,15 +845,11 @@ section.list.solo table.grid tbody td { font-variant-numeric: tabular-nums; }
 .sc-hit { font-size: var(--fs-aux); color: var(--ink-2); font-variant-numeric: tabular-nums; }
 /* 吸顶搜索条：名单/表格滚起来后，搜姓名仍然在视野最上面（打卡页 .ck-tools 的同一套做法）。
    上面的实色投影负责盖住 section 18px 内边距那道缝，不然滚动的行会从缝里露半行。 */
-/* 2026-10-20 晚：向下也补一层实色遮罩。
-   之前只往上盖（-26px），下面还留着 margin 那 10px 的缝，滚动时行文字会从
-   搜索条和表头之间的缝里钻出来半行，看着像「文字卡在视图里」。
-   现在上下各一片实色，缝隙彻底封住，再叠一层柔和投影分层。 */
-.sc-tools.stick { position: sticky; top: 0; z-index: 7;
-  margin: 0 -24px 6px; padding: 10px 24px 8px; background: var(--panel-solid);
-  border-bottom: 1px solid var(--line);
-  box-shadow: 0 -26px 0 -1px var(--panel-solid), 0 10px 0 -1px var(--panel-solid),
-    0 14px 18px -14px rgba(30, 26, 20, .45); }
+/* 2026-10-20 晚：工具栏吸顶**撤回**（用户反馈「都有点挡住了」）。
+   吸顶条自带上下两片实色遮罩，未滚动时也会画在内容上，把紧挨着的统计卡、
+   标签行的边吃掉一条；滚动时又会压住第一行。收益不值这个风险 ——
+   成绩/电联/答题卡按普通布局滚，表头仍由表格自己钉住。 */
+.sc-tools.stick { }
 /* 吸顶接力（2026-10-20）：一个 solo 页里常常有两条要钉住的条 —— 考试/轮次标签行、
    搜索 + 列开关条。它们不能都写死 top:0，否则会叠成一坨。
    凡是带 .stick 的，由 syncStick() 按 DOM 顺序一条条往下排 top，
