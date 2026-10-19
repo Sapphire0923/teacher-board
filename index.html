@@ -1461,6 +1461,245 @@ html.wallpaper .callrow, html.wallpaper .recfile { background: var(--panel-solid
 @media (max-width: 820px) {
   #mCallLog .modal { width: auto; }
 }
+
+/* ==========================================================================
+ * 语文打卡页（.ck-page · 2026-10-19 改版）
+ *
+ * 用户的反馈：「文字和按钮偏小，73 个人逐个找、逐个点，太费眼太费时间」。
+ * 这页是全看板唯一「按人点状态」的页面，所以它单独用一档更大的尺寸，
+ * 全部规则挂 .ck-page 上（renderStage 按 view.mode 加 class），
+ * 卡片页 / 成绩页 / 电联页一个字都不动。
+ *
+ * 三条硬约束（对应需求）：
+ *   1. 状态不能只靠颜色 —— 徽标里带图标 + 文字 + 边框样式（实线/虚线/点线）。
+ *   2. 姓名不删、数量不少 —— 73 人照样全列，靠行高和搜索筛选择挑，不靠缩字号。
+ *   3. 背景一律实底 —— 这页满屏姓名，壁纸图案从字底下透出来最伤眼。
+ * ========================================================================== */
+
+/* ① 本页字号整体上提一档：只改 .ck-page 作用域里的刻度令牌，
+      别的页面（卡片 / 成绩 / 电联）完全不受影响。 */
+.ck-page {
+  --fs-title: 17px;
+  --fs-head: 15px;
+  --fs-body: 14.5px;
+  --fs-cell: 13.5px;
+  --fs-aux: 12.5px;
+  --fs-mini: 12px;
+  --ck-btn-h: 36px;      /* 打卡页按钮统一高度：拇指/鼠标都够得着 */
+}
+
+/* ② 背景简化：壁纸模式下数据区本来只有 58% 白，这页直接给实底 */
+section.list.ck-page { background: var(--bg); }
+html.wallpaper section.list.ck-page { background: var(--panel-solid); }
+
+/* ③ 任务信息卡：跟着页面滚走（不吸顶，避免占掉名单高度） */
+.ck-page .ck-detail-h { padding: 12px 16px; margin-bottom: 10px; }
+.ck-page .ck-detail-title { font-size: var(--fs-head); }
+.ck-page .ck-detail-src { font-size: var(--fs-aux); color: var(--ink-2); }
+.ck-page .ck-detail-content { font-size: var(--fs-cell); color: var(--ink); max-height: 128px; overflow: auto; }
+.ck-page .ck-detail-rec { font-size: var(--fs-cell); }
+.ck-page .ck-lb-sub { font-size: var(--fs-cell); color: var(--ink-2); }
+
+/* ④ 吸顶工具栏：搜索 / 筛选 / 快捷筛选 / 勾选 / 批量，滚到 73 人哪一行都在 */
+.ck-page .ck-tools {
+  position: sticky; top: 0; z-index: 7;
+  margin: 0 -24px 12px; padding: 12px 24px 10px;
+  background: var(--panel-solid);
+  border-bottom: 1px solid var(--line);
+  /* 上面那条实色阴影是「遮住条」：section 有 18px 内边距，滚动的名单会从吸顶条
+     上方的那道缝里露出来半行字，用它把缝盖住 */
+  box-shadow: 0 -26px 0 -1px var(--panel-solid), 0 8px 14px -12px rgba(30, 26, 20, .55);
+}
+.ck-page .ck-tools-row { display: flex; align-items: center; gap: 12px 14px; flex-wrap: wrap; }
+
+/* 搜索框 + 输入联想 */
+.ck-page .ck-search { position: relative; flex: 1 1 300px; max-width: 480px; }
+.ck-page .ck-search input {
+  width: 100%; height: 40px; padding: 0 38px 0 13px;
+  font: inherit; font-size: var(--fs-body); color: var(--ink);
+  background: var(--panel-solid);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-s); outline: none;
+}
+.ck-page .ck-search input::placeholder { color: var(--ink-3); }
+.ck-page .ck-search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.ck-page .ck-search input::-webkit-search-cancel-button { display: none; }
+.ck-page .ck-search-x {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 28px; height: 28px; padding: 0; cursor: pointer;
+  font-size: 18px; line-height: 1; color: var(--ink-3);
+  background: transparent; border: 0; border-radius: 6px;
+}
+.ck-page .ck-search-x:hover { background: var(--panel-3); color: var(--ink); }
+.ck-page .ck-ac {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 30;
+  max-height: 320px; overflow: auto; padding: 5px;
+  background: var(--panel-solid);
+  border: 1px solid var(--line-strong); border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+}
+.ck-page .ck-ac[hidden] { display: none; }
+.ck-page .ck-ac-i { display: flex; align-items: center; gap: 9px; padding: 9px 10px;
+  font-size: var(--fs-body); border-radius: var(--radius-s); cursor: pointer; }
+.ck-page .ck-ac-i:hover, .ck-page .ck-ac-i.on { background: var(--accent-soft); }
+.ck-page .ck-ac-name { font-size: var(--fs-head); font-weight: 700; color: var(--ink); }
+.ck-page .ck-ac-lvl { font-size: var(--fs-aux); color: var(--ink-2);
+  background: var(--panel-3); border-radius: 5px; padding: 1px 6px; }
+.ck-page .ck-ac-none { padding: 10px; font-size: var(--fs-aux); color: var(--ink-2); }
+.ck-page .ck-hit { background: var(--amber-soft); color: var(--amber); border-radius: 3px; padding: 0 1px; }
+
+/* 三个筛选项：年级 / 等级 / 状态 */
+.ck-page .ck-f { display: inline-flex; align-items: center; gap: 7px;
+  font-size: var(--fs-cell); color: var(--ink-2); }
+.ck-page .ck-f select {
+  height: 38px; min-width: 96px; padding: 0 10px;
+  font: inherit; font-size: var(--fs-cell); color: var(--ink);
+  background: var(--panel-solid);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-s);
+  outline: none; cursor: pointer;
+}
+.ck-page .ck-f select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.ck-page .ck-f-note { font-size: var(--fs-aux); color: var(--ink-3); }
+
+/* 快捷筛选（未打卡 / 已完成 / 需讲解 / 补做完成 / 请假 / 全部） */
+.ck-page .ck-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 11px; }
+.ck-page .ck-tabs .nav {
+  width: auto; display: inline-flex; align-items: center; gap: 7px;
+  min-height: 34px; padding: 5px 12px;
+  font-size: var(--fs-cell); font-weight: 650; color: var(--ink-2);
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: var(--radius-s); cursor: pointer;
+}
+.ck-page .ck-tabs .nav:hover { color: var(--ink); border-color: var(--accent); }
+.ck-page .ck-tabs .nav.on { color: var(--accent); background: var(--accent-soft); border-color: var(--accent); }
+.ck-page .ck-tab-ico { font-weight: 800; }
+.ck-page .ck-tabs .nav .n {
+  min-width: 22px; padding: 0 7px; text-align: center;
+  font-size: var(--fs-aux); font-variant-numeric: tabular-nums; color: var(--ink-3);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 999px;
+}
+.ck-page .ck-tabs .nav.on .n { color: var(--accent); background: var(--panel-solid); border-color: var(--accent-2-line); }
+
+/* 批量操作条：全选当前结果 + 选中人数 + 复制 + 导出 */
+.ck-page .ck-batchbar { display: flex; align-items: center; flex-wrap: wrap; gap: 9px 12px;
+  margin-top: 11px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.ck-page .ck-selall { display: inline-flex; align-items: center; gap: 7px;
+  font-size: var(--fs-cell); font-weight: 650; color: var(--ink); cursor: pointer; }
+.ck-page .ck-selall input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+.ck-page .ck-selinfo { font-size: var(--fs-cell); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.ck-page .ck-selinfo b { font-size: var(--fs-head); color: var(--ink); }
+.ck-page .ck-grow { flex: 1 1 auto; }
+.ck-page .ck-batchbar .btn { min-height: var(--ck-btn-h); padding: 0 14px; font-size: var(--fs-cell); }
+
+/* ⑤ 学生行：行高 ~58px、姓名 17px、当前状态徽标 + 3 个 36px 大按钮 */
+.ck-page .ck-list { display: flex; flex-direction: column; gap: 8px; }
+.ck-page .ck-student {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 9px 12px;
+  min-height: 58px; padding: 10px 14px;
+  background: var(--panel-solid);
+  border: 1px solid var(--line); border-radius: var(--radius);
+  font-size: var(--fs-body);
+}
+.ck-page .ck-student:hover { border-color: var(--line-strong); }
+.ck-page .ck-student.on { border-color: var(--accent); background: var(--accent-soft); }
+.ck-page .ck-pick { display: inline-flex; align-items: center; }
+.ck-page .ck-pick input { width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; }
+.ck-page .ck-st-name { min-width: 88px; font-size: var(--fs-title); font-weight: 700; color: var(--ink); }
+.ck-page .ck-st-lvl { padding: 2px 7px; font-size: var(--fs-aux); font-weight: 700;
+  color: var(--ink-2); background: var(--panel-3); border-radius: 5px; }
+.ck-page .ck-st-meta { flex: 1 1 130px; min-width: 92px;
+  font-size: var(--fs-cell); line-height: 1.5; color: var(--ink-2); }
+.ck-page .ck-st-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.ck-page .ck-st-actions .chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  min-height: var(--ck-btn-h); padding: 0 13px;
+  font-size: var(--fs-cell); font-weight: 650; line-height: 1;
+  color: var(--ink); background: var(--panel-2);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-s); cursor: pointer;
+}
+.ck-page .ck-st-actions .chip:hover { color: var(--accent); background: var(--accent-soft); border-color: var(--accent); }
+.ck-page .ck-set-ico { font-weight: 800; }
+
+/* 当前状态的那个按钮：按状态上色 + 描边加粗，一眼看出「他已经是这个状态了」 */
+.ck-page .ck-st-actions .chip.on { border-width: 2px; font-weight: 750; }
+.ck-page .ck-st-actions .chip.on[data-set="未打卡"] { color: var(--ink-2); background: var(--panel-3); border-color: var(--line-strong); border-style: dashed; }
+.ck-page .ck-st-actions .chip.on[data-set="已完成"] { color: var(--green); background: var(--green-soft); border-color: var(--green-line); }
+.ck-page .ck-st-actions .chip.on[data-set="需讲解"] { color: var(--red); background: var(--red-soft); border-color: var(--red-line); }
+.ck-page .ck-st-actions .chip.on[data-set="补做完成"] { color: var(--amber); background: var(--amber-soft); border-color: var(--amber-line); }
+.ck-page .ck-st-actions .chip.on[data-set="请假"] { color: var(--ink-2); background: var(--panel-4); border-color: var(--line-strong); border-style: dotted; }
+
+/* ⑥ 状态徽标：图形 + 文字 + 边框样式，三路冗余，不只靠颜色 */
+.ck-page .ck-badge {
+  display: inline-flex; align-items: center; gap: 5px; flex: none;
+  padding: 3px 10px; white-space: nowrap;
+  font-size: var(--fs-cell); font-weight: 650;
+  border: 1px solid; border-radius: 999px;
+}
+.ck-page .ck-badge-ico { font-weight: 800; }
+.ck-page .ck-badge.st-todo { color: var(--ink-2); background: var(--panel-3); border-color: var(--line-strong); border-style: dashed; }
+.ck-page .ck-badge.st-done { color: var(--green); background: var(--green-soft); border-color: var(--green-line); }
+.ck-page .ck-badge.st-fix { color: var(--red); background: var(--red-soft); border-color: var(--red-line); }
+.ck-page .ck-badge.st-redo { color: var(--amber); background: var(--amber-soft); border-color: var(--amber-line); }
+.ck-page .ck-badge.st-leave { color: var(--ink-2); background: var(--panel-4); border-color: var(--line-strong); border-style: dotted; }
+
+/* ⑦ 批量确认面板：人数 + 目标状态 + 会改谁 + 影响，确认后才写 */
+.ck-page .ck-confirm { margin-bottom: 12px; padding: 14px 16px;
+  background: var(--accent-soft); border: 1px solid var(--accent-2-line); border-radius: var(--radius); }
+.ck-page .ck-confirm-h { font-size: var(--fs-head); font-weight: 700; color: var(--ink); }
+.ck-page .ck-confirm-opts { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 9px; }
+.ck-page .ck-confirm-opts .chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  min-height: var(--ck-btn-h); padding: 0 13px;
+  font-size: var(--fs-cell); font-weight: 650; color: var(--ink); background: var(--panel-solid);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-s); cursor: pointer;
+}
+.ck-page .ck-confirm-opts .chip:hover { border-color: var(--accent); }
+.ck-page .ck-confirm-opts .chip.on { color: var(--accent); background: var(--accent-soft); border-color: var(--accent); }
+.ck-page .ck-confirm-body { font-size: var(--fs-cell); line-height: 1.7; color: var(--ink-2); }
+.ck-page .ck-confirm-body b { font-size: var(--fs-head); color: var(--ink); }
+.ck-page .ck-confirm-warn { margin-top: 5px; font-size: var(--fs-aux); color: var(--ink-3); }
+.ck-page .ck-confirm-act { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 13px; }
+.ck-page .ck-confirm-act .btn { min-height: 38px; padding: 0 16px; font-size: var(--fs-body); }
+
+/* ⑧ 批量结果：成功多少人、哪些人失败（失败必须指名，不能一笔带过） */
+.ck-page .ck-result { margin-bottom: 12px; padding: 13px 16px; border-radius: var(--radius);
+  font-size: var(--fs-cell); line-height: 1.7; }
+.ck-page .ck-result.ok { background: var(--green-soft); border: 1px solid var(--green-line); }
+.ck-page .ck-result.bad { background: var(--red-soft); border: 1px solid var(--red-line); }
+.ck-page .ck-result-h { margin-bottom: 4px; font-size: var(--fs-head); font-weight: 700; }
+.ck-page .ck-result.ok .ck-result-h { color: var(--green); }
+.ck-page .ck-result.bad .ck-result-h { color: var(--red); }
+.ck-page .ck-result-b { color: var(--ink); }
+.ck-page .ck-result-b b { font-size: var(--fs-head); }
+.ck-page .ck-result-fail { margin-top: 6px; color: var(--ink); }
+.ck-page .ck-result-fail ul { margin: 4px 0 0; padding-left: 20px; }
+.ck-page .ck-result .btn { margin-top: 10px; min-height: 34px; }
+
+/* ⑨ 空名单 / 无匹配的提示，别让用户以为「数据丢了」
+      （用的是全站通用的 .empty-hint，这里只把它放大一点） */
+.ck-page .empty-hint { padding: 26px 18px; font-size: var(--fs-body); line-height: 1.8;
+  color: var(--ink-2); background: var(--panel-solid);
+  border: 1px dashed var(--line-strong); border-radius: var(--radius);
+  display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ck-page .empty-hint small { display: block; margin-top: 6px; font-size: var(--fs-aux); color: var(--ink-3); }
+.ck-page .ck-eh-t { font-size: var(--fs-head); color: var(--ink); }
+.ck-page .ck-eh-s { max-width: 560px; font-size: var(--fs-aux); color: var(--ink-2); }
+.ck-page .ck-clear-f { min-height: 38px; padding: 0 16px; font-size: var(--fs-cell); }
+
+/* 确认面板 / 结果条：滚进视野时别被吸顶工具栏压住 */
+.ck-page .ck-confirm, .ck-page .ck-result { scroll-margin-top: 150px; }
+
+/* ⑩ 任务卡片（选任务那一屏）也跟着大一号 */
+.ck-page .ck-task { padding: 13px 15px; }
+.ck-page .ck-task-title, .ck-page .ck-date { font-size: var(--fs-cell); }
+.ck-page .ck-task-stat { font-size: var(--fs-aux); }
+.ck-page .ck-week-h { font-size: var(--fs-head); }
+
+/* ⑪ 窄屏：按钮换行后不再挤成一条 */
+@media (max-width: 820px) {
+  .ck-page .ck-st-actions { margin-left: 0; width: 100%; }
+  .ck-page .ck-st-name { min-width: 0; }
+  .ck-page .ck-search { flex: 1 1 100%; max-width: none; }
+}
 </style>
 </head>
 <body>
@@ -5410,6 +5649,10 @@ const SYNC = (() => {
     selIds: [], batchOpen: false,
     // 语文打卡：选中的任务 id 与当前展示的状态筛选
     checkinTask: null, checkinStatus: "未打卡",
+    // 打卡页的查找/批量状态（2026-10-19）：搜索词、年级/等级筛选、勾选的人、
+    // 待确认的批量目标状态、上一次批量结果、联想列表里高亮第几条
+    ckTask: null, ckQuery: "", ckGrade: "all", ckLevel: "all",
+    ckSel: [], ckPend: null, ckResult: null, ckAcIdx: -1,
     sideCollapsed: { follow: false, tag: true, ptag: true },
     // 成绩侧栏：当前选中的考试名（null = 全部）
     scoreExam: null,
@@ -6745,6 +6988,10 @@ const SYNC = (() => {
     setListSolo(solo);
     // 成绩页专属样式的挂钩（宽度分配、数字对齐、数据区实底都挂在 .sc-wide 上）
     setStageWide(view.mode === "score");
+    // 打卡页专属样式的挂钩（.ck-page）：放大字号 / 加高行 / 实底背景 / 吸顶工具栏
+    // 全都挂在这一个 class 上，绝不波及卡片页、成绩页、电联页。
+    const secEl = document.querySelector("section.list");
+    if (secEl) secEl.classList.toggle("ck-page", view.mode === "checkin");
     // 「收起顶栏」只在 solo 页生效；一旦离开（点侧栏、回卡片页），顶栏必须自己回来，
     // 否则用户会被困在一个没有工具栏的页面上。
     document.body.classList.toggle("head-compact", solo && !!view.headCompact);
@@ -11768,6 +12015,7 @@ const SYNC = (() => {
       stage.querySelectorAll("[data-task]").forEach((el) => el.onclick = () => {
         view.checkinTask = el.dataset.task;
         view.checkinStatus = "未打卡";
+        view.ckQuery = ""; view.ckSel = []; view.ckPend = null; view.ckResult = null;
         renderStage();
       });
       return;
@@ -11778,20 +12026,33 @@ const SYNC = (() => {
     if (!task) { view.checkinTask = null; renderStage(); return; }
     const tid = checkinTaskId(task);
     const st = checkinTaskStats(tid);
+    const recorded = Math.max(0, DB.students.length - (st["未打卡"] || 0));
 
-    // 当前状态筛选下的学生（未打卡 = 所有没记过的）
-    const inStatus = (s) => checkinStatusOf(tid, s.id) === view.checkinStatus;
-    const list = DB.students.filter(inStatus);
+    // 换任务就把搜索词、勾选、确认面板、上一次的结果提示全清掉：
+    // 跨任务带着勾选去批量改，是最容易「改错人」的场景。
+    if (view.ckTask !== tid) {
+      view.ckTask = tid;
+      view.ckQuery = ""; view.ckSel = []; view.ckPend = null; view.ckResult = null; view.ckAcIdx = -1;
+    }
+    view.ckSel = (view.ckSel || []).filter((id) => DB.students.some((s) => s.id === id));
+
+    // 年级：名单本身没有年级字段（整个看板是一个班），所以优先用学生的 grade，
+    // 没有就从班名里认「初一 / 七年级」这种；都认不出来就只剩「全部年级」。
+    // 不编数据：下拉里出现什么，就是名单里真有的什么。
+    const grades = [...new Set(DB.students.map(ckGradeOf).filter(Boolean))];
+    const levels = (DB.config.levels || []).map((x) => ({ key: x.key, label: x.label || x.key }));
+    if (view.ckGrade !== "all" && !grades.includes(view.ckGrade)) view.ckGrade = "all";
+    if (view.ckLevel !== "all" && !levels.some((x) => x.key === view.ckLevel)) view.ckLevel = "all";
 
     listbar.innerHTML = `<b>${esc(task.date)} ${esc(task.weekday || "")} · ${esc(task.qno || "")}</b>
+      <span class="ck-lb-sub">全班 ${DB.students.length} 人 · 本任务已记 ${recorded} 人</span>
       <span style="flex:1"></span>
-      <button class="btn ghost" id="ckBack">← 返回</button>`;
-    const back = $("ckBack");
-    if (back) back.onclick = () => { view.checkinTask = null; renderStage(); };
+      <button class="btn ghost" id="ckBack">← 返回周列表</button>`;
 
-    const statusTabs = CHECKIN_STATUSES.map((s) =>
-      `<button class="nav ck-st ${view.checkinStatus === s ? "on" : ""}" data-st="${esc(s)}">
-        ${esc(s)} <span class="n">${st[s]}</span></button>`).join("");
+    const statusTabs = [CK_ALL, ...CHECKIN_STATUSES].map((s) =>
+      `<button class="nav ck-st${view.checkinStatus === s ? " on" : ""}" data-st="${esc(s)}" aria-pressed="${view.checkinStatus === s}">
+        <span class="ck-tab-ico">${esc(CK_ICON[s] || "≡")}</span>${esc(s)}
+        <span class="n">${s === CK_ALL ? DB.students.length : (st[s] || 0)}</span></button>`).join("");
 
     stage.innerHTML = `
       <div class="ck-detail-h">
@@ -11800,61 +12061,471 @@ const SYNC = (() => {
         <div class="ck-detail-content">${esc(task.content || "")}</div>
         ${task.recite ? `<div class="ck-detail-rec">📖 背诵：${esc(task.recite)}</div>` : ""}
       </div>
-      <div class="ck-copybar">
-        <button class="btn" id="ckBatch">批量导入名单</button>
-        <button class="btn" id="ckCopy">复制这 ${list.length} 人姓名</button>
-        <button class="btn" id="ckExport">导出当前筛选 CSV</button>
-        <button class="btn" id="ckExportFull">导出全班名单</button>
+      <div class="ck-tools" id="ckTools">
+        <div class="ck-tools-row">
+          <div class="ck-search">
+            <input id="ckSearch" type="search" autocomplete="off" spellcheck="false"
+              value="${esc(view.ckQuery || "")}" placeholder="搜学生姓名（输入就联想）/ 也能搜备注"
+              aria-label="搜索学生姓名">
+            <button class="ck-search-x" id="ckSearchX" title="清空搜索" aria-label="清空搜索">×</button>
+            <div class="ck-ac" id="ckAc" hidden></div>
+          </div>
+          <label class="ck-f" title="按年级筛选（名单没有年级字段时只有「全部年级」）"><span>年级</span>
+            <select id="ckGradeSel">
+              <option value="all"${view.ckGrade === "all" ? " selected" : ""}>全部年级${grades.length ? "" : "（名单未填）"}</option>
+              ${grades.map((g) => `<option value="${esc(g)}"${view.ckGrade === g ? " selected" : ""}>${esc(g)}</option>`).join("")}
+            </select></label>
+          <label class="ck-f" title="按等级筛选"><span>等级</span>
+            <select id="ckLevelSel">
+              <option value="all"${view.ckLevel === "all" ? " selected" : ""}>全部等级</option>
+              ${levels.map((x) => `<option value="${esc(x.key)}"${view.ckLevel === x.key ? " selected" : ""}>${esc(x.label)}</option>`).join("")}
+            </select></label>
+          <span class="ck-f-note"></span>
+        </div>
+        <div class="ck-tabs" id="ckTabs">${statusTabs}</div>
+        <div class="ck-batchbar">
+          <label class="ck-selall" title="只勾当前筛选出来的学生；换筛选后勾选会按新结果重算">
+            <input type="checkbox" id="ckSelAll"><span id="ckSelAllTxt">全选当前 0 人</span></label>
+          <span class="ck-selinfo" id="ckSelInfo">当前筛选 <b>0</b> 人 · 已选 <b>0</b> 人</span>
+          <span class="ck-grow"></span>
+          <button class="btn" id="ckCopy">复制姓名</button>
+          <button class="btn" id="ckExport">导出当前筛选 CSV</button>
+          <button class="btn ghost" id="ckExportFull">导出全班</button>
+          <button class="btn ghost" id="ckBatch" title="把粘贴的一串名字一次性标成同一种状态">批量导入名单</button>
+          <button class="btn primary" id="ckBulk">批量设置状态</button>
+        </div>
       </div>
-      <div class="ck-tabs">${statusTabs}</div>
-      <div class="ck-list">${list.length
-        ? list.map((s) => `<div class="ck-student">
-            <span class="ck-st-name">${esc(s.name)}</span>
-            <span class="ck-st-meta">${s.cons ? "⚠ " + esc(s.cons) : ""}</span>
-            <span class="ck-st-actions">${CHECKIN_STATUSES.map((ss) =>
-              `<button class="chip ${ss === view.checkinStatus ? "on" : ""}" data-set="${esc(ss)}" data-sid="${s.id}" ${ss === view.checkinStatus ? "disabled" : ""}>${esc(ss)}</button>`).join("")}
-            </span>
-          </div>`).join("")
-        : `<div class="empty-hint">这个状态下没有学生</div>`}</div>`;
+      ${ckConfirmHtml()}
+      ${ckResultHtml()}
+      <div class="ck-list" id="ckList"></div>`;
 
-    stage.querySelectorAll("[data-st]").forEach((b) => b.onclick = () => {
-      view.checkinStatus = b.dataset.st; renderStage();
+    bindCheckinPage(task);
+    ckPaint();
+    return;
+  }
+
+  /* ============================================================ 打卡页：找人 / 勾人 / 批量改
+   *
+   * 2026-10-19 用户反馈：「文字和按钮偏小、73 个人逐个找逐个点太费眼费时间」。
+   * 在原有「周分组 → 点任务 → 名单」结构上补三样东西，全部只服务打卡页：
+   *   ① 吸顶工具栏：姓名搜索（带联想）、年级 / 等级 / 状态筛选、快捷状态标签、
+   *      全选当前筛选结果、复制姓名、导出当前筛选名单；
+   *   ② 每一行都显示「当前状态」徽章 —— 图标 + 文字 + 边框样式，不只靠颜色；
+   *   ③ 勾选后批量设置状态：先弹确认面板（人数 / 目标 / 逐类变更预览），
+   *      执行后报成功人数，失败的逐个列出来，绝不把部分成功说成全部成功。
+   *
+   * 约束（别踩）：状态仍然是 CHECKIN_STATUSES 那 5 个字符串，
+   * 存档仍然只写 DB.checkin.status[任务id][学生id]，「未打卡」= 不落键。
+   * 老的选择器（.ck-task / .ck-tabs .nav[data-st] / .ck-student / [data-set]）都得留着，
+   * 回归里有一堆断言按这些找元素。
+   */
+  const CK_ALL = "全部";
+  const CK_ICON = { "未打卡": "○", "已完成": "✓", "需讲解": "✎", "补做完成": "↺", "请假": "⏸" };
+  const CK_BADGE = { "未打卡": "todo", "已完成": "done", "需讲解": "fix", "补做完成": "redo", "请假": "leave" };
+
+  /** 学生年级：先看他自己的 grade 字段，没有就从班名里认；都没有就返回空串 */
+  function ckGradeOf(s) {
+    const g = String((s && s.grade) || "").trim();
+    if (g) return g;
+    const m = String(DB.config.className || "").match(/(高一|高二|高三|初一|初二|初三|七年级|八年级|九年级)/);
+    return m ? m[1] : "";
+  }
+
+  function ckQueryHit(s) {
+    const q = String(view.ckQuery || "").trim().toLowerCase();
+    if (!q) return true;
+    return [s.name, s.cons, s.note].join(" ").toLowerCase().includes(q);
+  }
+
+  /** 状态 + 等级 + 年级 + 搜索词，四个条件同时生效 */
+  function ckFiltered() {
+    return DB.students.filter((s) =>
+      (view.checkinStatus === CK_ALL || checkinStatusOf(view.checkinTask, s.id) === view.checkinStatus)
+      && (view.ckLevel === "all" || levelOf(s) === view.ckLevel)
+      && (view.ckGrade === "all" || ckGradeOf(s) === view.ckGrade)
+      && ckQueryHit(s));
+  }
+
+  function ckBadgeHtml(cur) {
+    return `<span class="ck-badge st-${CK_BADGE[cur] || "todo"}"><span class="ck-badge-ico">${CK_ICON[cur] || "○"}</span>${esc(cur)}</span>`;
+  }
+
+  function ckRowHtml(s) {
+    const cur = checkinStatusOf(view.checkinTask, s.id);
+    const picked = view.ckSel.includes(s.id);
+    return `<div class="ck-student${picked ? " on" : ""}" data-sid="${esc(s.id)}">
+      <label class="ck-pick" title="勾选 ${esc(s.name)}"><input type="checkbox" data-ckpick="${esc(s.id)}"${picked ? " checked" : ""} aria-label="勾选 ${esc(s.name)}"></label>
+      <span class="ck-st-name">${esc(s.name)}</span>
+      <span class="ck-st-lvl" title="等级">${esc(levelOf(s) || "—")}</span>
+      ${ckBadgeHtml(cur)}
+      <span class="ck-st-meta">${s.cons ? "⚠ " + esc(s.cons) : (s.note ? esc(s.note) : "")}</span>
+      <span class="ck-st-actions">${CHECKIN_STATUSES.map((x) =>
+        `<button class="chip ck-set${x === cur ? " on" : ""}" data-set="${esc(x)}" data-sid="${esc(s.id)}"
+          ${x === cur ? 'disabled aria-pressed="true"' : 'aria-pressed="false"'}
+          title="把 ${esc(s.name)} 标成「${esc(x)}」（现在是「${esc(cur)}」）">
+          <span class="ck-set-ico">${CK_ICON[x]}</span>${esc(x)}</button>`).join("")}</span>
+    </div>`;
+  }
+
+  function ckEmptyHtml() {
+    const q = String(view.ckQuery || "").trim();
+    // 注意：.empty-hint 里的 <b> 是全站通用的「整行加粗标题」样式，这里不能用（会把数字单独顶一行）
+    const clearBtn = `<button class="btn ck-clear-f" id="ckClearFilters">清掉搜索和筛选，看全部</button>`;
+    if (q) {
+      const ql = q.toLowerCase();
+      const loose = DB.students.filter((s) => [s.name, s.cons, s.note].join(" ").toLowerCase().includes(ql)).length;
+      return `<div class="empty-hint">
+        <div class="ck-eh-t">当前条件里没有名字或备注含「${esc(q)}」的学生。</div>
+        ${loose ? `<div class="ck-eh-s">全名单里其实有 ${loose} 个人符合这个搜索，是被上面的状态/等级筛选挡住了。</div>` : ""}
+        ${clearBtn}
+      </div>`;
+    }
+    if (view.checkinStatus === "未打卡") return `<div class="empty-hint"><div class="ck-eh-t">这个任务全班都记过状态了。</div>${clearBtn}</div>`;
+    if (view.checkinStatus === CK_ALL) return `<div class="empty-hint"><div class="ck-eh-t">名单是空的。</div>${clearBtn}</div>`;
+    return `<div class="empty-hint"><div class="ck-eh-t">「${esc(view.checkinStatus)}」这个状态下还没有学生。</div>${clearBtn}</div>`;
+  }
+
+  /** 只重画名单和计数，不动工具栏 —— 搜索框还在焦点里，输入法组字也不会被打断 */
+  function ckPaint() {
+    if (!view.checkinTask) return;
+    const all = ckFiltered();
+    const alive = new Set(all.map((s) => s.id));
+    // 勾选只对「当前筛选结果」生效：筛选一变就按新结果重算，
+    // 绝不让一个已经看不见的人被批量改掉。
+    view.ckSel = view.ckSel.filter((id) => alive.has(id));
+    const box = $("ckList");
+    if (box) box.innerHTML = all.length ? all.map(ckRowHtml).join("") : ckEmptyHtml();
+    ckBindRows();
+    ckSync();
+    ckPaintAc();
+  }
+
+  function ckSync() {
+    const all = ckFiltered();
+    const n = all.length, m = view.ckSel.length;
+    const info = $("ckSelInfo");
+    if (info) info.innerHTML = `当前筛选 <b>${n}</b> 人 · 已选 <b>${m}</b> 人`;
+    const master = $("ckSelAll");
+    if (master) {
+      master.checked = n > 0 && m === n;
+      master.indeterminate = m > 0 && m < n;
+      master.disabled = n === 0;
+    }
+    const mt = $("ckSelAllTxt");
+    if (mt) mt.textContent = n === 0 ? "全选当前（0 人）" : m === n ? `取消全选（${n} 人）` : `全选当前 ${n} 人`;
+    const bulk = $("ckBulk");
+    if (bulk) { bulk.disabled = m === 0; bulk.textContent = m ? `批量设置状态（${m} 人）` : "批量设置状态"; }
+    const cp = $("ckCopy");
+    if (cp) {
+      cp.textContent = m ? `复制已选 ${m} 人姓名` : `复制当前 ${n} 人姓名`;
+      cp.disabled = (m || n) === 0;
+    }
+    const ex = $("ckExport");
+    if (ex) { ex.textContent = `导出当前筛选（${n} 人）CSV`; ex.disabled = n === 0; }
+    const note = document.querySelector(".ck-f-note");
+    if (note) note.textContent = `筛选后剩 ${n} 人`;
+  }
+
+  /** 联想浮层：只列「名字里含这几个字」的学生，点一下就选中 */
+  function ckPaintAc() {
+    const box = $("ckAc");
+    if (!box) return;
+    const q = String(view.ckQuery || "").trim();
+    if (!q) { box.hidden = true; box.innerHTML = ""; view.ckAcIdx = -1; return; }
+    const hits = DB.students.filter((s) => s.name.toLowerCase().includes(q.toLowerCase())).slice(0, 8);
+    box.hidden = false;
+    if (!hits.length) {
+      box.innerHTML = `<div class="ck-ac-none">没有名字含「${esc(q)}」的学生（备注命中的仍会列在下面）</div>`;
+      view.ckAcIdx = -1;
+      return;
+    }
+    box.innerHTML = hits.map((s, i) =>
+      `<div class="ck-ac-i${view.ckAcIdx === i ? " on" : ""}" data-ac="${esc(s.id)}" role="option">
+        <span class="ck-ac-name">${esc(s.name)}</span>
+        <span class="ck-ac-lvl">${esc(levelOf(s) || "—")}</span>
+        ${ckBadgeHtml(checkinStatusOf(view.checkinTask, s.id))}
+      </div>`).join("");
+    box.querySelectorAll("[data-ac]").forEach((el) => {
+      el.onmousedown = (e) => { e.preventDefault(); ckPickAc(el.dataset.ac); };
     });
-    stage.querySelectorAll("[data-set]").forEach((b) => b.onclick = () => {
-      const sid = b.dataset.set === "sid" ? b.dataset.sid : b.dataset.set;
-      // data-set 是状态，data-sid 是学生
-      const set = b.dataset.set, studentId = b.dataset.sid;
-      DB.checkin ||= { importedAt: "", tasks: [], status: {} };
-      DB.checkin.status ||= {};
-      DB.checkin.status[tid] ||= {};
-      if (set === "未打卡") delete DB.checkin.status[tid][studentId];
-      else DB.checkin.status[tid][studentId] = set;
-      save();
+  }
+
+  function ckPickAc(id) {
+    const s = DB.students.find((x) => x.id === id);
+    if (!s) return;
+    view.ckQuery = s.name;
+    view.ckAcIdx = -1;
+    renderStage();
+    const inp = $("ckSearch");
+    if (inp) { inp.focus(); try { inp.setSelectionRange(s.name.length, s.name.length); } catch (e) { /* 忽略 */ } }
+  }
+
+  /** 确认面板：先写清「涉及几人 / 改成什么 / 每类各改几人」，点确认才动数据 */
+  function ckConfirmHtml() {
+    const target = view.ckPend;
+    if (!target || !view.ckSel.length) return "";
+    const sameIds = view.ckSel.filter((id) => checkinStatusOf(view.checkinTask, id) === target);
+    const from = new Map();
+    for (const id of view.ckSel) {
+      const cur = checkinStatusOf(view.checkinTask, id);
+      if (cur === target) continue;
+      from.set(cur, (from.get(cur) || 0) + 1);
+    }
+    const change = view.ckSel.length - sameIds.length;
+    const parts = [...from.entries()].map(([k, v]) => `${k} → ${target}：${v} 人`).join("；");
+    return `<div class="ck-confirm" id="ckConfirm">
+      <div class="ck-confirm-h">批量设置打卡状态</div>
+      <div class="ck-confirm-opts">${CHECKIN_STATUSES.map((x) =>
+        `<button class="chip ck-opt${x === target ? " on" : ""}" data-pickst="${esc(x)}" aria-pressed="${x === target}">
+          <span class="ck-set-ico">${CK_ICON[x]}</span>${esc(x)}</button>`).join("")}</div>
+      <div class="ck-confirm-body">
+        <div>将对已勾选的 <b>${view.ckSel.length}</b> 名学生设置成 <b>「${esc(target)}」</b></div>
+        <div class="ck-confirm-what">${change
+          ? `实际会改动 <b>${change}</b> 人 —— ${esc(parts)}`
+          : `勾选的这 ${view.ckSel.length} 人本来就是「${esc(target)}」，确认也不会重复写入`}</div>
+        ${sameIds.length && change ? `<div class="ck-confirm-same">另有 <b>${sameIds.length}</b> 人已经是「${esc(target)}」，保持原样、不重复写入</div>` : ""}
+        <div class="ck-confirm-warn">只改这 ${view.ckSel.length} 名学生的「本次打卡」记录，别的任务、别的学生一律不动。</div>
+      </div>
+      <div class="ck-confirm-act">
+        <button class="btn primary" id="ckConfirmGo"${change ? "" : " disabled"}>${change ? `确认设置「${esc(target)}」 ${change} 人` : "没有需要改的"}</button>
+        <button class="btn ghost" id="ckConfirmNo">取消</button>
+      </div>
+    </div>`;
+  }
+
+  /** 上一次批量的结果：成功几人、跳过几人、失败的逐个点名 */
+  function ckResultHtml() {
+    const r = view.ckResult;
+    if (!r) return "";
+    const bad = (r.fail || []).length;
+    if (r.persistFailed) {
+      return `<div class="ck-result bad" id="ckBulkRes">
+        <div class="ck-result-h">✗ 改动没保存到浏览器（刷新会丢）</div>
+        <div class="ck-result-b">目标状态「${esc(r.target)}」：勾选的这些人的状态在页面上已经变了，但<b>没写进本地存储</b>（多半是浏览器空间满了）。<b>先导出备份再重试</b>，别直接刷新。</div>
+        <div class="ck-result-fail"><b>失败原因：</b><ul>${r.fail.map((f) => `<li>${esc(f.name)} — ${esc(f.reason)}</li>`).join("")}</ul></div>
+        <button class="btn ghost" id="ckBulkResX">知道了</button>
+      </div>`;
+    }
+    return `<div class="ck-result ${bad ? "bad" : "ok"}" id="ckBulkRes">
+      <div class="ck-result-h">${bad ? "✗ 批量操作部分完成" : "✓ 批量操作已完成"}</div>
+      <div class="ck-result-b">目标状态「${esc(r.target)}」：成功 <b>${r.ok}</b> 人${r.skipped ? ` · 本来就是该状态、没重复写入 <b>${r.skipped}</b> 人` : ""}${bad ? ` · 失败 <b>${bad}</b> 人` : ""}</div>
+      ${bad ? `<div class="ck-result-fail"><b>失败名单（这 ${bad} 人的状态没有改成目标状态）：</b><ul>${r.fail.map((f) => `<li>${esc(f.name)} — ${esc(f.reason)}</li>`).join("")}</ul></div>` : ""}
+      <button class="btn ghost" id="ckBulkResX">知道了</button>
+    </div>`;
+  }
+
+  /** 真正写数据：逐个学生 try/catch，落盘后**读回来核对**，失败的记名字不留情面。
+   *
+   * 为什么要自己落盘、不靠 save()：
+   *   save() 是 120ms 防抖，而且它内部 catch 掉异常只弹一句 toast ——
+   *   批量操作必须当场知道「到底存进去了没有」，否则就会出现
+   *   「提示成功了、刷新一下全变回去」这种最坏的情况。
+   */
+  function ckApplyBulk() {
+    const target = view.ckPend;
+    const ids = view.ckSel.slice();
+    const tid = view.checkinTask;
+    if (!target || !ids.length || !tid) return;
+    const nameOf = (sid) => (DB.students.find((x) => x.id === sid) || {}).name || sid;
+    const before = new Map(ids.map((sid) => [sid, checkinStatusOf(tid, sid)]));
+    snapshot(`批量打卡「${target}」${ids.length} 人`);
+    DB.checkin ||= { importedAt: "", tasks: [], status: {} };
+    DB.checkin.status ||= {};
+    DB.checkin.status[tid] ||= {};
+    const fail = [];
+    for (const sid of ids) {
+      if (before.get(sid) === target) continue;
+      try {
+        if (target === "未打卡") delete DB.checkin.status[tid][sid];
+        else DB.checkin.status[tid][sid] = target;
+      } catch (e) {
+        fail.push({ name: nameOf(sid), id: sid, reason: (e && e.message) || "写入失败" });
+      }
+    }
+    // 立刻同步落盘 + 读回，别让防抖把「没存上」藏起来
+    let saved = null;
+    try {
+      clearTimeout(saveTimer);
+      localStorage.setItem(KEY, JSON.stringify(DB));
+      saved = JSON.parse(localStorage.getItem(KEY) || "null");
+    } catch (e) {
+      fail.push({ name: "（整批保存到本地存储）", reason: "写入失败：" + ((e && e.message) || "空间可能已满，请先导出备份") });
+    }
+    // 没落盘 = 改动刷新就没：这时候一个「成功」都不许报
+    const persistFailed = !saved;
+    let ok = 0, skipped = 0;
+    if (!persistFailed) {
+      for (const sid of ids) {
+        if (fail.some((f) => f.id === sid)) continue;
+        const got = ((((saved.checkin || {}).status || {})[tid] || {})[sid]) || "未打卡";
+        if (got !== target) { fail.push({ name: nameOf(sid), id: sid, reason: `保存后读回是「${got}」，不是「${target}」` }); continue; }
+        if (before.get(sid) === target) skipped++; else ok++;
+      }
+    }
+    view.ckResult = { target, ok, skipped, fail, persistFailed, at: Date.now() };
+    view.ckPend = null;
+    view.ckSel = [];
+    // 数据已经同步落盘了；这里只补一次后台同步推送（没开同步时什么也不做）
+    try { if (typeof scheduleSyncPush === "function") scheduleSyncPush(); } catch (e) {}
+    renderStage();
+    toast(persistFailed
+      ? `没保存成功（${target}）：先「导出备份」再重试，刷新会丢`
+      : fail.length
+        ? `部分完成：成功 ${ok} 人，失败 ${fail.length} 人（失败名单在页面上）`
+        : `已完成：${ok} 人设为「${target}」${skipped ? `，${skipped} 人本来就是该状态` : ""}`, 4200);
+  }
+
+  /** 名单里每一行的勾选和「单个改状态」按钮 */
+  function ckBindRows() {
+    const box = $("ckList");
+    if (!box) return;
+    box.querySelectorAll("[data-ckpick]").forEach((cb) => {
+      cb.onchange = () => {
+        const id = cb.dataset.ckpick;
+        if (cb.checked) { if (!view.ckSel.includes(id)) view.ckSel.push(id); }
+        else view.ckSel = view.ckSel.filter((x) => x !== id);
+        const row = cb.closest(".ck-student");
+        if (row) row.classList.toggle("on", cb.checked);
+        ckSync();
+      };
+    });
+    box.querySelectorAll("[data-set]").forEach((b) => {
+      b.onclick = () => {
+        const tid = view.checkinTask, sid = b.dataset.sid, set = b.dataset.set;
+        if (!tid || !sid) return;
+        DB.checkin ||= { importedAt: "", tasks: [], status: {} };
+        DB.checkin.status ||= {};
+        DB.checkin.status[tid] ||= {};
+        if (set === "未打卡") delete DB.checkin.status[tid][sid];
+        else DB.checkin.status[tid][sid] = set;
+        save();
+        view.ckResult = null;
+        renderStage();
+      };
+    });
+    // 空名单里那个「清掉筛选」按钮每次重画都要重新绑
+    const clr = $("ckClearFilters");
+    if (clr) clr.onclick = () => {
+      view.ckQuery = ""; view.ckGrade = "all"; view.ckLevel = "all";
+      view.checkinStatus = CK_ALL; view.ckSel = []; view.ckPend = null;
+      renderStage();
+    };
+  }
+
+  function bindCheckinPage(task) {
+    const back = $("ckBack");
+    if (back) back.onclick = () => {
+      view.checkinTask = null; view.ckSel = []; view.ckPend = null; view.ckResult = null; view.ckQuery = "";
+      renderStage();
+    };
+
+    $("ckTabs")?.querySelectorAll("[data-st]").forEach((b) => b.onclick = () => {
+      view.checkinStatus = b.dataset.st;
+      view.ckPend = null;
       renderStage();
     });
+
+    const gsel = $("ckGradeSel");
+    if (gsel) gsel.onchange = () => { view.ckGrade = gsel.value; renderStage(); };
+    const lsel = $("ckLevelSel");
+    if (lsel) lsel.onchange = () => { view.ckLevel = lsel.value; renderStage(); };
+
+    const inp = $("ckSearch");
+    if (inp) {
+      inp.oninput = () => { view.ckQuery = inp.value; view.ckAcIdx = -1; ckPaint(); };
+      inp.onkeydown = (e) => {
+        const items = $("ckAc") ? [...$("ckAc").querySelectorAll("[data-ac]")] : [];
+        if (e.key === "ArrowDown" && items.length) {
+          e.preventDefault();
+          view.ckAcIdx = Math.min(view.ckAcIdx + 1, items.length - 1);
+          ckPaintAc();
+        } else if (e.key === "ArrowUp" && items.length) {
+          e.preventDefault();
+          view.ckAcIdx = Math.max(view.ckAcIdx - 1, 0);
+          ckPaintAc();
+        } else if (e.key === "Enter") {
+          const pick = items[view.ckAcIdx] || items[0];
+          if (pick) { e.preventDefault(); ckPickAc(pick.dataset.ac); }
+        } else if (e.key === "Escape") {
+          view.ckQuery = ""; inp.value = ""; ckPaint();
+        }
+      };
+      inp.onblur = () => setTimeout(() => {
+        const b = $("ckAc");
+        if (b) { b.hidden = true; b.innerHTML = ""; }
+      }, 140);
+    }
+    const x = $("ckSearchX");
+    if (x) x.onclick = () => {
+      view.ckQuery = ""; view.ckAcIdx = -1;
+      if (inp) { inp.value = ""; inp.focus(); }
+      ckPaint();
+    };
+
+    const master = $("ckSelAll");
+    if (master) master.onchange = () => {
+      view.ckSel = master.checked ? ckFiltered().map((s) => s.id) : [];
+      ckPaint();
+    };
+
     const cp = $("ckCopy");
     if (cp) cp.onclick = () => {
-      const names = list.map((s) => s.name).join("\n");
+      const picked = view.ckSel.length > 0;
+      const scope = picked ? DB.students.filter((s) => view.ckSel.includes(s.id)) : ckFiltered();
+      if (!scope.length) return toast("当前没有可复制的学生");
+      const names = scope.map((s) => s.name).join("\n");
       navigator.clipboard.writeText(names).then(
-        () => toast(`已复制 ${list.length} 个姓名`),
+        () => toast(`已复制 ${scope.length} 个姓名（${picked ? "已勾选" : "当前筛选"}）`),
         () => toast("复制失败，浏览器不允许访问剪贴板"));
     };
     const ex = $("ckExport");
-    if (ex) ex.onclick = () => exportCheckinCsv(task, list);
+    if (ex) ex.onclick = () => {
+      const l = ckFiltered();
+      if (!l.length) return toast("当前筛选是空的，没什么可导出的");
+      exportCheckinCsv(task, l);
+    };
     const exf = $("ckExportFull");
     if (exf) exf.onclick = () => exportCheckinFull(task);
     const bt = $("ckBatch");
     if (bt) bt.onclick = openCkBatch;
+
+    const bulk = $("ckBulk");
+    if (bulk) bulk.onclick = () => {
+      if (!view.ckSel.length) return toast("先勾几个学生（或用「全选当前」）");
+      if (!view.ckPend) view.ckPend = "已完成";
+      view.ckResult = null;
+      renderStage();
+      const c = $("ckConfirm");
+      if (c) c.scrollIntoView({ block: "center", behavior: "smooth" });
+    };
+
+    document.querySelectorAll("[data-pickst]").forEach((b) => b.onclick = () => {
+      view.ckPend = b.dataset.pickst;
+      const y = window.scrollY;
+      renderStage();
+      window.scrollTo(0, y);
+      const c = $("ckConfirm");
+      if (c) c.scrollIntoView({ block: "center", behavior: "smooth" });
+    });
+    const go = $("ckConfirmGo");
+    if (go) go.onclick = () => ckApplyBulk();
+    const no = $("ckConfirmNo");
+    if (no) no.onclick = () => { view.ckPend = null; renderStage(); };
+    const rx = $("ckBulkResX");
+    if (rx) rx.onclick = () => { view.ckResult = null; renderStage(); };
   }
 
   function exportCheckinCsv(task, list) {
-    const header = ["姓名", "任务", "日期", "状态"];
+    const tid = checkinTaskId(task);
+    const header = ["姓名", "等级", "年级", "状态", "备注", "任务", "日期"];
     const rows = list.map((s) => [
-      s.name, `${task.qno || ""} ${task.type || ""}`, task.date, view.checkinStatus,
+      s.name, levelOf(s) || "", ckGradeOf(s), checkinStatusOf(tid, s.id), s.cons || "",
+      `${task.qno || ""} ${task.type || ""}`, task.date,
     ]);
     const csv = [header, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
-    download(`打卡-${task.date}-${view.checkinStatus}.csv`, "\ufeff" + csv, "text/csv");
-    toast("已导出 CSV");
+    const tag = view.checkinStatus === CK_ALL ? "全部状态" : view.checkinStatus;
+    download(`打卡-${task.date}-${tag}-${list.length}人.csv`, "\ufeff" + csv, "text/csv");
+    toast(`已导出当前筛选 ${list.length} 人 CSV`);
   }
 
   /** 导出全班名单（当前任务的每个人的状态，不受状态筛选影响） */
