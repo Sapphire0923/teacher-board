@@ -343,6 +343,9 @@ aside.side { width: 212px; flex: 0 0 212px; background: var(--panel);
 .ck-student { display: flex; align-items: center; gap: 12px; background: var(--panel);
   border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
 .ck-st-name { font-weight: 650; font-size: 13.5px; flex: 0 0 auto; min-width: 64px; }
+/* 电联页：名字可点，点了就地看学情详情（不跳回名单） */
+.ck-st-link { cursor: pointer; border-bottom: 1px dashed transparent; transition: border-color .12s, color .12s; }
+.ck-st-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
 .ck-st-meta { font-size: var(--fs-aux); color: var(--ink-3); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ck-st-actions { display: flex; gap: 4px; flex-wrap: wrap; }
 .ck-st-actions .chip { cursor: pointer; }
@@ -10065,6 +10068,19 @@ const SYNC = (() => {
     renderDetail();
   }
 
+  /** 从任意页面就地打开某个学生的学情详情。
+   *  stage = 详情里想直接滚到哪一块（目前只用电联页传 "call"）。
+   *  详情面板本来就是全站共用的那一块，这里只负责「选中他 + 保证它展开 + 滚到该看的地方」。
+   */
+  function openStudentDetail(sid, scrollTo) {
+    if (!sid || !DB.students.some((x) => x.id === sid)) return;
+    view.selected = sid;
+    _detScroll = 0;
+    _detId = null;                       // 换人不保留滚动位置，从头看
+    if (scrollTo) view.scrollDetTo = scrollTo;
+    renderDetail();
+  }
+
   function renderDetail() {
     const d = $("detail");
     const s = DB.students.find((x) => x.id === view.selected);
@@ -10135,7 +10151,7 @@ const SYNC = (() => {
         ${s.followUp?.text ? `<div class="ftask">📌 ${esc(s.followUp.text)}</div>` : ""}
       </div>
 
-      <div class="box"><h4>电联记录（聊上 ${callCountOf(s.id).n} 次${callLogCount(s.id) ? " · 逐次记录 " + callLogCount(s.id) + " 条" : ""}）</h4>
+      <div class="box" data-detbox="call"><h4>电联记录（聊上 ${callCountOf(s.id).n} 次${callLogCount(s.id) ? " · 逐次记录 " + callLogCount(s.id) + " 条" : ""}）</h4>
         <div class="rowset" style="margin:0 0 10px">
           <button class="btn primary" id="dAddCall">＋ 记一次电联</button>
           ${callLogCount(s.id) ? `<button class="btn" id="dCallExport">⬇ 导出记录（Word）</button>` : ""}
@@ -10177,6 +10193,20 @@ const SYNC = (() => {
     if (view.scrollExam) {
       const target = d.querySelector(`[data-eid="${view.scrollExam}"]`);
       view.scrollExam = null;
+      if (target) {
+        requestAnimationFrame(() => {
+          d.scrollTop = Math.max(0, target.offsetTop - 12);
+          _detScroll = d.scrollTop;
+        });
+      }
+    }
+
+    // 从电联页点「详情」进来时，直接把面板滚到「电联记录」那一段 —— 老师来这儿的
+    // 目的就是看电联，让他自己往下翻两三屏等于没帮上忙。
+    if (view.scrollDetTo) {
+      const key = view.scrollDetTo;
+      view.scrollDetTo = null;
+      const target = d.querySelector(`[data-detbox="${key}"]`);
       if (target) {
         requestAnimationFrame(() => {
           d.scrollTop = Math.max(0, target.offsetTop - 12);
@@ -12481,10 +12511,11 @@ const SYNC = (() => {
           ? list.map((s) => {
             const cc = callCountOf(s.id);
             return `<div class="ck-student">
-              <span class="ck-st-name">${esc(s.name)}</span>
+              <span class="ck-st-name"><span class="ck-st-link" data-cldetail="1" data-sid="${s.id}" title="看这个学生的学情详情（不离开电联页）">${esc(s.name)}</span></span>
               <span class="ck-st-meta">${cc.n > 1 ? `已聊 ${cc.n} 次 · ` : ""}${s.cons ? "⚠ " + esc(s.cons) : ""}</span>
               <span class="ck-st-last">${callLastCellHtml(s)}</span>
               <span class="ck-st-actions">
+                <button class="btn btnmini" data-cldetail="1" data-sid="${s.id}" title="看学情详情">👁 详情</button>
                 <button class="btn btnmini" data-clgnew="1" data-sid="${s.id}">✎ 记一次</button>
                 ${CALL_STATUSES.map((ss) =>
                 `<button class="chip ${ss === view.callStatus ? "on" : ""}" data-cset="${esc(ss)}" data-sid="${s.id}" ${ss === view.callStatus ? "disabled" : ""}>${esc(ss)}</button>`).join("")}
@@ -12511,6 +12542,15 @@ const SYNC = (() => {
     stage.querySelectorAll("tbody tr[data-id]").forEach((tr) => tr.onclick = () => {
       view.selected = tr.dataset.id;
       renderDetail();
+    });
+
+    // 「👁 详情」/ 点名字 → 就地打开学情详情，**不跳回名单**
+    // 详情面板本来就是全站共用的那个（renderDetail），只是这里保证它一定是打开的；
+    // 打开后 renderDetail 会把电联历史、成绩、聊天、优缺点都画出来，电联页本身不动。
+    stage.querySelectorAll("[data-cldetail]").forEach((el) => el.onclick = (ev) => {
+      ev.stopPropagation();
+      // 滚到「电联记录」那一段：从电联页进来的人，要看的就是电联历史
+      openStudentDetail(el.dataset.sid, "call");
     });
     const a = $("clAdd");
     if (a) a.onclick = addCallBatch;
