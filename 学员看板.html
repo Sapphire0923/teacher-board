@@ -803,9 +803,10 @@ section.list.solo .listbar { margin-bottom: 8px; padding-bottom: 8px; }
    2026-10-19 踩坑：这条规则一度写在 `.listbar` 基础规则下面，属同一层、`top:0` 打赢了
       这里给 solo 值，结果 #stage 里那种 .listbar 变成 sticky 但父级不滚，粘死在顶上。
       所以 `top` 在这里显式覆盖。 */
-section.list > .listbar { position: sticky; top: 0; z-index: 9; margin-top: -18px;
-  padding-top: 12px; background: var(--panel-solid);
-  box-shadow: 0 -18px 0 var(--panel-solid), 0 10px 14px -14px rgba(30, 26, 20, .5); }
+/* 2026-10-20 晚：标题条不再吸顶（撤回）。
+   之前给它加 sticky + margin-top:-18px，滚动时会往下跳 18px 把下面的筛选标签
+   啃掉一条，窄窗口下还会在左侧漏出一道竖边。收益不值这个风险，先回到静态。 */
+section.list > .listbar { margin-top: -18px; padding-top: 12px; }
 section.list.solo .sc-tabs { margin-bottom: 8px; }
 section.list.solo .sc-stats { margin-bottom: 8px; }
 section.list.solo table.grid th,
@@ -846,12 +847,10 @@ section.list.solo table.grid th { padding: 5px 12px; }
    搜索 + 列开关条。它们不能都写死 top:0，否则会叠成一坨。
    凡是带 .stick 的，由 syncStick() 按 DOM 顺序一条条往下排 top，
    累加的总高度写进 #stage 的 --stick-h，表头 th 的 sticky top 正好接在最下面一条之后。 */
-.sc-tabs.stick { position: sticky; top: 0; z-index: 6;
-  /* 顶部多留 8px：上面的标题条也是 sticky 且层级更高，万一两者在文档流里贴得比
-     预算的更紧（实测能压住 10px），被盖掉的也只是这圈留白，标签文字不会被切掉一条。 */
-  margin: 0 -24px 8px; padding: 16px 24px 6px;
-  background: var(--panel-solid);
-  box-shadow: 0 -26px 0 -1px var(--panel-solid), 0 8px 14px -12px rgba(30, 26, 20, .45); }
+/* 2026-10-20 晚：吸顶标签条撤回（见文件末尾说明）。
+   保留样式类名，但不再 sticky、不再出血 —— 负 margin 在窄窗口会撑出横向滚动，
+   看着像页面左边多了一道竖边。 */
+.sc-tabs.stick { }
 .sc-colwrap { position: relative; }
 .sc-colpick { display: none; position: absolute; right: 0; top: 112%; z-index: 30;
   background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--radius-s);
@@ -1960,21 +1959,15 @@ section.list.solo table.grid tbody tr:last-child td:last-child { border-bottom-r
 .pap-page .btnmini { border-radius: 10px; }
 
 /* ---------------------------------------------------------------------------
- * 页面标题条吸顶（2026-10-20，补「其他版块仿照打卡页」最后一项）
+ * 2026-10-20：标题条吸顶**已撤回**。
  *
- * solo 页（成绩 / 电联全部 / 答题卡名单）滚的是 #stage，标题条天然不动；
- * 但卡片页、表格页、待跟进页滚的是 section.list 本身 —— 人一多，
- * 「全部学员 · 46 人」和右上角「＋ 加学员 / 换名单」就跟着滚走了，
- * 想加个人还得先滚回顶部。这里让标题条在列表里吸住。
- *
- * 打卡页排除：它自己有一条 .ck-tools 吸顶工具栏，两条会叠在一起。
+ * 试过让 section.list 的直接子元素 .listbar 吸顶（卡片页/表格页/待跟进页），
+ * 结果在 solo 页（成绩/电联全部）把 #stage 顶上 18px 盖掉：电联的轮次标签
+ * 只剩一条边、成绩的表头被削掉半行，卡片页第一张卡也被啃。根子是基础规则里
+ * 那句 `margin-top: -18px` 与 sticky 的 top 相互打架，改成 top:-18px 也没能
+ * 收干净。收益（滚远了还知道在看哪一档）不值这个风险，先整体退回。
+ * 真要再做，得先把那 -18px 从基础规则里拆出来，再单独给吸顶条算偏移。
  * ------------------------------------------------------------------------- */
-section.list:not(.ck-page) > .listbar {
-  position: sticky; top: 0; z-index: 9;
-  margin: -18px -24px 10px; padding: 16px 24px 12px;
-  background: var(--panel-solid);
-  box-shadow: 0 -20px 0 0 var(--panel-solid), 0 10px 16px -14px rgba(30, 26, 20, .5);
-}
 </style>
 </head>
 <body>
