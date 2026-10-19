@@ -6082,22 +6082,28 @@ const SYNC = (() => {
 
   /* ---- 主题与背景图 ---------------------------------------------------- */
 
+  /* 主色一律留空 = 用 style.css 里那支按主题走的自然色（浅色 #3e6b54 / 深色 #6fb392）。
+     2026-10-19 吉卜力取意：原来每套主题都带一个写死的 accent，切换主题就把内联色盖回 CSS
+     （深色那套还是 #4c8dff 的蓝），新配色永远出不来，深色主题对比度也掉到 3:1 以下。
+     swatch 只用于设置页的色卡展示，不参与计算。 */
   const THEMES = [
-    { key: "light", label: "浅色", accent: "#3f6f5a", swatch: ["#f5f6f8", "#ffffff", "#3f6f5a"] },
-    { key: "green", label: "浅绿", accent: "#2c7d5a", swatch: ["#f0f6f1", "#ffffff", "#2c7d5a"] },
-    { key: "dark", label: "深色", accent: "#4c8dff", swatch: ["#14171a", "#1e2227", "#4c8dff"] },
+    { key: "light", label: "浅色", accent: "", swatch: ["#f7f4ec", "#fffdf9", "#3e6b54"] },
+    { key: "green", label: "浅绿", accent: "", swatch: ["#eef2e6", "#fbfaf3", "#3e6b54"] },
+    { key: "dark", label: "深色", accent: "", swatch: ["#1a1b18", "#232520", "#6fb392"] },
   ];
 
-  /* 2026-10-16 混搭改版：主色从蓝 #2f6feb 换成墨绿 #3f6f5a。
+  /* 2026-10-16 混搭改版：主色从蓝 #2f6feb 换成墨绿。
      麻烦在于 accent 是**存库**的：老用户库里写着旧的蓝，applyTheme() 会内联覆盖 CSS，
      光改默认值他们永远看不到新配色。这里做一次性迁移 —— 只换「还停在旧默认色」的库，
-     他自己在设置里挑过的颜色一个都不碰。 */
-  const OLD_ACCENTS = ["#2f6feb", "#eaf1ff"];
+     他自己在设置里挑过的颜色一个都不碰。
+     2026-10-19 吉卜力取意：迁移目标从写死 #3f6f5a 改成**清空**，让三套主题各自用
+     style.css 里的自然色（浅色 #3e6b54 / 深色 #6fb392）；写死深绿会拖低深色主题对比度。 */
+  const OLD_ACCENTS = ["#2f6feb", "#eaf1ff", "#3f6f5a"];
   function migrateAccentToGreen() {
     const c = DB.config;
     if (!c || typeof c.accent !== "string") return false;
     if (!OLD_ACCENTS.includes(c.accent.toLowerCase())) return false;
-    c.accent = "#3f6f5a";
+    c.accent = "";
     return true;
   }
 
@@ -13953,7 +13959,7 @@ const SYNC = (() => {
 
         <div class="rowset" style="margin-top:12px">
           <span style="flex:0 0 88px;font-size:12px;color:var(--ink-3)">主色</span>
-          <input type="color" data-cfg="accent" value="${esc(c.accent)}">
+          <input type="color" data-cfg="accent" value="${esc(c.accent || (THEMES.find((x) => x.key === (c.theme || "light")) || THEMES[0]).swatch[2])}">
           <button class="btn" id="accentReset">恢复主题默认色</button>
         </div>
 
@@ -14184,17 +14190,16 @@ const SYNC = (() => {
       const t = THEMES.find((x) => x.key === el.dataset.theme);
       if (!t) return;
       c.theme = t.key;
-      c.accent = t.accent;      // 换主题顺手把主色带到该主题的默认色，想改再改
+      c.accent = "";            // 留空 = 跟随主题用 CSS 里的自然色，想改再在下面选
       save(); applyTheme(); drawSettings(); render();
       toast("已切换到「" + t.label + "」");
     });
 
     const accentReset = $("accentReset");
     if (accentReset) accentReset.onclick = () => {
-      const t = THEMES.find((x) => x.key === (c.theme || "light")) || THEMES[0];
-      c.accent = t.accent;
+      c.accent = "";
       save(); applyTheme(); drawSettings();
-      toast("主色已恢复为「" + t.label + "」的默认色");
+      toast("主色已恢复为主题默认色");
     };
 
     $("setBody").querySelectorAll("[data-wall]").forEach((el) => el.onclick = () => {
