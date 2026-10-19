@@ -8595,6 +8595,82 @@ const SYNC = (() => {
     return hits.find((x) => x.paper) || hits.find((x) => hasScore(x)) || hits[0];
   }
 
+  /* ---- 成绩去重（2026-10-19 加）
+   *
+   * 老师有两条录分的路：「导入成绩」一次贴一整个班；学生详情里「＋ 添加一次考试」一个个补。
+   * 两条路撞在一起就出重复 —— 导入那天日期是 11-08，手补那天日期是今天；或者名字后面
+   * 多打一个空格，同一场「第一次月考」就成了两条，成绩页看着像考了两次。
+   *
+   * 所以考试的身份**只认名字**（去掉所有空白），日期只是属性、不参与判重。
+   * 一场考试 + 一个学生 = 一条记录，这才是老师心里的模型。
+   */
+  function examKeyOf(e) {
+    const n = String((e && e.name) || "").replace(/[\s\u3000]+/g, "");
+    if (n) return n;
+    const d = String((e && e.date) || "").trim();
+    return d ? `${d}未命名考试` : "未命名考试";
+  }
+
+  /** 累计合并了多少条重复记录（老师说要看「合并次数」） */
+  function addMergeHits(n) {
+    if (!n) return;
+    DB.config.mergeHits = (DB.config.mergeHits || 0) + n;
+    DB.config.mergeAt = todayStr();
+  }
+
+  /**
+   * 把同一个学生身上「同名考试」的多条记录并成一条。返回 {groups, removed}。
+   * - onlyKey：只处理这个考试名（不传 = 全部过一遍）
+   * - preferId：强制保留这一条（老师正在编辑的那条），其余字段缺什么补什么
+   */
+  function dedupeStudentExams(s, onlyKey, preferId) {
+    const groups = new Map();
+    for (const e of (s.exams || [])) {
+      // 顺手把名字里的多余空白收干净 —— 「第一次月考 」和「第一次月考」必须是一回事
+      if (typeof e.name === "string") e.name = e.name.replace(/[\s\u3000]+/g, " ").trim();
+      const k = examKeyOf(e);
+      if (onlyKey && k !== onlyKey) continue;
+      groups.set(k, (groups.get(k) || []).concat(e));
+    }
+    let g = 0, removed = 0;
+    for (const [, recs] of groups) {
+      if (recs.length < 2) continue;
+      g++;
+      removed += recs.length - 1;
+      // 保留谁：老师正在编辑的那条 > 真传过答题卡的 > 有分数的 > 最早的
+      const keep = (preferId && recs.find((x) => x.id === preferId))
+        || recs.find((x) => x.paper) || recs.find(hasScore) || recs[0];
+      for (const r of recs) {
+        if (r === keep) continue;
+        if (!hasScore(keep) && hasScore(r)) {
+          keep.score = r.score;
+          if (keep.full === null || keep.full === undefined) keep.full = r.full;
+        }
+        if (!(keep.full > 0) && r.full > 0) keep.full = r.full;
+        if (!keep.date && r.date) keep.date = r.date;
+        if (!keep.paper && r.paper) keep.paper = r.paper;
+        if ((r.attachments || []).length) keep.attachments = (keep.attachments || []).concat(r.attachments);
+        if (!String(keep.name || "").trim() && r.name) keep.name = r.name;
+      }
+      s.exams = (s.exams || []).filter((x) => !recs.includes(x) || x === keep);
+    }
+    return { groups: g, removed };
+  }
+
+  /** 这场考试在班里已经录过多少人、攒了几条重复 —— 导入前先跟老师交个底 */
+  function examDupInfo(name) {
+    const k = examKeyOf({ name });
+    const out = { people: 0, dupPeople: 0, dupRecords: 0 };
+    if (!k) return out;
+    for (const s of DB.students) {
+      const hits = (s.exams || []).filter((e) => examKeyOf(e) === k);
+      if (!hits.length) continue;
+      out.people++;
+      if (hits.length > 1) { out.dupPeople++; out.dupRecords += hits.length - 1; }
+    }
+    return out;
+  }
+
   /** 某个学生在某个批次里的状态：没这条记录 = 未上传 */
   function batchStateOf(s, key) {
     const e = batchExamOf(s, key);
@@ -9479,13 +9555,13 @@ const SYNC = (() => {
     for (const s of DB.students) {
       const byName = new Map();
       for (const e of (s.exams || [])) {
-        const k = batchKeyOf(e);
+        const k = examKeyOf(e);
         byName.set(k, (byName.get(k) || 0) + 1);
       }
       for (const [k, n] of byName) {
         if (n > 1) out.push({
-          type: "conflict", sid: s.id, name: s.name,
-          label: "成绩有两条", why: `「${k}」有 ${n} 条记录，可能是重复导入`,
+          type: "conflict", sid: s.id, name: s.name, key: k, n,
+          label: "成绩重复", why: `「${k}」有 ${n} 条记录 —— 点「合并」就并成一条`,
           at: 0,
         });
       }
@@ -9505,13 +9581,16 @@ const SYNC = (() => {
     const head = `<div class="sc-detail-h"><b>待处理</b>
       <span class="hint-inline">${list.length
         ? `共 ${list.length} 件事等你拿主意 · ${Object.keys(cnt).map((k) => (QTYPE[k] || k) + " " + cnt[k]).join(" · ")}`
-        : "一件事都没有"}</span></div>`;
+          + (DB.config.mergeHits ? ` · 累计已合并 ${DB.config.mergeHits} 条重复成绩` : "")
+        : "一件事都没有"}</span>
+      ${cnt.conflict ? `<button class="btn ghost" id="qMergeAll" style="margin-left:auto">全部合并（${cnt.conflict} 人）</button>` : ""}</div>`;
     stage.innerHTML = `<div class="pap-page">${head}
       ${list.length ? `<div class="qd-list">${list.map((it, i) => `
         <div class="qd-row">
           <span class="qd-tag t-${esc(it.type)}">${esc(QTYPE[it.type] || it.type)}</span>
           <b class="qd-name">${esc(it.name || "")}</b>
           <span class="qd-why">${esc(it.why || "")}</span>
+          ${it.type === "conflict" ? `<button class="btn ghost" data-qmerge="${i}">合并</button>` : ""}
           <button class="btn ghost" data-qgo="${i}">去处理</button>
         </div>`).join("")}</div>`
         : `<div class="pap-empty">太好了，没有待处理的事。<br>
@@ -9543,6 +9622,31 @@ const SYNC = (() => {
       // 聊天没归类：把人带到一个能处理的地方（快速录入）
       openQuick();
     });
+
+    /* ---- 成绩重复：逐个合并 / 一把合并（2026-10-19 加）---- */
+    stage.querySelectorAll("[data-qmerge]").forEach((b) => b.onclick = () => {
+      const it = list[+b.dataset.qmerge];
+      const s = it && DB.students.find((x) => x.id === it.sid);
+      if (!s) return;
+      const m = dedupeStudentExams(s, it.key);
+      if (!m.removed) return toast("这条已经并干净了");
+      addMergeHits(m.removed);
+      save(); renderStats(); renderSide(); renderStage();
+      toast(`${s.name} 的「${it.key}」合并了 ${m.removed} 条重复记录`, 2600);
+    });
+
+    const qAll = stage.querySelector("#qMergeAll");
+    if (qAll) qAll.onclick = () => {
+      let groups = 0, removed = 0, people = 0;
+      for (const s of DB.students) {
+        const m = dedupeStudentExams(s);
+        if (m.removed) { groups += m.groups; removed += m.removed; people++; }
+      }
+      if (!removed) return toast("没有要合并的");
+      addMergeHits(removed);
+      save(); renderStats(); renderSide(); renderStage();
+      toast(`合并了 ${people} 人的 ${groups} 组重复成绩，清掉 ${removed} 条记录`, 3200);
+    };
   }
 
   function renderPaperPage() {
@@ -10466,6 +10570,16 @@ const SYNC = (() => {
         const f = el.dataset.ex;
         e[f] = (f === "score" || f === "full") ? (el.value === "" ? null : Number(el.value)) : el.value;
         commitSoft();
+        // 名字填成了已有的一场：当场并掉，别让它变成第二条（2026-10-19 加）
+        if (f === "name") {
+          const m = dedupeStudentExams(s, examKeyOf(e), e.id);
+          if (m.removed) {
+            addMergeHits(m.removed);
+            save(); renderStats(); renderSide(); renderDetail();
+            toast(`这场之前就录过了，合并掉 ${m.removed} 条重复记录`);
+            return;
+          }
+        }
         // 只把趋势行换掉，不重建整块——否则改完分数光标就没了
         const trend = $("dTrend");
         if (trend) trend.innerHTML = examTrendHtml(s);
@@ -11368,13 +11482,17 @@ const SYNC = (() => {
     for (const r of SC) { if (r.sid && seen.has(r.sid)) dup.add(r.sid); seen.set(r.sid, 1); }
 
     // 这次考试是「更新已有」还是「新增」—— 老师最怕的是重复导两遍变成两次考试
+    // 判重只认考试名（2026-10-19 改）：以前要求「名字+日期都一样」才算同一场，
+    // 于是同一次月考换个日期再导一遍就多出一条，待处理里堆 33 条重复。
+    const tKey = examKeyOf({ name: t.name });
     let upd = 0, add = 0;
     for (const r of SC) {
       if (!r.sid || typeof r.score !== "number") continue;
       const s = DB.students.find((x) => x.id === r.sid);
-      const same = (s?.exams || []).find((e) => (e.name || "") === t.name && (e.date || "") === t.date);
+      const same = (s?.exams || []).some((e) => examKeyOf(e) === tKey);
       same ? upd++ : add++;
     }
+    const dupInfo = examDupInfo(t.name);
 
     const guessed = SC.filter((r) => r.sid && r.fuzzy).length;
     $("scoreHint").innerHTML = `识别到 <b>${SC.length}</b> 行，认出 <b>${matched}</b> 人` +
@@ -11383,7 +11501,14 @@ const SYNC = (() => {
       (guessed ? ` <b style="color:var(--amber)">有 ${guessed} 行是「猜」的（原文里名字对不上，按同音/形近/繁简推的）—— 请扫一眼下面带「猜」标记的行。</b>` : "") +
       (dup.size ? ` <b style="color:var(--red)">有 ${dup.size} 人重复出现，写入时只留最后一条。</b>` : "");
     $("scoreMode").innerHTML = `考试「<b>${esc(t.name || "（未填名称）")}</b>」${esc(t.date)} · 满分 ${t.full}。` +
-      ` 同名同日期的已有成绩会被<b>更新</b>（${upd} 条），其余<b>新增</b>（${add} 条）——所以重复导入不会变成两次考试。`;
+      ` 这场已有的成绩会被<b>更新</b>（${upd} 条），其余的<b>新增</b>（${add} 条）——同名考试只留一条，重复导入不会变成两次考试。` +
+      (dupInfo.people
+        ? `<br><span style="color:var(--ink-2)">智能检索：班里已经有 <b>${dupInfo.people}</b> 人录过这场考试` +
+          (dupInfo.dupRecords
+            ? `，其中 <b>${dupInfo.dupPeople}</b> 人攒了 <b style="color:var(--amber)">${dupInfo.dupRecords}</b> 条重复记录，保存时会自动合并成一条`
+            : "，没有重复") +
+          `。</span>`
+        : "");
 
     box.innerHTML = `
       <div class="preview" style="margin-top:12px;max-height:300px;overflow:auto">
@@ -11424,26 +11549,38 @@ const SYNC = (() => {
     const lastOf = new Map();
     for (const r of SC) if (r.sid) lastOf.set(r.sid, r);
 
-    let nAdd = 0, nUpd = 0, skipped = 0;
+    const tKey = examKeyOf({ name: t.name });
+    let nAdd = 0, nUpd = 0, skipped = 0, nMerge = 0;
     for (const r of lastOf.values()) {
       if (typeof r.score !== "number") { skipped++; continue; }
       const s = DB.students.find((x) => x.id === r.sid);
       if (!s) { skipped++; continue; }
       const full = typeof r.full === "number" && r.full > 0 ? r.full : t.full;
       s.exams ||= [];
-      const same = s.exams.find((e) => (e.name || "") === t.name && (e.date || "") === t.date);
-      if (same) { same.score = r.score; same.full = full; nUpd++; }
+      // 同名考试只该有一条：先把这个学生身上的历史重复并掉，再决定更新还是新增
+      nMerge += dedupeStudentExams(s, tKey).removed;
+      const same = s.exams.find((e) => examKeyOf(e) === tKey);
+      if (same) {
+        same.score = r.score; same.full = full;
+        if (!String(same.name || "").trim()) same.name = t.name;
+        if (!same.date) same.date = t.date;
+        nUpd++;
+      }
       else { s.exams.push({ id: uid(), name: t.name, date: t.date, score: r.score, full }); nAdd++; }
     }
 
     // 把这次考试记进模板：下次导同一场成绩，考试名直接有下拉可选（2026-10-16 加）
     rememberExam(t.name, t.full);
+    addMergeHits(nMerge);
     save();
     renderStats(); renderSide(); renderStage();
     const done = nAdd + nUpd;
-    $("scoreResult").innerHTML = done ? `新增 <b>${nAdd}</b> 条、更新 <b>${nUpd}</b> 条` : "";
+    $("scoreResult").innerHTML = done
+      ? `新增 <b>${nAdd}</b> 条、更新 <b>${nUpd}</b> 条`
+        + (nMerge ? `，顺带把 <b>${nMerge}</b> 条重复记录合并掉了` : "")
+      : "";
     if (!done) return toast(`一条都没写进去：${skipped} 行没有分数或没指定学生`);
-    toast(`已写入 ${done} 条成绩${skipped ? `，跳过 ${skipped} 行` : ""}`, 2600);
+    toast(`已写入 ${done} 条成绩${nMerge ? `，合并 ${nMerge} 条重复` : ""}${skipped ? `，跳过 ${skipped} 行` : ""}`, 2800);
     SC = [];
     setTimeout(() => $("mScore").classList.remove("open"), 900);
   }
