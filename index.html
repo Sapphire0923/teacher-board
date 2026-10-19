@@ -1975,6 +1975,81 @@ section.list.solo table.grid tbody tr:last-child td:last-child { border-bottom-r
  * 收干净。收益（滚远了还知道在看哪一档）不值这个风险，先整体退回。
  * 真要再做，得先把那 -18px 从基础规则里拆出来，再单独给吸顶条算偏移。
  * ------------------------------------------------------------------------- */
+
+/* ==========================================================================
+ * 2026-10-20 晚 · 面板化收口（用户：云朵别穿内容、按钮要有边界、圆角统一）
+ *
+ * 做法只有一条：把「标题 / 切换 / 工具 / 信息条 / 统计卡 / 表格」每一块都做成
+ * 独立的不透明圆角面板，云朵和纹理只留在面板之间的留白里。
+ * 圆角分两档：面板 12px，按钮/标签 8px；表格本身保持规整，不做胶囊。
+ * ========================================================================== */
+
+/* ① 页面标题条：从「一行字」变成一张标题卡 */
+section.list > .listbar {
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin: -18px 0 12px;
+}
+section.list.solo > .listbar { border-radius: var(--radius); }
+
+/* ② 切换条（考试 / 轮次 / 筛选一批）：整条包成一个面板，按钮仍在里面 */
+.sc-tabs {
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  padding: 7px 9px;
+  margin-bottom: 12px;
+}
+.sc-tabs .nav { background: var(--panel-2); }
+.sc-tabs .nav.on { background: var(--accent-soft); }
+
+/* ③ 搜索 / 列开关那一行：同样给个面板，跟表格分开 */
+.sc-tools {
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  padding: 8px 10px;
+}
+
+/* ④ 单场 / 单轮的信息条：原来是直角 + 一条下划线，跟圆角按钮不搭；
+      现在是一张浅底圆角信息卡，标题、来源、动作都在卡里 */
+.sc-detail-h {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin: 0 0 14px;
+}
+
+/* ⑤ 卡片里的动作按钮：统一描边，危险动作红色、单独隔开 */
+.sc-detail-title .sc-actions { gap: 6px; }
+.sc-detail-title .sc-actions .btnmini { min-height: 32px; padding: 5px 12px; }
+.btnmini.danger,
+.sc-detail-title .sc-actions .btnmini.danger {
+  color: var(--red); background: var(--red-soft); border-color: var(--red-line); font-weight: 650;
+}
+.btnmini.danger:hover { background: var(--red-soft); border-color: var(--red); color: var(--red); }
+.sc-actions .sc-danger-sep { width: 1px; height: 18px; background: var(--line-strong); margin: 0 4px; }
+
+/* ⑥ 顶栏那排导入 / 管理动作：给个工具栏面板，按钮本身有描边，
+      不再是一串看不出是按钮的文字。一排放不下时换行，不会撑出横向滚动 */
+.tools {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 5px 6px; background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: var(--radius-s);
+}
+.tools .btn.ghost { border-color: var(--line-strong); background: var(--panel-solid); }
+.tools .btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+.tools-sep { width: 1px; height: 18px; background: var(--line-strong); margin: 0 3px; flex: none; }
+
+/* ⑦ 背景图只留在留白里：数据面板已经全部实底，这里把内容列本身压成暖米色
+      （比面板深半档）—— 云朵被挡在外面，但整页仍然是暖的、有层次，
+      面板浮在这层底色上，边界一眼看得出来（用户要求「保留温暖柔和」）。 */
+html.wallpaper section.list { background: var(--bg); }
+section.list { background: var(--bg); }
 </style>
 </head>
 <body>
@@ -13399,10 +13474,10 @@ const SYNC = (() => {
         <div class="sc-detail-h">
           <div class="sc-detail-title"><span>${esc(cur)}</span>
             <span class="sc-actions">
-              <button class="btn ghost" id="scExportX">导出 Excel</button>
-              <button class="btn ghost" id="scExportP">导出 PDF</button>
-              <button class="btn ghost" id="scRename">改名</button>
-              <button class="btn ghost" id="scDel" style="color:var(--red)">删除这场考试</button>
+              <button class="btnmini" id="scExportX">导出 Excel</button>
+              <button class="btnmini" id="scExportP">导出 PDF</button>
+              <button class="btnmini" id="scRename">改名</button>
+              <span class="sc-danger-sep"></span><button class="btnmini danger" id="scDel">删除这场考试</button>
             </span>
           </div>
           <div class="sc-detail-src">${recs.length} 人已录 ${date ? "· " + esc(date) : ""} · 满分 ${full}</div>
@@ -13436,8 +13511,8 @@ const SYNC = (() => {
         <div class="sc-detail-h">
           <div class="sc-detail-title"><span>${esc(cur)}</span>
             <span class="sc-actions">
-              <button class="btn ghost" id="scRename">改名</button>
-              <button class="btn ghost" id="scDel" style="color:var(--red)">删除这场考试</button>
+              <button class="btnmini" id="scRename">改名</button>
+              <span class="sc-danger-sep"></span><button class="btnmini danger" id="scDel">删除这场考试</button>
             </span>
           </div>
           <div class="sc-detail-src">还没有人录分数 · 满分 ${full}</div>
@@ -13740,10 +13815,10 @@ const SYNC = (() => {
         <div class="sc-detail-h">
           <div class="sc-detail-title"><span>${esc(cur.name)}</span>
             <span class="sc-actions">
-              <button class="btn ghost" id="clExportX">导出 Excel</button>
-              <button class="btn ghost" id="clExportP">导出 PDF</button>
-              <button class="btn ghost" id="clRename">改名 / 改日期</button>
-              <button class="btn ghost" id="clDel" style="color:var(--red)">删除这一轮</button>
+              <button class="btnmini" id="clExportX">导出 Excel</button>
+              <button class="btnmini" id="clExportP">导出 PDF</button>
+              <button class="btnmini" id="clRename">改名 / 改日期</button>
+              <span class="sc-danger-sep"></span><button class="btnmini danger" id="clDel">删除这一轮</button>
             </span>
           </div>
           <div class="sc-detail-src">${esc(cur.date)} · 已沟通 ${st["已沟通"]}/${st.total} 人 · 勾「已沟通」会自动把跟进项「电联」标成已完成</div>
