@@ -88,12 +88,25 @@
   --radius-s: 8px;
   --radius-l: 16px;
 
+  /* 控件尺寸：打卡页 2026-10-19 改版时定的「不累眼、不误点」下限，
+     其余版块照着这套走，别再各处写 min-height:24px。
+     34 = 普通按钮；36 = 榜单/工具栏里的状态按钮与搜索框；40 = 主搜索框。 */
+  --ctl-h: 34px;
+  --ctl-h-lg: 36px;
+  --ctl-gap: 8px;
+  --ck-btn-h: 36px;
+
   /* 表头底色必须和面板明确分开 —— 用跟奶油底同族的浅沙色，吸顶后才看得出边界。 */
   --th-bg: #f2ecdd;
   --th-ink: #55503f;
   --th-line: #e4dbc7;
   --row-alt: #fbf8f1;        /* 隔行底色：不靠加高行距也能把行分开 */
   --panel-solid: #fffdf9;    /* 数据区永远用不透明底，开着背景图也不透 */
+
+  /* 滚动条（2026-10-20）：Windows 原生那条方角灰条 + 上下箭头太扎眼，
+     全站换成「细圆角滑块、轨道透明」，和打卡页那条页面级滚动观感一致。 */
+  --scroll-thumb: rgba(88, 82, 68, .26);
+  --scroll-thumb-hover: rgba(88, 82, 68, .46);
 
   --veil: transparent;       /* 壁纸遮罩色，由 JS 按主题 + 浓度设置 */
   --wall: none;              /* 壁纸图，由 JS 设为 url(data:...) */
@@ -121,6 +134,8 @@
   --tag-bg: #e9efe1; --tag-ink: #55503f;
   --th-bg: #edf2e4; --th-ink: #4e5747; --th-line: #dce5d1;
   --row-alt: #fafcf5; --panel-solid: #fffefa;
+  --scroll-thumb: rgba(78, 88, 70, .26);
+  --scroll-thumb-hover: rgba(78, 88, 70, .46);
   --shadow: 0 1px 2px rgba(46,64,40,.05);
   --shadow-card: 0 1px 2px rgba(46,64,40,.045);
   --shadow-hover: 0 4px 14px rgba(46,64,40,.08);
@@ -152,6 +167,8 @@
   --tag-bg: #2d2921; --tag-ink: #b6ad9b;
   --th-bg: #2a2720; --th-ink: #c0b8a8; --th-line: #3b372e;
   --row-alt: #25221c; --panel-solid: #201e19;
+  --scroll-thumb: rgba(226, 219, 202, .24);
+  --scroll-thumb-hover: rgba(226, 219, 202, .42);
   --shadow: 0 1px 2px rgba(0,0,0,.3);
   --shadow-card: 0 1px 2px rgba(0,0,0,.26);
   --shadow-hover: 0 4px 14px rgba(0,0,0,.38);
@@ -297,9 +314,9 @@ button.btn:disabled { opacity: .5; cursor: default; }
    选中态只靠底色和字重，不加边框，视觉上比七个方框安静得多。 */
 .seg { display: flex; gap: 2px; padding: 3px; border: 0; border-radius: 10px;
   background: var(--panel-3); overflow: hidden; }
-.seg button { padding: 6px 14px; min-height: 32px; border: 0; background: transparent; cursor: pointer; color: var(--ink-2);
+.seg button { padding: 6px 15px; min-height: var(--ctl-h); border: 0; background: transparent; cursor: pointer; color: var(--ink-2);
   font-size: var(--fs-cell); line-height: 1.45; border-radius: 8px; transition: background .14s, color .14s;
-  font-weight: 500; white-space: nowrap; }
+  font-weight: 600; white-space: nowrap; }
 .seg button + button { border-left: 0; }
 .seg button:hover { color: var(--ink); background: var(--panel-2); }
 .seg button.on { background: var(--panel); color: var(--ink); font-weight: 600;
@@ -368,25 +385,64 @@ aside.side { width: 218px; flex: 0 0 218px; background: var(--panel);
 .ck-detail-src { font-size: var(--fs-aux); color: var(--ink-3); margin-top: 4px; }
 .ck-detail-content { font-size: var(--fs-cell); color: var(--ink-2); margin-top: 8px; white-space: pre-wrap; line-height: 1.6; }
 .ck-detail-rec { font-size: var(--fs-cell); color: var(--amber); margin-top: 8px; font-weight: 600; }
-.ck-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-.ck-tabs .nav { width: auto; padding: 5px 11px; }
-.ck-list { display: flex; flex-direction: column; gap: 6px; }
+.ck-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+/* 状态/结果标签：跟打卡页同一套尺寸 —— 34px 高、13.5px 字、8px 间距。
+   以前是 5px 11px 的小胶囊，一行五个挨得近，手一抖就点到旁边那个。 */
+.ck-tabs .nav { width: auto; min-height: var(--ctl-h); padding: 5px 13px;
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: var(--fs-cell); font-weight: 650; }
+.ck-tabs .nav .n { min-width: 22px; padding: 0 7px; text-align: center; border-radius: 999px;
+  font-size: var(--fs-aux); font-variant-numeric: tabular-nums;
+  color: var(--ink-3); background: var(--panel); border: 1px solid var(--line); }
+.ck-tabs .nav.on .n { color: var(--accent); background: var(--panel-solid); border-color: var(--accent-2-line); }
+.ck-tabs .nav .ico { font-weight: 800; font-size: var(--fs-aux); }
+.ck-list { display: flex; flex-direction: column; gap: 8px; }
 .ck-student { display: flex; align-items: center; gap: 12px; background: var(--panel);
-  border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
-.ck-st-name { font-weight: 650; font-size: 13.5px; flex: 0 0 auto; min-width: 64px; }
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 14px;
+  min-height: 58px; }
+.ck-st-name { font-weight: 700; font-size: var(--fs-title); flex: 0 0 auto; min-width: 84px; color: var(--ink); }
 /* 电联页：名字可点，点了就地看学情详情（不跳回名单） */
 .ck-st-link { cursor: pointer; border-bottom: 1px dashed transparent; transition: border-color .12s, color .12s; }
 .ck-st-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
-.ck-st-meta { font-size: var(--fs-aux); color: var(--ink-3); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ck-st-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+.ck-st-meta { font-size: var(--fs-cell); color: var(--ink-2); flex: 1 1 130px; min-width: 92px;
+  line-height: 1.5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ck-st-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
 .ck-st-actions .chip { cursor: pointer; }
 .ck-st-actions .chip.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
-.ck-st-actions .chip:disabled { opacity: .4; cursor: default; }
+/* 已经是当前状态的那个按钮：不能调淡到看不清 —— 灰色 40% 透明度在奶油底上几乎消失，
+   老师会以为「这个学生没状态」。改成「描边加粗 + 实底」，看得出它被选中了。 */
+.ck-st-actions .chip:disabled { opacity: 1; cursor: default; border-width: 2px; font-weight: 750; }
+.ck-st-actions .chip:not(:disabled):hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.ck-st-actions .btnmini { min-height: 32px; padding: 0 11px; font-size: var(--fs-aux); }
+
+/* 名单/表格的吸顶条只在真正会滚动的容器里吸。
+   ⚠️ 2026-10-19 修正：以前这里写的是 `section.list.solo .sc-tools.stick`，但**没有任何页面
+   会给 section.list 加 .solo**（.solo 挂在卡片网格 `#cards` / `#stage` 那层），
+   所以这段一直是空转，「solo 里关掉吸顶」的真实情况是：电联单轮名单滚下去，
+   搜索框、结果标签、复制/导出全滚出视野。现在改成给那一块套 `.ck-sticky`，
+   让它在真正滚动的容器（#stage）里吸顶，滚动时用一条实色阴影盖住露出来的行。 */
+section.list .ck-sticky { position: sticky; top: 0; z-index: 8;
+  margin: 0 0 10px; padding: 8px 0 9px;
+  background: var(--panel-solid);
+  box-shadow: 0 -14px 0 var(--panel-solid), 0 10px 16px -14px rgba(30, 26, 20, .5); }
+section.list .ck-sticky .sc-tools { position: static; margin: 0 0 8px; padding: 0;
+  border-bottom: 0; box-shadow: none; background: transparent; }
+section.list .ck-sticky .sc-q { height: 40px; min-height: 40px; font-size: var(--fs-body); }
+section.list .ck-sticky .ck-tabs { margin-bottom: 9px; }
+section.list .ck-sticky .ck-copybar { margin-top: 0; }
+section.list.solo .ck-list { padding-top: 4px; }
+/* 电联表格里的状态格：图形在前、短名在后。以前只有一个「✓ / 未接 / 再打」，色弱分不清 */
+.call-ico { display: inline-block; min-width: 1.1em; margin-right: 3px; font-weight: 800; }
 
 /* ---------- 成绩页 ---------- */
-.sc-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-.sc-tabs .nav { width: auto; padding: 6px 12px; border: 1px solid var(--line); border-radius: var(--radius-s);
-  font-size: var(--fs-cell); }
+.sc-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.sc-tabs .nav { width: auto; min-height: var(--ctl-h); padding: 5px 13px; border: 1px solid var(--line);
+  border-radius: var(--radius-s); font-size: var(--fs-cell); font-weight: 650;
+  display: inline-flex; align-items: center; gap: 7px; }
+.sc-tabs .nav .n { min-width: 22px; padding: 0 7px; text-align: center; border-radius: 999px;
+  font-size: var(--fs-aux); font-variant-numeric: tabular-nums;
+  color: var(--ink-3); background: var(--panel); border: 1px solid var(--line); }
+.sc-tabs .nav.on .n { color: var(--accent); background: var(--panel-solid); border-color: var(--accent-2-line); }
 .sc-tabs .nav.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); font-weight: 600; }
 .sc-tabs .nav .a { font-size: var(--fs-mini); color: var(--ink-3); padding-left: 6px; font-variant-numeric: tabular-nums; }
 .sc-tabs .nav.on .a { color: var(--accent); opacity: .75; }
@@ -408,9 +464,9 @@ aside.side { width: 218px; flex: 0 0 218px; background: var(--panel);
 .sc-stats { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
 .sc-stat { background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 10px 16px; min-width: 100px; box-shadow: var(--shadow-card); }
-.sc-stat .k { display: block; font-size: var(--fs-mini); color: var(--ink-3); margin-bottom: 3px; }
-.sc-stat b { font-size: 18px; color: var(--ink); font-weight: 700; }
-.sc-stat .s { display: block; font-size: var(--fs-mini); color: var(--ink-3); margin-top: 3px; }
+.sc-stat .k { display: block; font-size: var(--fs-aux); color: var(--ink-2); margin-bottom: 3px; }
+.sc-stat b { font-size: 20px; color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+.sc-stat .s { display: block; font-size: var(--fs-aux); color: var(--ink-3); margin-top: 3px; }
 
 /* 表格底部的统计行 / 与平均分的差 */
 table.grid tfoot .stat-row td { background: var(--panel-3); font-size: var(--fs-aux); color: var(--ink-2);
@@ -511,38 +567,39 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 18px 24px 60px;
 .listbar b { font-size: var(--fs-title); font-weight: 650; color: var(--ink);
   letter-spacing: .3px; margin-right: 2px; }
 .listbar .cnt { color: var(--ink-3); font-size: var(--fs-body); }
-.cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr)); }
+.cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); }
 /* 学员卡片（2026-10-19 降噪）：
    · 去掉等级色的左边框 —— 46 张卡片五种颜色竖条，是这一屏最吵的东西；
      等级本来就有一个小徽章（.lv），信息没丢，装饰没了。
    · 去掉常驻投影，只留 1px 边框；悬停时才浮起一点。
    · 圆角从 14 收到 12，跟按钮/输入框的 7px 之间保持一个可解释的梯度。 */
 .card { background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--radius-l);
-  padding: 14px 16px; cursor: pointer; transition: transform .14s, box-shadow .14s, border-color .14s;
+  padding: 15px 17px; cursor: pointer; transition: transform .14s, box-shadow .14s, border-color .14s;
   box-shadow: none;
-  display: flex; flex-direction: column; gap: 11px; }
+  display: flex; flex-direction: column; gap: 12px; }
 .card:hover { transform: translateY(-1px); border-color: var(--line-strong); box-shadow: var(--shadow); }
 .card.sel { border-color: var(--accent-2); box-shadow: 0 0 0 2px var(--accent-2-soft); }
 
 /* ---------- 批量勾选 + 批量操作条（2026-10-16 加） ---------- */
-/* 勾选框：平时低调，别跟姓名抢注意力；勾上的人用浅绿底+绿边一眼看出来 */
-.cbsel { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer;
-  flex: none; margin: 0 2px 0 0; vertical-align: -2px; }
+/* 勾选框：平时低调，别跟姓名抢注意力；勾上的人用浅绿底+绿边一眼看出来。
+   2026-10-19：15px → 18px（表格/卡片里都要点得准，跟打卡页保持一档）。 */
+.cbsel { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer;
+  flex: none; margin: 0 2px 0 0; vertical-align: -3px; }
 .card.checked { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft), var(--shadow-card); }
 .grid tr.rowsel td { background: var(--accent-soft); }
 .batchbar { border: 1px solid var(--accent); border-radius: var(--radius);
   background: var(--accent-soft); margin-bottom: 12px; overflow: hidden; }
-.bb-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  padding: 9px 13px; border-bottom: 1px solid var(--accent-line, var(--line)); }
-.bb-top b { color: var(--accent-2); }
-.bb-names { font-size: var(--fs-aux); color: var(--ink-2); overflow: hidden;
+.bb-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 11px 14px; border-bottom: 1px solid var(--accent-line, var(--line)); }
+.bb-top b { color: var(--accent-2); font-size: var(--fs-body); }
+.bb-names { font-size: var(--fs-cell); color: var(--ink-2); overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap; max-width: 46%; }
-.bb-acts { display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
-  padding: 9px 13px; background: var(--panel-solid); }
-.bb-grp { display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
-  font-size: var(--fs-aux); color: var(--ink-3); }
-.bb-sep { width: 1px; height: 20px; background: var(--line); }
-.bb-in { width: 118px; padding: 4px 8px; border: 1px solid var(--line-strong);
+.bb-acts { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 11px 14px; background: var(--panel-solid); }
+.bb-grp { display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+  font-size: var(--fs-cell); color: var(--ink-2); }
+.bb-sep { width: 1px; height: 22px; background: var(--line); }
+.bb-in { width: 128px; min-height: 34px; padding: 6px 9px; border: 1px solid var(--line-strong);
   border-radius: 7px; background: var(--panel); color: var(--ink); font-size: var(--fs-cell); }
 /* 批量派下来的跟进任务：在详情里明确露出来 */
 .ftask { margin-top: 8px; padding: 7px 10px; border-radius: 8px;
@@ -625,16 +682,20 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 18px 24px 60px;
 .qd-why { flex: 1; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* 侧栏上「只有需要关注的数量」才用强调色 */
 .nav .n .hot { color: var(--accent-2); font-weight: 700; }
-.card .row1 { display: flex; align-items: center; gap: 8px; }
-.card .nm { font-weight: 650; font-size: 16px; letter-spacing: .2px; }
+.card .row1 { display: flex; align-items: center; gap: 9px; }
+/* 姓名 17px：跟打卡页名单同一档。一屏几十张卡，名字是老师唯一要「认人」的字，
+   16px 在 1600 宽的屏上偏细，再往上一档才不用凑近看。 */
+.card .nm { font-weight: 700; font-size: 17px; letter-spacing: .2px; }
 /* 等级徽章：去底色，改成「描边细框 + 等级色字」。
    原来一屏几十个灰底小方块，跟标签胶囊撞在一起分不出谁是谁。 */
-.lv { font-size: var(--fs-mini); font-weight: 650; padding: 1px 6px; border-radius: 5px;
+.lv { font-size: var(--fs-aux); font-weight: 700; padding: 2px 7px; border-radius: 5px;
   background: transparent; border: 1px solid var(--line-strong); color: var(--ink-2); }
-.lv i { font-style: normal; font-size: 9px; opacity: .75; margin-left: 3px; }
-.chips { display: flex; gap: 5px; flex-wrap: wrap; }
-/* 标签统一 11px / 500：胶囊、标签、状态都是「次要信息」，不该跟正文抢字号 */
-.chip { font-size: var(--fs-mini); font-weight: 500; line-height: 1.55; padding: 3px 9px;
+.lv i { font-style: normal; font-size: 9.5px; opacity: .8; margin-left: 3px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+/* 标签统一 12.5px / 500：胶囊、标签、状态都是「次要信息」，不该跟正文抢字号，
+   但也别小到要凑近看 —— 11.5px 在奶油底上偏虚，抬到 12.5px、高度兜底 26px。 */
+.chip { font-size: var(--fs-aux); font-weight: 500; line-height: 1.5; padding: 4px 10px;
+  min-height: 26px; display: inline-flex; align-items: center; gap: 4px;
   border-radius: 7px; background: var(--panel-3); color: var(--ink-2); border: 1px solid var(--line); }
 .chip.ok { background: var(--green-soft); color: var(--green); border-color: var(--green-line); }
 .chip.no { background: var(--red-soft); color: var(--red); border-color: var(--red-line); }
@@ -663,15 +724,15 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 18px 24px 60px;
    用等宽的列对齐代替画框 —— 信息一个没少，噪声下来了。 */
 .scores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
 .sc { text-align: left; padding: 0; border: 0; background: none; min-width: 0; }
-.sc .k { display: block; font-size: var(--fs-mini); color: var(--ink-3); overflow: hidden;
+.sc .k { display: block; font-size: var(--fs-aux); color: var(--ink-2); overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap; line-height: 1.5; }
-.sc .v { font-size: 15px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--ink); }
+.sc .v { font-size: 16px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--ink); }
 /* 异常只让数字变色，不铺底：一眼能看见，又不至于整屏泛红 */
 .sc.low .v { color: var(--red); }
 .sc.mid .v { color: var(--amber); }
 .sc.low .k, .sc.mid .k { color: var(--ink-3); }
-.cons { font-size: var(--fs-aux); color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical; overflow: hidden; min-height: 32px; }
+.cons { font-size: var(--fs-cell); color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden; min-height: 34px; }
 .cons.empty { color: var(--ink-3); font-style: italic; }
 
 /* ---------- 表格 ---------- */
@@ -732,6 +793,16 @@ section.list.solo .wrap-table { max-height: none; overflow: visible; background:
    2026-10-15 第二次调整：字号 12.5→13、横向留白 10→12、行高 1.25→1.35，
    表格里再密也不让字贴着边框；纵向留白保持 5px，人数不能因此变少。 */
 section.list.solo .listbar { margin-bottom: 8px; padding-bottom: 8px; }
+/* 2026-10-19（仿照打卡页）：标题条跟着滚走以后，滚到第 30 张卡就忘了自己在哪个块。
+   现在它吸在列表顶端；滚动时用一条实色阴影盖住上面的行，免得半行字从缝里露出来。
+   ⚠️ 只认 section.list 的**直接子元素**（`> .listbar`）—— 成绩/电联页有些 .listbar
+      是 JS 塞进 #stage 里的（详情头），那些不能跟着吸顶。
+   2026-10-19 踩坑：这条规则一度写在 `.listbar` 基础规则下面，属同一层、`top:0` 打赢了
+      这里给 solo 值，结果 #stage 里那种 .listbar 变成 sticky 但父级不滚，粘死在顶上。
+      所以 `top` 在这里显式覆盖。 */
+section.list > .listbar { position: sticky; top: 0; z-index: 9; margin-top: -18px;
+  padding-top: 12px; background: var(--panel-solid);
+  box-shadow: 0 -18px 0 var(--panel-solid), 0 10px 14px -14px rgba(30, 26, 20, .5); }
 section.list.solo .sc-tabs { margin-bottom: 8px; }
 section.list.solo .sc-stats { margin-bottom: 8px; }
 section.list.solo table.grid th,
@@ -753,11 +824,21 @@ section.list.solo table.grid th { padding: 5px 12px; }
 #stage.sc-wide table.grid th.col-sect,
 #stage.sc-wide table.grid td.col-sect { text-align: left; color: var(--ink-2); font-size: var(--fs-aux); }
 
-.sc-tools { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; }
-.sc-q { width: 200px; padding: 5px 10px; border: 1px solid var(--line); border-radius: var(--radius-s);
-  background: var(--panel-solid); color: var(--ink); font-size: var(--fs-cell); }
-.sc-q:focus { outline: none; border-color: var(--accent); }
-.sc-hit { font-size: var(--fs-mini); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.sc-tools { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; }
+/* 姓名搜索框：跟打卡页主搜索框同一档（40px 高、14px 字、聚焦时绿描边 + 柔光）。
+   以前 200px 宽、5px 内边距、13.5px 字，一只手打字一支手还得对准。 */
+.sc-q { width: 260px; min-height: 40px; padding: 8px 13px;
+  border: 1px solid var(--line-strong); border-radius: var(--radius-s);
+  background: var(--panel-solid); color: var(--ink); font-size: var(--fs-body); }
+.sc-q::placeholder { color: var(--ink-3); }
+.sc-q:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.sc-hit { font-size: var(--fs-aux); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+/* 吸顶搜索条：名单/表格滚起来后，搜姓名仍然在视野最上面（打卡页 .ck-tools 的同一套做法）。
+   上面的实色投影负责盖住 section 18px 内边距那道缝，不然滚动的行会从缝里露半行。 */
+.sc-tools.stick { position: sticky; top: 0; z-index: 7;
+  margin: 0 -24px 10px; padding: 10px 24px; background: var(--panel-solid);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 -26px 0 -1px var(--panel-solid), 0 8px 14px -12px rgba(30, 26, 20, .45); }
 .sc-colwrap { position: relative; }
 .sc-colpick { display: none; position: absolute; right: 0; top: 112%; z-index: 30;
   background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--radius-s);
@@ -772,11 +853,11 @@ section.list.solo table.grid th { padding: 5px 12px; }
 .sc-foot { display: flex; align-items: center; gap: 10px; padding: 8px 2px 2px;
   font-size: var(--fs-mini); color: var(--ink-3); }
 .sc-foot .sc-count b { color: var(--ink); font-variant-numeric: tabular-nums; }
-.sc-foot .btnmini { padding: 2px 9px; font-size: var(--fs-mini); border: 1px solid var(--line); border-radius: var(--radius-s); }
+.sc-foot .btnmini { padding: 4px 11px; min-height: 32px; font-size: var(--fs-aux); border: 1px solid var(--line); border-radius: var(--radius-s); }
 .sc-foot .btnmini.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); font-weight: 600; }
 .sc-foot .btnmini[disabled] { opacity: .4; cursor: default; }
 .sc-foot .btnmini[disabled]:hover { border-color: var(--line); background: transparent; }
-.sc-per, .sc-pager { display: flex; gap: 4px; align-items: center; }
+.sc-per, .sc-pager { display: flex; gap: 6px; align-items: center; }
 table.grid td.sc-nohit { color: var(--ink-3); text-align: center; padding: 18px 0; cursor: default; }
 
 /* 「收起顶栏」：把整条工具栏的高度也让给名单（按钮只放在成绩页/电联页）。
@@ -784,14 +865,20 @@ table.grid td.sc-nohit { color: var(--ink-3); text-align: center; padding: 18px 
 body.head-compact header.top { display: none; }
 
 table.grid { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--panel-solid); }
-table.grid th, table.grid td { padding: 10px 16px; border-bottom: 1px solid var(--line);
+/* 行高往打卡名单那档靠：单元格 10px→12px 上下内边距，行高约 54px；
+   姓名列加粗到 15px —— 一行几十个名字，认人靠的就是它。 */
+table.grid th, table.grid td { padding: 13px 16px; border-bottom: 1px solid var(--line);
   text-align: left; font-size: var(--fs-cell); line-height: var(--lh-cell); white-space: nowrap; }
+/* 姓名列（冻结列）：比正文大一档、加粗，表格里认人全靠它 */
+table.grid tbody td.sticky-l { font-size: var(--fs-body); font-weight: 700; }
+table.grid tbody td[data-col="name"] { font-size: var(--fs-body); }
+table.grid tbody td[data-col="name"] b { font-weight: 700; }
 /* 表头：独立实色底 + 明显的下框线 + 抬到所有单元格之上。
    以前 th 是 z-index:1、冻结的 td 是 z-index:2 —— 纵向滚动时数据行压在表头上，
    这就是用户看到的「表头与数据行重叠」。现在 th=4、冻结列=2、冻结表头=6，层级不再反。
    底色也从 --panel-2（几乎跟白底一样）换成 --th-bg，表头一眼能认出来。 */
-table.grid th { background: var(--th-bg); color: var(--th-ink); font-weight: 600;
-  font-size: 12.5px; letter-spacing: .25px; position: sticky; top: 0; z-index: 4;
+table.grid th { background: var(--th-bg); color: var(--th-ink); font-weight: 650;
+  font-size: var(--fs-aux); letter-spacing: .25px; position: sticky; top: 0; z-index: 4;
   cursor: pointer; user-select: none; border-bottom: 1px solid var(--th-line); }
 table.grid tbody tr { cursor: pointer; }
 /* 隔行底色：不加高行距也能一眼分清哪一格属于哪一行（比单纯加行高省地方） */
@@ -830,15 +917,16 @@ aside.detail.open { display: block; }
   display: flex; align-items: center; gap: 9px; margin: 0 -17px 4px; padding: 17px 17px 7px;
   box-shadow: 0 1px 0 var(--line); }
 .det-head .nm { font-size: 19px; font-weight: 700; }
-.det-sub { color: var(--ink-3); font-size: var(--fs-aux); margin-bottom: 13px; }
+/* 详情副标题：12.5px + ink-3 在窄抽屉里几乎糊掉，抬到 13.5px / ink-2 */
+.det-sub { color: var(--ink-2); font-size: var(--fs-cell); margin-bottom: 13px; }
 .box { border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; margin-bottom: 11px; }
-.box h4 { margin: 0 0 8px; font-size: var(--fs-aux); color: var(--ink-3); letter-spacing: .5px; text-transform: uppercase; font-weight: 600; }
+.box h4 { margin: 0 0 8px; font-size: var(--fs-aux); color: var(--ink-2); letter-spacing: .5px; font-weight: 700; }
 /* 危险区：以前是「粉边框 + 红标题 + 红字按钮」三层红色一起喊。
    现在只留红标题，边框跟别的盒子一样，按钮平时是普通描边，悬停才泛红。 */
 .box.danger h4 { color: var(--red); }
 .box.danger .btn.danger { border-color: var(--line); color: var(--red); }
 .box.danger .btn.danger:hover { background: #fbeeee; border-color: var(--red); }
-.kv { display: flex; gap: 8px; margin-bottom: 5px; font-size: var(--fs-cell); }
+.kv { display: flex; gap: 8px; margin-bottom: 6px; font-size: var(--fs-cell); }
 .kv .k { color: var(--ink-3); flex: 0 0 60px; }
 textarea.note { width: 100%; min-height: 72px; resize: vertical; border: 1px solid var(--line);
   border-radius: 8px; padding: 8px 10px; background: var(--panel-2); outline: none; font-size: var(--fs-cell); }
@@ -880,7 +968,7 @@ textarea.note:focus { border-color: var(--accent); background: var(--panel); }
   border-radius: 10px; padding: 11px; font-family: ui-monospace, Consolas, monospace; font-size: var(--fs-cell);
   background: var(--panel-2); outline: none; }
 .modal textarea:focus { border-color: var(--accent); background: var(--panel); }
-.hint { font-size: var(--fs-cell); color: var(--ink-3); margin: 8px 0 0; line-height: 1.7; }
+.hint { font-size: var(--fs-cell); color: var(--ink-2); margin: 8px 0 0; line-height: 1.7; }
 .result { font-size: var(--fs-cell); margin-right: auto; }
 .result b { color: var(--green); }
 .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(20px);
@@ -970,7 +1058,7 @@ button.cellflag { padding: 3px 10px; min-width: 48px; border: 1px solid var(--li
   background: var(--panel-solid); cursor: pointer; font-size: var(--fs-cell); color: var(--ink-3); }
 button.cellflag:hover { border-color: var(--line-strong); background: var(--panel-2); }
 button.cellflag.on { background: var(--green-soft); border-color: var(--green-line); color: var(--green); font-weight: 600; }
-.hint-inline { font-size: var(--fs-aux); color: var(--ink-3); }
+.hint-inline { font-size: var(--fs-aux); color: var(--ink-2); }
 
 .lvauto { font-size: var(--fs-cell); color: var(--ink-3); padding: 4px 9px; border-radius: var(--radius-s);
   background: var(--panel-3); border: 1px solid var(--line); }
@@ -1244,9 +1332,9 @@ input[type=range] { accent-color: var(--accent); }
 .bc-foot { font-size: var(--fs-mini); color: var(--ink-2); }
 .batch-foot { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 
-/* 第二级「全班名单」：表格里的操作列（按钮得小一号，不然一行挤成两行） */
-.pap-act { display: flex; gap: 6px; flex-wrap: wrap; }
-.pap-act .btn { padding: 3px 9px; font-size: var(--fs-mini); }
+/* 第二级「全班名单」：表格里的操作列 */
+.pap-act { display: flex; gap: 8px; flex-wrap: wrap; }
+.pap-act .btn { padding: 5px 11px; font-size: var(--fs-aux); min-height: 32px; }
 
 /* 答题卡缩略图：详情页里给答题卡单独一条，别跟试卷混在一个池子里 */
 .papcardrow { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-top: 7px; }
@@ -1275,7 +1363,7 @@ input[type=range] { accent-color: var(--accent); }
 .papsheet { max-width: 1080px; }
 .papjump { display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
   margin: 0 0 16px; padding: 0 2px 10px; border-bottom: 1px solid var(--line); }
-.papjump .btnmini { padding: 3px 10px; color: var(--ink-2); }
+.papjump .btnmini { padding: 5px 12px; color: var(--ink-2); }
 .papjump .btnmini:hover { color: var(--accent); border-color: var(--accent); }
 .papsec { background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 15px 18px 17px; margin-bottom: 16px; }
@@ -1298,8 +1386,8 @@ input[type=range] { accent-color: var(--accent); }
 .cardfoot .hint-inline { flex: 1 1 auto; }
 
 /* ---- 答题卡方案：手工改 / 历史版本 / 话术 / 导出 ---- */
-.btnmini { font-size: var(--fs-cell); color: var(--accent); cursor: pointer; padding: 3px 10px;
-  border-radius: var(--radius-s); border: 1px solid var(--line); background: var(--panel-solid); }
+.btnmini { font-size: var(--fs-cell); color: var(--accent); cursor: pointer; padding: 5px 11px;
+  min-height: 32px; border-radius: var(--radius-s); border: 1px solid var(--line); background: var(--panel-solid); }
 .btnmini:hover { border-color: var(--accent); background: var(--accent-soft); }
 .pap-edit { width: 100%; box-sizing: border-box; font: inherit; font-size: var(--fs-cell);
   line-height: var(--lh); color: var(--ink); padding: 10px 12px; border: 1px solid var(--line);
@@ -1439,16 +1527,25 @@ input[type=range] { accent-color: var(--accent); }
 .agree { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: var(--fs-cell);
   color: var(--ink); cursor: pointer; }
 
-.calllast { line-height: 1.35; }
+.calllast { line-height: 1.45; }
 .calllast .cl-at { font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: var(--fs-cell); }
 .calllast .cl-st { margin-left: 7px; font-weight: 600; }
 .calllast .cl-rec { margin-left: 5px; }
-.calllast .cl-note { color: var(--ink-3); font-size: var(--fs-aux); max-width: 210px;
+/* 最近一次的备注：12.5px/ink-3 在电联名单里几乎看不清，抬到 13.5px/ink-2 */
+.calllast .cl-note { color: var(--ink-2); font-size: var(--fs-cell); max-width: 240px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .callhist { display: flex; flex-direction: column; gap: 8px; }
 .ck-st-last { margin-left: 4px; }
-.ck-student { flex-wrap: wrap; }
+/* 电联名单专用：五个结果按钮 + 详情/记一次 挤在一行，窄屏先让按钮整体换到下一行 */
+.ck-list.is-call .ck-st-actions { row-gap: 8px; }
+.ck-list.is-call .ck-st-actions .chip { min-height: var(--ck-btn-h); padding: 0 12px;
+  font-size: var(--fs-cell); font-weight: 650; color: var(--ink); background: var(--panel-2);
+  border-color: var(--line-strong); }
+@media (max-width: 1200px) {
+  .ck-list.is-call .ck-st-actions { margin-left: 0; width: 100%; }
+  .ck-list.is-call .ck-st-last { margin-left: 0; }
+}
 .callrow { display: block; border: 1px solid var(--line); border-radius: var(--radius-s); padding: 9px 11px;
   background: var(--panel-solid); cursor: pointer; }
 .callrow:hover { border-color: var(--accent); background: var(--accent-soft); }
@@ -1781,6 +1878,70 @@ html.wallpaper section.list.ck-page { background: var(--panel-solid); }
 }
 /* 打卡页的空提示是竖排 flex，叶子单独占一行更像个「小插画」 */
 .ck-page .empty-hint::before { margin-bottom: 0; }
+
+/* ==========================================================================
+ * 滚动条（2026-10-20）
+ * 用户原话：「点进去之后的这个滚动条也参考刚才打卡的那个滚动界面进行调整和优化」。
+ * 打卡页是「一条页面级滚动」——滚起来整块内容走，表格右边不会再挂一条方角灰条。
+ * 所以这里做两件事：
+ *   ① 全站滚动条换成细圆角滑块（10px、悬停加深），跟暖色系配套；
+ *   ② 答题卡页改成 solo（滚动交给 #stage，表头 sticky 吸顶），见 app.js renderStage。
+ * Chrome/Edge 走 ::-webkit-scrollbar；Firefox 走 scrollbar-width / scrollbar-color。
+ * 颜色走 --scroll-thumb，三套主题各自定义，不在这里写死色值。
+ * ========================================================================== */
+* { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+  min-height: 40px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); background-clip: padding-box; }
+::-webkit-scrollbar-thumb:active { background: var(--ink-3); background-clip: padding-box; }
+
+/* ==========================================================================
+ * 答题卡页（2026-10-20）：更圆润 + 单条滚动
+ * 用户原话：「答题卡这个界面不够圆润」。这一页以前 12 / 8 / 6px 三种圆角混着用，
+ * 筛选条、日期框、批次卡、名单表格壳四角对不上。这里统一抬到 15 / 14 / 12 / 9，
+ * 只挂在 .pap-page 上，卡片页、成绩页、电联页一点不动。
+ * ========================================================================== */
+.pap-page .pap-midbar { border-radius: 14px; padding: 10px 14px; gap: 10px; }
+.pap-page .pap-midbar input[type="date"] {
+  min-height: 34px; padding: 4px 10px; border-radius: 9px;
+  border-color: var(--line-strong); color: var(--ink); background: var(--panel-solid);
+}
+.pap-page .pap-midbar input[type="date"]:focus {
+  outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.pap-page .pap-empty { border-radius: 14px; padding: 34px 20px; }
+.pap-page .pap-list { gap: 9px; }
+.pap-page .pap-row { border-radius: 12px; padding: 12px 15px; }
+.pap-page .batch-list { gap: 14px; }
+.pap-page .batchcard { border-radius: 15px; padding: 16px 18px; }
+.pap-page .bc-bar { height: 7px; border-radius: 999px; }
+.pap-page .bc-bar i { border-radius: 999px; }
+/* 名单页吸顶搜索条：顶部贴边，只把下沿做成圆角，滚动时像一块浮起来的工具条 */
+.pap-page .sc-tools.stick { border-radius: 0 0 14px 14px; }
+/* 表头也要吸顶，但不能贴在 0 —— 否则会被上面那条搜索条整个盖住（2026-10-20 实测）。
+   搜索条定高 61px（10 + 40 + 10 + 1 边框），表头就从它下面开始吸。 */
+section.list.solo .pap-page table.grid th { top: 61px; }
+/* 表格壳：solo 之后不再自己滚（滚动交给 #stage），但保留一圈 14px 圆角外框，
+   让「这张表」看起来仍是一块完整的白面板。 */
+section.list.solo .pap-page .wrap-table {
+  border-radius: 14px; border: 1px solid var(--line); background: var(--panel-solid);
+}
+/* 表头/末行自己也有底色，给首末格补上圆角，四角才不会被方角背景顶破 */
+section.list.solo .pap-page table.grid thead th:first-child { border-top-left-radius: 13px; }
+section.list.solo .pap-page table.grid thead th:last-child { border-top-right-radius: 13px; }
+section.list.solo .pap-page table.grid tbody tr:last-child td:first-child { border-bottom-left-radius: 13px; }
+section.list.solo .pap-page table.grid tbody tr:last-child td:last-child { border-bottom-right-radius: 13px; }
+/* 答题卡页的按钮/小按钮也抬一档圆角，跟卡片、筛选条对齐 */
+.pap-page .btn { border-radius: 10px; }
+.pap-page .btnmini { border-radius: 10px; }
 </style>
 </head>
 <body>
@@ -5372,7 +5533,7 @@ const SYNC = (() => {
     const brief = String(L.note || "").replace(/\s+/g, " ").slice(0, 18);
     return `<div class="calllast" title="${esc(stampShort(L.at) + " " + (L.status || "") + " " + String(L.note || ""))}">
       <span class="cl-at">${esc(stampShort(L.at))}</span>
-      <span class="cl-st" style="color:${callStatusColor(L.status)}">${esc(L.status || "")}</span>
+      <span class="cl-st ck-badge st-${CALL_BADGE[L.status] || "todo"}"><span class="ck-badge-ico">${esc(CALL_ICON[L.status] || "○")}</span>${esc(L.status || "—")}</span>
       ${L.rec ? `<span class="cl-rec" title="有录音">🎙</span>` : ""}
       <div class="cl-note">${esc(brief || "（没写备注）")}${brief.length >= 18 ? "…" : ""}</div>
     </div>`;
@@ -5393,7 +5554,7 @@ const SYNC = (() => {
       <div class="callrow" data-clgedit="${esc(L.id)}" data-clgb="${esc(callBatchId(b))}">
         <div class="cr-top">
           <b>${esc(stampShort(L.at))}</b>
-          <span class="tag" style="color:${callStatusColor(L.status)}">${esc(L.status || "—")}</span>
+          <span class="tag ck-badge st-${CALL_BADGE[L.status] || "todo"}"><span class="ck-badge-ico">${esc(CALL_ICON[L.status] || "○")}</span>${esc(L.status || "—")}</span>
           <span class="cr-b">${esc(b.name)}</span>
           <span class="spacer"></span>
           ${L.rec ? `<span class="cr-rec" title="有录音">🎙 ${L.rec.sec ? recFmt(L.rec.sec) : ""}</span>` : ""}
@@ -7076,7 +7237,12 @@ const SYNC = (() => {
     _imePend = false;
     // 只有「里面是一张固定高度表格」的页面才 solo（成绩页两种视图都是；
     // 电联页只有「全部」那张跨批次表是，单轮视图是普通列表，得让内容区自己滚）。
-    const solo = view.mode === "score" || (view.mode === "call" && !view.callBatch);
+    // 答题卡页 2026-10-20 加进来：名单页以前是「页面一条 + 表格里一条」两条滚动条，
+    // 表格右边那条方角粗滚动条就是用户截图圈出来的那块 —— 现在滚动统一交给 #stage，
+    // 表头靠 sticky 吸顶，跟打卡页那种「一条滚动、工具条始终在视野里」的观感一致。
+    const solo = view.mode === "score"
+      || (view.mode === "call" && !view.callBatch)
+      || view.mode === "paper";
     setListSolo(solo);
     // 成绩页专属样式的挂钩（宽度分配、数字对齐、数据区实底都挂在 .sc-wide 上）
     setStageWide(view.mode === "score");
@@ -8906,6 +9072,10 @@ const SYNC = (() => {
     analyzed: { t: "已分析", c: "ok" },
   };
   const PAPER_ORDER = ["none", "todo", "review", "confirmed", "analyzed"];
+  /* 2026-10-19（仿照打卡页）：答题卡的五个状态也配图形标记，不只靠颜色/文字。
+     六个筛选标签原来用 .seg（底槽式切换），跟成绩/电联页的圆角标签不是一套；
+     统一成 .sc-tabs .nav 之后，五个标签彼此之间也有 8px 间距，不容易点到旁边。 */
+  const PAPER_ICON = { all: "≡", none: "○", todo: "◌", review: "✎", confirmed: "✓", analyzed: "★" };
 
   /* ---- 答题卡工作区：批次 → 名单（两级） --------------------------------
    * 老师的心智是「一次考试一个批次」：第一次月考、第二次月考、期中……
@@ -10153,13 +10323,14 @@ const SYNC = (() => {
         <button class="btn ghost" id="papBack">← 全部批次</button></span></div>`;
 
     stage.innerHTML = `<div class="pap-page">${head}
-      <div class="pap-tools">
+      <div class="sc-tools stick">
         <input class="sc-q" id="papQ" placeholder="搜姓名…" autocomplete="off" value="${esc(pq)}">
         <span class="hint-inline">${pq ? `筛出 ${show.length} 人` : "边打边联想，选中就筛到他"}</span>
       </div>
       ${paperPasteHtml()}
       <div class="sc-tabs">${tabs.map(([k, t]) =>
-        `<button class="seg ${filt === k ? "on" : ""}" data-pfilt="${k}">${esc(t)}</button>`).join("")}</div>
+        `<button class="nav sc-tab ${filt === k ? "on" : ""}" data-pfilt="${k}" aria-pressed="${filt === k}">
+          ${k !== "all" ? `<span class="ico">${esc(PAPER_ICON[k] || "≡")}</span>` : ""}${esc(t)}</button>`).join("")}</div>
       ${show.length ? `<div class="wrap-table cap-md"><table class="grid">
         <thead><tr>
           <th class="sticky-l">姓名</th><th>状态</th><th>成绩</th><th>答题卡</th><th>板块分析</th><th>下一步</th>
@@ -10237,9 +10408,19 @@ const SYNC = (() => {
     });
 
     // 名单页的姓名搜索（跟成绩页同一套联想；只筛这张表）
+    // 2026-10-19：原来每敲一个字就 renderStage() 重画整页，输入框被重建 ——
+    // 光标会跳、连打两个字容易丢字。改成跟打卡页一样的「输入期间不重画」：
+    // 只把值写进 view，标签计数不用跟着变（它算的是整批人次），失焦/回车时再统一重画。
     const papQ = $("papQ");
     if (papQ) {
-      papQ.oninput = () => { view.papQ = papQ.value; renderStage(); };
+      papQ.oninput = () => {
+        view.papQ = papQ.value;
+        const hit = DB.students.filter((s) => !papQ.value.trim() || s.name.includes(papQ.value.trim())).length;
+        const tip = papQ.parentElement && papQ.parentElement.querySelector(".hint-inline");
+        if (tip) tip.textContent = papQ.value.trim() ? `筛出 ${hit} 人` : "边打边联想，选中就筛到他";
+      };
+      papQ.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); renderStage(); } };
+      papQ.onblur = () => { if (view.papQ !== papQ.value) renderStage(); };
       nameSearchBox(papQ, { onPick: () => { view.papQ = papQ.value; renderStage(); } });
     }
     // 粘贴 / 拖入答题卡图片的待归属区
@@ -13152,7 +13333,7 @@ const SYNC = (() => {
           <div class="sc-detail-src">${recs.length} 人已录 ${date ? "· " + esc(date) : ""} · 满分 ${full}</div>
         </div>
         ${statsHtml}
-        <div class="sc-tools">
+        <div class="sc-tools stick">
           <input class="sc-q" id="scQ" placeholder="搜姓名…" autocomplete="off" value="${esc(V.q)}">
           <span class="sc-hit">${V.q ? `筛出 ${V.hit} / ${V.total} 人` : ""}</span>
           <span style="flex:1"></span>
@@ -13345,8 +13526,18 @@ const SYNC = (() => {
     toast("已删除这一轮", 2200);
   }
 
-  /** 表格里那个字（格子窄，只能放一个字） */
-  const CALL_SHORT = { "未联系": "—", "已沟通": "✓", "未接听": "未接", "改天再打": "再打", "号码有误": "号码" };
+  /** 表格里的短名：只放「短到能一眼认出」的，完整写法放 title。
+      2026-10-19：「已沟通」之前缩成 ✓，跟前面的对勾图标重复成「✓ ✓」，改成写词不写符号。 */
+  const CALL_SHORT = { "未联系": "", "已沟通": "已沟通", "未接听": "未接", "改天再打": "再打", "号码有误": "号码误" };
+  /* 2026-10-19（仿照打卡页）：状态不只靠颜色 —— 每个结果配一枚图形标记，
+     黑白色盲也能分清。图形跟 CALL_SHORT 是两件事：图形进按钮/徽标，短名进表格。
+     「已沟通/未接听」一对最容易混，给的是对勾和叉，形状差别最大；没打过的是空心圈。 */
+  const CALL_ICON = { "未联系": "○", "已沟通": "✓", "未接听": "✕", "改天再打": "↻", "号码有误": "!" };
+  /* 徽标配色：绿=成、红=不成、琥珀=还要再打、灰=没动过。
+     跟打卡页 CK_BADGE 同一套命名（st-done / st-fix / st-redo / st-todo），样式也复用。 */
+  const CALL_BADGE = { "未联系": "todo", "已沟通": "done", "未接听": "fix", "改天再打": "redo", "号码有误": "fix" };
+  const callBadgeHtml = (st) =>
+    `<span class="ck-badge st-${CALL_BADGE[st] || "todo"}"><span class="ck-badge-ico">${esc(CALL_ICON[st] || "○")}</span>${esc(st)}</span>`;
 
   /**
    * 勾上「已沟通」时，顺手把「电联」这个跟进项标成已完成。
@@ -13384,7 +13575,7 @@ const SYNC = (() => {
     const hitName = (s) => !q || String(s.name || "").includes(q);
     // 搜索框那一行。跟成绩页长得一样（.sc-q / .sc-hit），老师不用重新学
     const qTools = (hit, total) => `
-        <div class="sc-tools">
+        <div class="sc-tools stick">
           <input class="sc-q" id="clQ" placeholder="搜姓名…" autocomplete="off" value="${esc(view.callQ)}">
           <span class="sc-hit">${q ? `筛出 ${hit} / ${total} 人` : ""}</span>
           <span style="flex:1"></span>
@@ -13425,7 +13616,12 @@ const SYNC = (() => {
             ${batches.map((b) => {
               const st = callStatusOf(callBatchId(b), s.id);
               // 没打过的人写「—」：低调但看得懂。「—」满屏的时候比真实数据还亮就没法扫读了
-              return `<td class="${st === "未联系" ? "none" : ""}" style="color:${callStatusColor(st)}" title="${esc(st)}">${esc(CALL_SHORT[st] || st)}</td>`;
+              // 2026-10-19：格子里只站图标（✓ / ✕ / ↻ / ! / ○）+ 短名，
+              // 完整的「已沟通 / 未接听…」放进 title，鼠标停一下就看得见；
+              // 没打过的人只留一个空心圈，不写「—」，免得跟真的「记了没打通」混。
+              const lb = st === "未联系" ? "" : esc(CALL_SHORT[st] || st);
+              return `<td class="${st === "未联系" ? "none" : ""}" style="color:${callStatusColor(st)}" title="${esc(
+                st === "未联系" ? "还没联系过" : "结果：" + st)}"><span class="call-ico">${esc(CALL_ICON[st] || "")}</span>${lb}</td>`;
             }).join("")}
             <td>${cc.n ? `<b>${cc.n}</b>` : `<span class="none">—</span>`}</td>
             <td>${callLastCellHtml(s)}</td>
@@ -13453,9 +13649,16 @@ const SYNC = (() => {
           ${statCell("号码有误", st["号码有误"] + " 人")}
           ${statCell("还没联系", st["未联系"] + " 人")}
         </div>`;
+      // 2026-10-19（仿照打卡页），顺手修掉三处真的会误点/误导的地方：
+      // ① 五个结果按钮原来下面跟着一行「按结果筛选」的标签，标签正好是其中一个结果
+      //    （默认「未联系」），于是「未联系」按钮永远被判成 disabled、淡到 40% 透明 ——
+      //    看上去像坏了。现在禁用态不再调淡（见 .chip:disabled），并且每个按钮带图形标记。
+      // ② 每个学生行先给一枚「当前结果」徽标（图形 + 文字 + 边框三种表达），
+      //    不用再从五个按钮里找哪个是亮的。
+      // ③ 按钮从 11px 小胶囊放大到 36px 高、8px 间距，跟打卡页同一档。
       const statusTabs = CALL_STATUSES.map((s) =>
-        `<button class="nav ck-st ${view.callStatus === s ? "on" : ""}" data-cst="${esc(s)}">
-          ${esc(s)} <span class="n">${st[s]}</span></button>`).join("");
+        `<button class="nav ck-st${view.callStatus === s ? " on" : ""}" data-cst="${esc(s)}" aria-pressed="${view.callStatus === s}">
+          <span class="ico">${esc(CALL_ICON[s] || "○")}</span>${esc(s)} <span class="n">${st[s]}</span></button>`).join("");
 
       stage.innerHTML = `
         <div class="sc-tabs">${tabs}</div>
@@ -13471,26 +13674,31 @@ const SYNC = (() => {
           <div class="sc-detail-src">${esc(cur.date)} · 已沟通 ${st["已沟通"]}/${st.total} 人 · 勾「已沟通」会自动把跟进项「电联」标成已完成</div>
         </div>
         ${statsHtml}
-        <div class="ck-copybar">
-          <button class="btn" id="clBatch">批量导入名单</button>
-          <button class="btn" id="clCopy">复制这 ${list.length} 人姓名</button>
-          <button class="btn" id="clExport">导出当前筛选 CSV</button>
-          <button class="btn" id="clExportFull">导出全班名单</button>
+        <div class="ck-sticky">
+          ${qTools(list.length, rostered.length)}
+          <div class="ck-tabs">${statusTabs}</div>
+          <div class="ck-copybar">
+            <button class="btn" id="clBatch">批量导入名单</button>
+            <button class="btn" id="clCopy">复制这 ${list.length} 人姓名</button>
+            <button class="btn" id="clExport">导出当前筛选 CSV</button>
+            <button class="btn" id="clExportFull">导出全班名单</button>
+          </div>
         </div>
-        ${qTools(list.length, rostered.length)}
-        <div class="ck-tabs">${statusTabs}</div>
-        <div class="ck-list">${list.length
+        <div class="ck-list is-call">${list.length
           ? list.map((s) => {
             const cc = callCountOf(s.id);
+            // 「未联系」是筛出来的结果，不是这个人真被打成了「未联系」（那是懒存：没记过就是它）
             return `<div class="ck-student">
               <span class="ck-st-name"><span class="ck-st-link" data-clgnew="1" data-sid="${s.id}" title="点名字直接打开录音 / 转写面板（不离开电联页）">${esc(s.name)}</span></span>
+              ${callBadgeHtml(view.callStatus)}
               <span class="ck-st-meta">${cc.n > 1 ? `已聊 ${cc.n} 次 · ` : ""}${s.cons ? "⚠ " + esc(s.cons) : ""}</span>
               <span class="ck-st-last">${callLastCellHtml(s)}</span>
               <span class="ck-st-actions">
                 <button class="btn btnmini" data-clgnew="1" data-sid="${s.id}" title="打开录音 / 转写面板（就地记一次，不跳页）">🎙 详情</button>
                 <button class="btn btnmini" data-clgnew="1" data-sid="${s.id}">✎ 记一次</button>
                 ${CALL_STATUSES.map((ss) =>
-                `<button class="chip ${ss === view.callStatus ? "on" : ""}" data-cset="${esc(ss)}" data-sid="${s.id}" ${ss === view.callStatus ? "disabled" : ""}>${esc(ss)}</button>`).join("")}
+                `<button class="chip ${ss === view.callStatus ? "on" : ""}" data-cset="${esc(ss)}" data-sid="${s.id}" ${ss === view.callStatus ? "disabled" : ""}
+                  aria-pressed="${ss === view.callStatus}" title="把这个学生的电联结果记成「${esc(ss)}」"><span class="ck-set-ico">${esc(CALL_ICON[ss] || "○")}</span>${esc(ss)}</button>`).join("")}
               </span>
             </div>`; }).join("")
           : `<div class="empty-hint">${q
