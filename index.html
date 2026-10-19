@@ -844,9 +844,11 @@ section.list.solo table.grid th { padding: 5px 12px; }
    凡是带 .stick 的，由 syncStick() 按 DOM 顺序一条条往下排 top，
    累加的总高度写进 #stage 的 --stick-h，表头 th 的 sticky top 正好接在最下面一条之后。 */
 .sc-tabs.stick { position: sticky; top: 0; z-index: 6;
-  margin: 0 -24px 8px; padding: 8px 24px 6px;
+  /* 顶部多留 8px：上面的标题条也是 sticky 且层级更高，万一两者在文档流里贴得比
+     预算的更紧（实测能压住 10px），被盖掉的也只是这圈留白，标签文字不会被切掉一条。 */
+  margin: 0 -24px 8px; padding: 16px 24px 6px;
   background: var(--panel-solid);
-  box-shadow: 0 -18px 0 -1px var(--panel-solid), 0 8px 14px -12px rgba(30, 26, 20, .45); }
+  box-shadow: 0 -26px 0 -1px var(--panel-solid), 0 8px 14px -12px rgba(30, 26, 20, .45); }
 .sc-colwrap { position: relative; }
 .sc-colpick { display: none; position: absolute; right: 0; top: 112%; z-index: 30;
   background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--radius-s);
@@ -13241,9 +13243,21 @@ const SYNC = (() => {
     };
     // 渲染那一刻布局可能还没落定（.listbar 尚未 sticky、行高未定），
     // 直接量会得到 0 偏移 —— 标签行上沿被标题条切掉一条就是这么来的。
-    // 所以先同步量一次（读 rect 会强制布局，值已经可用），下一帧再校正一次。
+    // 先同步量一次（读 rect 会强制布局，值已经可用），下一帧再校正一次。
     measure();
     requestAnimationFrame(measure);
+    // 标题条的 sticky 定位是「开始滚动之后」才真正成立的，渲染时量到的重叠量可能偏小。
+    // 所以滚动时按帧再校正一次 —— 只读几个 rect、写几个 style，73 行数据量下不卡。
+    const stage = $("stage");
+    if (stage && !stage.__stickBound) {
+      stage.__stickBound = true;
+      let ticking = false;
+      stage.addEventListener("scroll", () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => { ticking = false; measure(); });
+      }, { passive: true });
+    }
   }
 
   function renderScorePage() {
