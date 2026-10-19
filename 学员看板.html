@@ -809,9 +809,15 @@ section.list.solo .listbar { margin-bottom: 8px; padding-bottom: 8px; }
 section.list > .listbar { margin-top: -18px; padding-top: 12px; }
 section.list.solo .sc-tabs { margin-bottom: 8px; }
 section.list.solo .sc-stats { margin-bottom: 8px; }
+/* 2026-10-20 晚（用户要求「成绩页按打卡页的视觉改」）：
+   打卡页是「一行一个学生、字大、能一直扫」，成绩页之前是密排表格，字小行窄。
+   这里把 solo 页的表格放宽：行高 37→45px，正文字号 13→14.5，姓名加粗到 15px，
+   表头加粗 —— 扫分数时不用再眯眼。人数不变仍靠内部滚动，表头钉在表顶。 */
 section.list.solo table.grid th,
-section.list.solo table.grid td { padding: 4px 12px; font-size: var(--fs-cell); line-height: 1.35; }
-section.list.solo table.grid th { padding: 5px 12px; }
+section.list.solo table.grid td { padding: 8px 14px; font-size: 14.5px; line-height: 1.45; }
+section.list.solo table.grid th { padding: 10px 14px; font-size: 13.5px; font-weight: 700; }
+section.list.solo table.grid tbody td:first-child { font-size: 15px; font-weight: 700; }
+section.list.solo table.grid tbody td { font-variant-numeric: tabular-nums; }
 
 /* ---- 成绩页的「扫读」与「灵活查看」（2026-10-15 用户反馈：
         数字都左对齐、一列数字比大小得一个个读；列多了没法自己选；人多了没法翻页）----
@@ -839,10 +845,15 @@ section.list.solo table.grid th { padding: 5px 12px; }
 .sc-hit { font-size: var(--fs-aux); color: var(--ink-2); font-variant-numeric: tabular-nums; }
 /* 吸顶搜索条：名单/表格滚起来后，搜姓名仍然在视野最上面（打卡页 .ck-tools 的同一套做法）。
    上面的实色投影负责盖住 section 18px 内边距那道缝，不然滚动的行会从缝里露半行。 */
+/* 2026-10-20 晚：向下也补一层实色遮罩。
+   之前只往上盖（-26px），下面还留着 margin 那 10px 的缝，滚动时行文字会从
+   搜索条和表头之间的缝里钻出来半行，看着像「文字卡在视图里」。
+   现在上下各一片实色，缝隙彻底封住，再叠一层柔和投影分层。 */
 .sc-tools.stick { position: sticky; top: 0; z-index: 7;
-  margin: 0 -24px 10px; padding: 10px 24px; background: var(--panel-solid);
+  margin: 0 -24px 6px; padding: 10px 24px 8px; background: var(--panel-solid);
   border-bottom: 1px solid var(--line);
-  box-shadow: 0 -26px 0 -1px var(--panel-solid), 0 8px 14px -12px rgba(30, 26, 20, .45); }
+  box-shadow: 0 -26px 0 -1px var(--panel-solid), 0 10px 0 -1px var(--panel-solid),
+    0 14px 18px -14px rgba(30, 26, 20, .45); }
 /* 吸顶接力（2026-10-20）：一个 solo 页里常常有两条要钉住的条 —— 考试/轮次标签行、
    搜索 + 列开关条。它们不能都写死 top:0，否则会叠成一坨。
    凡是带 .stick 的，由 syncStick() 按 DOM 顺序一条条往下排 top，
