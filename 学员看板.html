@@ -11678,6 +11678,8 @@ const SYNC = (() => {
     }
     DB.checkin ||= { importedAt: "", tasks: [], status: {} };
     DB.checkin.tasks = next;
+    // 存也按时间排一遍：否则单独导进来的那一周会排到最前面（2026-10-19 踩到）
+    DB.checkin.tasks = checkinTasksSorted();
     DB.checkin.importedAt = todayStr();
     save();
     renderSide(); renderStage();
@@ -11695,9 +11697,24 @@ const SYNC = (() => {
     renderSide(); renderStage();
   }
 
+  /**
+   * 打卡任务按时间排好再展示（2026-10-19 加）。
+   *
+   * 为什么不能直接用存储顺序：导入是「新文件的任务在前、旧任务追加在后」，
+   * 于是老师后面单独导第 2 周时，第 2 周就跑到第 1 周上面去了（实测踩到）。
+   * 存储顺序还会影响「这周专项」取哪条，所以展示时统一按「日期 → 第几次 → 周次」排。
+   */
+  function checkinTasksSorted() {
+    const numOf = (s) => { const m = String(s || "").match(/\d+/); return m ? Number(m[0]) : 1e9; };
+    return [...(DB.checkin?.tasks || [])].sort((a, b) =>
+      String(a.date || "").localeCompare(String(b.date || ""))
+      || numOf(a.nth) - numOf(b.nth)
+      || numOf(a.week) - numOf(b.week));
+  }
+
   /** 打卡页：按周分组展示 13 次任务，选中任务后列出学生名单 */
   function renderCheckin() {
-    const tasks = DB.checkin?.tasks || [];
+    const tasks = checkinTasksSorted();
     const stage = $("stage");
     const listbar = $("listbar");
 
