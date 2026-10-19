@@ -19,57 +19,61 @@
 :root {
   color-scheme: light;
 
-  --bg: #f5f5f7;             /* 苹果官网那种极浅中性灰，不带任何色偏 */
+  /* ---------- 2026-10-19 设计基调改版 ----------
+   * 底色从「苹果冷灰」换成一层极浅的暖白（纸感），正文从纯黑换成带一点暖的深墨。
+   * 理由：冷灰 + 纯黑在长时间盯表格时偏硬，暖白 + 暖墨更耐看；
+   * 对比度仍远高于 4.5:1（正文 #24221e on #f6f4ef ≈ 13:1），不影响读取。
+   * 强调色统一收深一档（#2f6a4a），浅色主题里少一点荧光感。 */
+  --bg: #f6f4ef;             /* 页面底：极浅暖白 */
   --panel: #ffffff;          /* 主面板 */
-  --panel-2: #fafafc;        /* 次级面（输入框、表头） */
-  --panel-3: #f2f2f5;        /* 三级面（胶囊、标签） */
-  --panel-4: #f7f7f9;        /* 四级面（小格子） */
-  --line: #e3e3e8;
-  --line-strong: #cdcdd4;
+  --panel-2: #faf9f5;        /* 次级面（输入框、表头行） */
+  --panel-3: #f1efe9;        /* 三级面（胶囊、标签） */
+  --panel-4: #f7f5f0;        /* 四级面（小格子） */
+  --line: #e8e4db;
+  --line-strong: #d6d0c4;
 
-  --ink: #1d1d1f;            /* 苹果正文色 */
-  --ink-2: #55555c;
-  --ink-3: #86868b;          /* 苹果次要文字色 */
+  --ink: #24221e;            /* 正文：暖墨，不是纯黑 */
+  --ink-2: #57534b;
+  --ink-3: #8a8478;          /* 次要文字：仍 ≥ 4.6:1 */
 
   /* 主色：一种克制的绿（2026-10-16 用户要求「绿色 + 白色」，
      从上一版的墨绿+暖橘「混搭」收敛成单绿色系）。
      苹果那种高级感靠的是「大量白 + 只用一种强调色」，所以这里只留一个绿，
      暖橘整条退场 —— 它原来干的活拆成两半：品牌色归绿，「未完成」的提醒归琥珀。 */
-  --accent: #1a7f4b;
-  --accent-soft: #e9f5ee;
+  --accent: #2f6a4a;
+  --accent-soft: #eef3ee;
   --accent-ink: #ffffff;
   /* --accent-2 保留变量名（多处组件在引用），但不再引入第二个色相，
      只作为「比主色更实一点」的深绿，用在最需要抓眼球的按钮上。 */
-  --accent-2: #14663c;
-  --accent-2-soft: #e9f5ee;
-  --accent-2-line: #cfe6da;
+  --accent-2: #24503a;
+  --accent-2-soft: #e7efe9;
+  --accent-2-line: #cbdfd1;
 
-  --red: #d93843;   --red-soft: #fdecec;   --red-line: #f6cfd1;
-  --amber: #b06a08; --amber-soft: #fdf4e3; --amber-line: #f0dfc0;
+  --red: #b23b36;   --red-soft: #fbeeec;   --red-line: #efd6d3;
+  --amber: #8f6516; --amber-soft: #faf2e0; --amber-line: #ecdcbc;
   /* 状态绿（已完成 / 通过）：跟品牌绿 --accent 拉开一点层次，
      否则「绿按钮」和「绿状态」在白底上糊成一片、看不出哪个能点。 */
-  --green: #16784a; --green-soft: #e6f4ec; --green-line: #cbe5d8;
+  --green: #2f6a4a; --green-soft: #eaf1ec; --green-line: #cfe0d5;
 
-  --tag-bg: #f0f0f3; --tag-ink: #4a4a52;
-  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 14px rgba(0,0,0,.045);
-  /* 卡片柔和阴影：两层、都不深。比 --shadow 更有存在感，
-     但远不到「糊一团」的程度 —— 用户明确要求阴影别太重。
-     2026-10-16 绿白改版：阴影从带蓝的冷灰换成纯中性灰，配白底更干净。 */
-  --shadow-card: 0 1px 2px rgba(0,0,0,.04), 0 6px 18px rgba(0,0,0,.05);
-  --shadow-hover: 0 2px 4px rgba(0,0,0,.045), 0 12px 28px rgba(0,0,0,.07);
-  --shadow-lg: 0 18px 48px rgba(0,0,0,.2);
-  --mask: rgba(0,0,0,.4);
-  --toast-bg: #1d1d1f;
-  --toast-ink: #fff;
+  --tag-bg: #f1eee7; --tag-ink: #565047;
+  /* 2026-10-19：阴影一律收到「几乎看不见」。分层靠 1px 边框和底色差，不靠投影 ——
+     卡片一多，投影会互相叠加成一片灰雾，是密度感最大来源。 */
+  --shadow: 0 1px 2px rgba(38,33,26,.045);
+  --shadow-card: 0 1px 2px rgba(38,33,26,.04);
+  --shadow-hover: 0 4px 14px rgba(38,33,26,.075);
+  --shadow-lg: 0 18px 48px rgba(30,26,20,.18);
+  --mask: rgba(30,26,20,.38);
+  --toast-bg: #2b2822;
+  --toast-ink: #fdfcf9;
 
-  --radius: 12px;
+  --radius: 10px;
 
   /* ---------- 版式令牌（2026-10-15 界面统一优化） ----------
    * 页面标题 / 分组标题 / 正文 / 单元格 / 辅助说明各有固定字号，
    * 下面所有组件只准引用这几个刻度，别再各处写 12.5px、13px、13.5px 混着用。 */
-  --font: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC",
-          "Hiragino Sans GB", "Source Han Sans SC", system-ui, -apple-system, sans-serif;
-  --fs-title: 17px;          /* 页面标题（成绩 / 电联 / 答题卡 / 学员列表） */
+  --font: "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei",
+          "PingFang SC", "Hiragino Sans GB", "Source Han Sans SC", system-ui, -apple-system, sans-serif;
+  --fs-title: 18px;          /* 页面标题（成绩 / 电联 / 答题卡 / 学员列表） */
   --fs-head: 14px;           /* 分组标题、卡片标题 */
   --fs-body: 13.5px;         /* 正文 */
   --fs-cell: 13px;           /* 表格单元格 */
@@ -78,15 +82,16 @@
   --lh: 1.62;                /* 正文行高：中文密排时 1.5 会显得挤 */
   --lh-cell: 1.5;            /* 单元格行高 */
 
-  --radius-s: 8px;
-  --radius-l: 14px;
+  --radius-s: 7px;
+  --radius-l: 12px;
 
   /* 表头底色必须和面板明确分开 —— 之前用 --panel-2（#fafbfc）跟白底几乎一样，
-     表头吸顶滚起来以后根本看不出边界，这正是用户说的「表头与数据行重叠」的观感来源。 */
-  --th-bg: #eef1f6;
-  --th-ink: #46505f;
-  --th-line: #d5dbe4;
-  --row-alt: #fafbfd;        /* 隔行底色：不靠加高行距也能把行分开 */
+     表头吸顶滚起来以后根本看不出边界，这正是用户说的「表头与数据行重叠」的观感来源。
+     2026-10-19：从偏蓝的 #eef1f6 换成暖中性 #f4f1ea —— 蓝灰表头跟暖白底不是一个世界。 */
+  --th-bg: #f4f1ea;
+  --th-ink: #57534b;
+  --th-line: #e3ded4;
+  --row-alt: #fbfaf6;        /* 隔行底色：不靠加高行距也能把行分开 */
   --panel-solid: #ffffff;    /* 数据区永远用不透明底，开着背景图也不透 */
 
   --veil: transparent;       /* 壁纸遮罩色，由 JS 按主题 + 浓度设置 */
@@ -97,64 +102,62 @@
    只是底色更偏浅绿一点点。暖橘点缀整条退场 —— 全站只用一支强调色。） */
 :root[data-theme="green"] {
   color-scheme: light;
-  --bg: #f2f6f3;
+  --bg: #f3f5f1;
   --panel: #ffffff;
-  --panel-2: #f8fbf9;
-  --panel-3: #eef3f0;
-  --panel-4: #f4f8f5;
-  --line: #e0e8e3;
-  --line-strong: #c6d3ca;
-  --ink: #1d1d1f;
-  --ink-2: #55555c;
-  --ink-3: #86868b;
-  --accent: #1a7f4b;
-  --accent-soft: #e9f5ee;
-  --accent-2: #14663c;
-  --accent-2-soft: #e9f5ee;
-  --accent-2-line: #cfe6da;
-  --tag-bg: #eef2f0; --tag-ink: #4a4a52;
-  --th-bg: #e9f0eb; --th-ink: #44514a; --th-line: #d3ded7;
-  --row-alt: #f7fbf8; --panel-solid: #ffffff;
-  --shadow: 0 1px 2px rgba(20,50,32,.06), 0 4px 14px rgba(20,50,32,.06);
-  --shadow-card: 0 1px 2px rgba(22,44,32,.05), 0 6px 18px rgba(22,44,32,.06);
-  --shadow-hover: 0 2px 4px rgba(22,44,32,.05), 0 12px 28px rgba(22,44,32,.09);
+  --panel-2: #f8faf7;
+  --panel-3: #eef2ec;
+  --panel-4: #f4f7f2;
+  --line: #e3e8de;
+  --line-strong: #ccd4c6;
+  --ink: #24221e;
+  --ink-2: #57534b;
+  --ink-3: #86897d;
+  --accent: #2f6a4a;
+  --accent-soft: #eef3ee;
+  --accent-2: #24503a;
+  --accent-2-soft: #e7efe9;
+  --accent-2-line: #cbdfd1;
+  --tag-bg: #edf1ea; --tag-ink: #565047;
+  --th-bg: #eff3ec; --th-ink: #4d564b; --th-line: #dde5d8;
+  --row-alt: #fafcf8; --panel-solid: #ffffff;
+  --shadow: 0 1px 2px rgba(30,45,32,.05);
+  --shadow-card: 0 1px 2px rgba(30,45,32,.045);
+  --shadow-hover: 0 4px 14px rgba(30,45,32,.08);
 }
 
-/* 深色主题 */
+/* 深色主题（2026-10-19：跟浅色主题同一套暖中性，不再偏蓝） */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #14171a;
-  --panel: #1e2227;
-  --panel-2: #242a30;
-  --panel-3: #2b3239;
-  --panel-4: #262c33;
-  --line: #333b43;
-  --line-strong: #46505a;
-  --ink: #e7ebef;
-  --ink-2: #aab4bf;
-  --ink-3: #7c8792;
-  /* 2026-10-16 绿白改版：深色主题的主色也从蓝 #4c8dff 换成绿，
-     跟浅色主题同一个色相，切主题时不会突然变一种颜色。
-     深色底上绿得提亮才看得清（#3fa06a）。 */
-  --accent: #3fa06a;
-  --accent-soft: #16301f;
+  --bg: #171614;
+  --panel: #201f1c;
+  --panel-2: #26241f;
+  --panel-3: #2d2a25;
+  --panel-4: #292723;
+  --line: #383530;
+  --line-strong: #4b4741;
+  --ink: #eae7e0;
+  --ink-2: #b0aba1;
+  --ink-3: #827c72;
+  /* 深色底上绿得提亮才看得清（#4a9c72）。 */
+  --accent: #4a9c72;
+  --accent-soft: #1b2f24;
   --accent-ink: #ffffff;
-  --accent-2: #2f7d51;
-  --accent-2-soft: #16301f;
-  --accent-2-line: #2a5138;
-  --red: #ff6b73;   --red-soft: #3a2224;   --red-line: #5c3236;
-  --amber: #e0a44a; --amber-soft: #382d1c; --amber-line: #5a4728;
-  --green: #4cc38a; --green-soft: #1c3529; --green-line: #2c5340;
-  --tag-bg: #2a323a; --tag-ink: #a9b6c4;
-  --th-bg: #2b323a; --th-ink: #b6c1cc; --th-line: #3d4650;
-  --row-alt: #22272d; --panel-solid: #1e2227;
-  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.28);
-  --shadow-card: 0 1px 2px rgba(0,0,0,.26), 0 6px 18px rgba(0,0,0,.3);
-  --shadow-hover: 0 2px 6px rgba(0,0,0,.3), 0 12px 28px rgba(0,0,0,.38);
+  --accent-2: #3d8964;
+  --accent-2-soft: #1b2f24;
+  --accent-2-line: #2d5240;
+  --red: #e0716c;   --red-soft: #33211f;   --red-line: #51312e;
+  --amber: #d3a259; --amber-soft: #302820; --amber-line: #4e3f2a;
+  --green: #57b98a; --green-soft: #1b2f24; --green-line: #2c4d3c;
+  --tag-bg: #2d2a25; --tag-ink: #b0aba1;
+  --th-bg: #2a2823; --th-ink: #bcb7ad; --th-line: #3b3833;
+  --row-alt: #25231f; --panel-solid: #201f1c;
+  --shadow: 0 1px 2px rgba(0,0,0,.28);
+  --shadow-card: 0 1px 2px rgba(0,0,0,.24);
+  --shadow-hover: 0 4px 14px rgba(0,0,0,.36);
   --shadow-lg: 0 18px 48px rgba(0,0,0,.5);
   --mask: rgba(0,0,0,.55);
-  --toast-bg: #e7ebef;
-  --toast-ink: #14171a;
+  --toast-bg: #eae7e0;
+  --toast-ink: #171614;
 }
 
 * { box-sizing: border-box; }
@@ -221,34 +224,49 @@ html.wallpaper[data-theme="dark"] section.list.solo { background: var(--panel-so
 
 .app { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100vh; }
 
-/* ---------- 顶栏 ---------- */
-/* 顶栏挤着品牌 + 统计胶囊 + 搜索 + 分段 + 8 个按钮，1600px 以下本来就放不下。
-   这里把间距和按钮内边距统一收紧：宽屏能压成一行，放不下时也只是整齐地折一次
-   （第一行品牌+胶囊，第二行工具），不会出现按钮单个掉队的碎行。
-   搜索框是唯一可以「让位」的控件，空间不够时先收缩它。 */
-header.top { display: flex; align-items: center; gap: 9px; padding: 9px 14px;
-  background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-.brand { font-size: var(--fs-title); font-weight: 700; letter-spacing: .2px; }
-.brand small { font-weight: 400; color: var(--ink-3); margin-left: 8px; font-size: var(--fs-aux); }
-.stats { display: flex; gap: 6px; flex-wrap: wrap; }
-.stat { display: flex; align-items: baseline; gap: 5px; padding: 3px 10px; border-radius: 999px;
-  background: var(--panel-3); border: 1px solid var(--line); font-size: var(--fs-aux); color: var(--ink-2); }
-.stat b { font-size: var(--fs-cell); color: var(--ink); }
-.stat.warn { background: var(--amber-soft); border-color: var(--amber-line); color: var(--amber); }
-.stat.warn b { color: var(--amber); }
-.stat.bad { background: var(--red-soft); border-color: var(--red-line); color: var(--red); }
+/* ---------- 顶栏 ----------
+ * 2026-10-19 改版：原来「品牌 + 4 个彩色胶囊 + 搜索 + 7 段模式 + 8 个按钮」
+ * 全塞一行，1600px 下必然折行，折出来的还是碎行。
+ * 现在明确分两层：
+ *   第一层（.top-main）＝「我在哪个班」+ 数据概况 + 搜索 + 唯一的主操作；
+ *   第二层（.top-sub） ＝「我要看哪一页」+ 一批低频的导入/管理动作（做成 ghost，不抢眼）。
+ * 两层各自一条线，职责分开，扫一眼就知道哪块是导航、哪块是动作。 */
+header.top { display: flex; flex-direction: column; gap: 0;
+  background: var(--panel); border-bottom: 1px solid var(--line); }
+.top-main { display: flex; align-items: center; gap: 12px; padding: 10px 18px 8px; min-width: 0; }
+.top-sub { display: flex; align-items: center; gap: 10px; padding: 0 18px 9px; min-width: 0; flex-wrap: wrap; }
+.brand { font-size: var(--fs-title); font-weight: 650; letter-spacing: .3px; white-space: nowrap; }
+.brand small { font-weight: 400; color: var(--ink-3); margin-left: 9px; font-size: var(--fs-aux);
+  letter-spacing: 0; }
+/* 统计：从「四个彩色胶囊」改成一行安静的读数。
+   理由：13 个按钮 + 4 个胶囊同时出现时，胶囊的颜色比按钮还响，
+   眼睛会先被「39 有短板」「42 待跟进」拽走，反而找不到要点的东西。
+   现在默认是「灰字 + 黑数字」，只有**真的需要动手**（非零）才上色，
+   而且是 11px 的小圆点承担颜色，不整块铺底色。 */
+.stats { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.stat { display: flex; align-items: baseline; gap: 5px; padding: 0; border: 0; background: none;
+  font-size: var(--fs-aux); color: var(--ink-3); white-space: nowrap; }
+.stat b { font-size: var(--fs-body); color: var(--ink); font-weight: 650; }
+/* 非零的提醒：数字上色 + 前面一个小圆点，底不动 */
+.stat.act b { color: var(--ink); }
+.stat.act::before { content: ""; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--amber); align-self: center; margin-right: -1px; }
+.stat.warn b { color: var(--ink); }
+.stat.warn::before { content: ""; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--amber); align-self: center; margin-right: -1px; }
+.stat.bad { color: var(--red); }
 .stat.bad b { color: var(--red); }
-/* 「要动手的」统计胶囊走琥珀（还没电联 / 待跟进这类）。跟红色区分开：
-   红色是「已经出事了」，琥珀是「还来得及、但该动了」。
-   2026-10-16 从暖橘改过来 —— 绿白改版后绿是品牌色，提醒色得另找一支。 */
-.stat.act { background: var(--amber-soft); border-color: var(--amber-line); color: var(--amber); }
-.stat.act b { color: var(--amber); }
+.stat.bad::before { content: ""; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--red); align-self: center; margin-right: -1px; }
 .spacer { flex: 1; }
-.tools { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+.tools { display: flex; gap: 2px; align-items: center; flex-wrap: wrap; }
+.tools-sep { width: 1px; height: 16px; background: var(--line); margin: 0 6px; }
 /* 搜索框是唯一可以「让位」的控件：空间不够时先收缩它，别把整排按钮挤下去 */
-input.search { flex: 0 1 168px; min-width: 150px; padding: 7px 11px; border: 1px solid var(--line);
-  border-radius: var(--radius-s); background: var(--panel-2); outline: none; font-size: var(--fs-body); }
-input.search:focus { border-color: var(--accent); background: var(--panel); }
+input.search { flex: 0 1 220px; min-width: 160px; padding: 7px 12px; border: 1px solid var(--line);
+  border-radius: var(--radius-s); background: var(--panel-2); outline: none; font-size: var(--fs-body);
+  transition: border-color .12s, background .12s; }
+input.search:focus { border-color: var(--accent); background: var(--panel);
+  box-shadow: 0 0 0 3px var(--accent-soft); }
 input.search::placeholder { color: var(--ink-3); }
 
 /* 按钮统一一档：13px / 圆角 8 / 同一套 padding。
@@ -258,46 +276,53 @@ button.btn, a.btn { display: inline-block; padding: 6px 11px; border-radius: var
   background: var(--panel); cursor: pointer; transition: .12s; white-space: nowrap;
   text-decoration: none; color: inherit; font-size: var(--fs-cell); font-weight: 500; line-height: 1.5; }
 button.btn:hover, a.btn:hover { border-color: var(--line-strong); background: var(--panel-2); }
-/* 主要操作按钮走品牌绿：一屏里只有一两颗，扫一眼就知道该点哪儿。
-   2026-10-16 绿白改版：原来暖橘兼职当按钮色，现在统一收归绿色系；
-   阴影也从橘色投影换成绿色投影（原来是 rgba(207,106,60,…) 的橘影，绿底上会很脏）。 */
+/* 主要操作按钮走品牌绿：一屏里只有一两颗，扫一眼就知道该点哪儿。 */
 button.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
-  box-shadow: 0 1px 2px rgba(20,102,60,.22); }
-button.btn.primary:hover { filter: brightness(1.07); border-color: var(--accent); }
-button.btn.ghost { background: transparent; }
+  box-shadow: 0 1px 2px rgba(30,70,48,.18); }
+button.btn.primary:hover { background: var(--accent-2); border-color: var(--accent-2); filter: none; }
+/* ghost：顶栏第二层那批「导入 / 管理」动作。原来它们也是白底描边按钮，
+   7 颗白按钮排一行跟 7 段模式切换抢同一份注意力；
+   现在做成无边框文字按钮，悬停才浮出底色 —— 动作还在，但退到第二层。 */
+button.btn.ghost { background: transparent; border-color: transparent; color: var(--ink-2); }
+button.btn.ghost:hover { background: var(--panel-3); border-color: transparent; color: var(--ink); }
 button.btn.danger { color: var(--red); }
 button.btn:disabled { opacity: .5; cursor: default; }
-.seg { display: flex; border: 1px solid var(--line); border-radius: var(--radius-s); overflow: hidden; }
-.seg button { padding: 6px 11px; border: 0; background: var(--panel); cursor: pointer; color: var(--ink-2);
-  font-size: var(--fs-cell); line-height: 1.5; }
-.seg button + button { border-left: 1px solid var(--line); }
-.seg button.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+/* 模式切换：从「一个个描边小按钮」改成「一条底槽 + 一颗浮起的选中块」，
+   选中态只靠底色和字重，不加边框，视觉上比七个方框安静得多。 */
+.seg { display: flex; gap: 2px; padding: 3px; border: 0; border-radius: 9px;
+  background: var(--panel-3); overflow: hidden; }
+.seg button { padding: 5px 13px; border: 0; background: transparent; cursor: pointer; color: var(--ink-2);
+  font-size: var(--fs-cell); line-height: 1.5; border-radius: 7px; transition: background .12s, color .12s;
+  font-weight: 500; white-space: nowrap; }
+.seg button + button { border-left: 0; }
+.seg button:hover { color: var(--ink); background: rgba(255,255,255,.55); }
+.seg button.on { background: var(--panel); color: var(--ink); font-weight: 600;
+  box-shadow: 0 1px 2px rgba(38,33,26,.1); }
 
 main { display: flex; flex: 1; min-height: 0; }
 
 /* ---------- 侧栏 ---------- */
-aside.side { width: 212px; flex: 0 0 212px; background: var(--panel);
-  border-right: 1px solid var(--line); overflow-y: auto; padding: 14px 9px 40px; }
+aside.side { width: 218px; flex: 0 0 218px; background: var(--panel);
+  border-right: 1px solid var(--line); overflow-y: auto; padding: 14px 12px 40px; }
 /* 侧栏一长条（30 个筛选项），滚下去就不知道自己在哪一组了，所以让分组标题跟着走。
-   分组标题沿用 B 方案的处理：小号、字距拉开、上下留白收紧，让一整列看起来是
-   「分组 + 条目」而不是一坨同粗同重的文字。 */
-.side h3 { position: sticky; top: 0; z-index: 2; background: var(--panel); padding: 9px 9px 5px;
-  margin: 5px 0 2px; font-size: var(--fs-mini); font-weight: 700; letter-spacing: 1.2px;
-  color: var(--ink-3); }
-.side h3:first-child { margin-top: 0; }
-/* 侧栏菜单统一 13.5px / 400，选中才加粗 —— 之前继承 body 的 14px，
-   跟顶栏按钮的 13.5px、标签的 11px 混在一起，同一列字忽大忽小。
-   2026-10-16：选中态统一成「浅绿底 + 左侧一条绿竖条」——
-   原来那条是暖橘，绿白改版后统一收归品牌绿，一项一色的问题就此消失。
-   侧栏 30 项太长，光靠底色深浅找当前位置不够快，有根竖条一扫就能定位。 */
-.nav { position: relative; display: flex; align-items: center; justify-content: space-between; padding: 7px 10px;
+   2026-10-19：分组标题上压一条极淡的分隔线 + 收紧字距，
+   让「分组」和「条目」在视觉上真正分层 —— 之前只靠灰色和小字号区分，滚起来还是糊。 */
+.side h3 { position: sticky; top: 0; z-index: 2; background: var(--panel); padding: 12px 8px 5px;
+  margin: 6px 0 1px; font-size: var(--fs-mini); font-weight: 600; letter-spacing: .6px;
+  color: var(--ink-3); border-top: 1px solid var(--line); }
+.side h3:first-child { margin-top: 0; border-top: 0; padding-top: 4px; }
+/* 侧栏菜单统一 13.5px / 400，选中才加粗。
+   2026-10-16：选中态统一成「浅绿底 + 左侧一条绿竖条」。
+   2026-10-19：竖条收到 2px、底色再淡一档 —— 一整列只有一个选中项，
+   竖条只是定位用的锚点，不需要那么响。 */
+.nav { position: relative; display: flex; align-items: center; justify-content: space-between; padding: 7px 9px;
   border-radius: var(--radius-s); cursor: pointer; color: var(--ink-2); border: 0; background: transparent;
   width: 100%; text-align: left; font-size: var(--fs-body); line-height: 1.5;
   transition: background-color .12s, color .12s; }
 .nav:hover { background: var(--panel-3); color: var(--ink); }
 .nav.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
-.nav.on::before { content: ""; position: absolute; left: -9px; top: 6px; bottom: 6px; width: 3px;
-  border-radius: 0 3px 3px 0; background: var(--accent); }
+.nav.on::before { content: ""; position: absolute; left: -12px; top: 7px; bottom: 7px; width: 2px;
+  border-radius: 0 2px 2px 0; background: var(--accent); }
 .nav .n { font-size: var(--fs-aux); color: var(--ink-3); padding-left: 8px; font-variant-numeric: tabular-nums; }
 .nav.on .n { color: var(--accent); font-weight: 600; }
 .nav .dot { width: 7px; height: 7px; border-radius: 50%; margin-right: 8px; flex: 0 0 7px; }
@@ -470,26 +495,28 @@ table.grid td.diff.down { color: #c0392b; }
 .callrow .cr-st { font-weight: 600; flex: 0 0 auto; }
 
 /* ---------- 列表区 ---------- */
-section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 20px 60px; }
+section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 18px 24px 60px; }
 /* 页面标题条：卡片 / 待跟进 / 成绩 / 电联 / 答题卡 共用同一条。
-   标题 17px 加粗 + 一条细底线，右边并排动作按钮（收起顶栏、加考试、新建一轮…）。
-   「三个页面看起来像同一套看板」就是靠这条统一起来的。 */
+   2026-10-19：标题从 17px 提到 18px 并压细字重（650），
+   下线从「贯穿整行」收到「只到标题区」，跟内容之间留白更多。 */
 .listbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  margin: 0 0 16px; padding: 0 2px 12px; border-bottom: 1px solid var(--line);
+  margin: 0 0 18px; padding: 0 0 14px; border-bottom: 1px solid var(--line);
   color: var(--ink-2); font-size: var(--fs-body); }
-.listbar b { font-size: var(--fs-title); font-weight: 700; color: var(--ink);
-  letter-spacing: .2px; margin-right: 2px; }
+.listbar b { font-size: var(--fs-title); font-weight: 650; color: var(--ink);
+  letter-spacing: .3px; margin-right: 2px; }
 .listbar .cnt { color: var(--ink-3); font-size: var(--fs-body); }
-.cards { display: grid; gap: 13px; grid-template-columns: repeat(auto-fill, minmax(256px, 1fr)); }
-/* 学员卡片（2026-10-16 混搭）：布局与密度仍是 B —— 一屏塞得下、扫得快；
-   质感借 A —— 圆角 14、两层柔影、悬停轻微抬起。阴影刻意压得很浅，
-   卡片多的时候不会糊成一片灰。 */
+.cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr)); }
+/* 学员卡片（2026-10-19 降噪）：
+   · 去掉等级色的左边框 —— 46 张卡片五种颜色竖条，是这一屏最吵的东西；
+     等级本来就有一个小徽章（.lv），信息没丢，装饰没了。
+   · 去掉常驻投影，只留 1px 边框；悬停时才浮起一点。
+   · 圆角从 14 收到 12，跟按钮/输入框的 7px 之间保持一个可解释的梯度。 */
 .card { background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--radius-l);
   padding: 13px 15px; cursor: pointer; transition: transform .14s, box-shadow .14s, border-color .14s;
-  box-shadow: var(--shadow-card);
-  border-left: 3px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
-.card:hover { transform: translateY(-1px); border-color: var(--line-strong); box-shadow: var(--shadow-hover); }
-.card.sel { border-color: var(--accent-2); box-shadow: 0 0 0 2px var(--accent-2-soft), var(--shadow-card); }
+  box-shadow: none;
+  display: flex; flex-direction: column; gap: 10px; }
+.card:hover { transform: translateY(-1px); border-color: var(--line-strong); box-shadow: var(--shadow); }
+.card.sel { border-color: var(--accent-2); box-shadow: 0 0 0 2px var(--accent-2-soft); }
 
 /* ---------- 批量勾选 + 批量操作条（2026-10-16 加） ---------- */
 /* 勾选框：平时低调，别跟姓名抢注意力；勾上的人用浅绿底+绿边一眼看出来 */
@@ -524,7 +551,7 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 20px 60px;
    一行一件事，右边一个按钮；不做大色块、不做卡片墙 —— 那是仪表盘，
    这里要的是「行动清单」，多一个装饰就多一分干扰。
    强调色只用在第一件（.first）的按钮上：一次只强调一个「现在做这个」。 */
-.wb-page { padding: 6px 0 26px; max-width: 1080px; }
+.wb-page { padding: 6px 0 26px; max-width: 1180px; }
 .wb-hi { font-size: var(--fs-title); font-weight: 700; color: var(--ink);
   display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .wb-date { font-size: var(--fs-aux); font-weight: 500; color: var(--ink-3); }
@@ -563,7 +590,7 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 20px 60px;
   display: flex; flex-direction: column; gap: 4px; transition: background .15s; }
 .wb-step:last-child { border-right: 0; }
 .wb-step:hover { background: var(--panel-2); }
-.wb-step.cur { background: var(--accent-2-soft); }
+.wb-step.cur { background: var(--panel-2); }
 .wb-step.cur::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px;
   background: var(--accent-2); }
 .wb-step-i { font-size: var(--fs-mini); color: var(--ink-3); font-weight: 700; }
@@ -593,9 +620,11 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 20px 60px;
 /* 侧栏上「只有需要关注的数量」才用强调色 */
 .nav .n .hot { color: var(--accent-2); font-weight: 700; }
 .card .row1 { display: flex; align-items: center; gap: 8px; }
-.card .nm { font-weight: 700; font-size: 15.5px; letter-spacing: .2px; }
-.lv { font-size: var(--fs-mini); font-weight: 700; padding: 2px 7px; border-radius: 6px;
-  background: var(--panel-3); color: var(--ink-2); }
+.card .nm { font-weight: 650; font-size: 16px; letter-spacing: .2px; }
+/* 等级徽章：去底色，改成「描边细框 + 等级色字」。
+   原来一屏几十个灰底小方块，跟标签胶囊撞在一起分不出谁是谁。 */
+.lv { font-size: var(--fs-mini); font-weight: 650; padding: 1px 6px; border-radius: 5px;
+  background: transparent; border: 1px solid var(--line-strong); color: var(--ink-2); }
 .lv i { font-style: normal; font-size: 9px; opacity: .75; margin-left: 3px; }
 .chips { display: flex; gap: 5px; flex-wrap: wrap; }
 /* 标签统一 11px / 500：胶囊、标签、状态都是「次要信息」，不该跟正文抢字号 */
@@ -622,30 +651,33 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 20px 60px;
 .ptagbtn:hover { border-color: var(--line-strong); color: var(--ink); }
 .ptagbtn.on { font-weight: 600; }
 .ptaginput { width: 140px; font-size: var(--fs-aux); padding: 3px 7px; }
-.scores { display: flex; gap: 6px; }
-/* 评分小格：2026-10-16 绿白改版。
-   原来低分（.low）会铺一层粉红底 —— 73 人的班，一屏几十块粉红，
-   把真正要报警的红色淹掉了，也违背「数据本身是重点、底色别抢戏」。
-   现在改成**只让数字变色 + 一点极淡的底**，异常照样一眼看见，但页面干净得多。 */
-.sc { flex: 1; text-align: center; padding: 4px 0; border-radius: 7px; background: var(--panel-4); border: 1px solid var(--line); }
-.sc .k { display: block; font-size: var(--fs-mini); color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sc .v { font-size: 14px; font-weight: 650; font-variant-numeric: tabular-nums; }
-.sc.low { background: #fdf6f6; border-color: #f1dcde; }
+/* 评分三联：2026-10-19 彻底去掉框和底。
+   原来三个小格各带 1px 边框 + 淡底，46 张卡片 ×3 就是 138 个框，
+   整屏看起来全是格子。现在只剩「一行小标签 + 一个数」，
+   用等宽的列对齐代替画框 —— 信息一个没少，噪声下来了。 */
+.scores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
+.sc { text-align: left; padding: 0; border: 0; background: none; min-width: 0; }
+.sc .k { display: block; font-size: var(--fs-mini); color: var(--ink-3); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; line-height: 1.5; }
+.sc .v { font-size: 15px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--ink); }
+/* 异常只让数字变色，不铺底：一眼能看见，又不至于整屏泛红 */
 .sc.low .v { color: var(--red); }
 .sc.mid .v { color: var(--amber); }
+.sc.low .k, .sc.mid .k { color: var(--ink-3); }
 .cons { font-size: var(--fs-aux); color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 2;
   -webkit-box-orient: vertical; overflow: hidden; min-height: 32px; }
 .cons.empty { color: var(--ink-3); font-style: italic; }
 
 /* ---------- 表格 ---------- */
+/* 壳自己带 1px 边框（代替原来的投影），表格跟页面之间是一条细线，不是一团影子 */
 .wrap-table { overflow: auto; max-height: calc(100vh - 190px); border-radius: var(--radius);
-  box-shadow: var(--shadow-card); background: var(--panel-solid); }
+  border: 1px solid var(--line); background: var(--panel-solid); }
 
 /* 列少的表别把列摊到 1600px 上 —— 电联「全部」只有「姓名 + 每轮 + 沟通次数」，
    成绩「全部」是「姓名 + 每场考试 + 平均」，列一拉宽就是满屏空白（用户反馈）。
-   给整张表一个宽度上限，富余的留白留在表格右边，看起来才像一张表而不是一排空格。 */
-.wrap-table.cap-sm { max-width: 760px; }
-.wrap-table.cap-md { max-width: 1120px; }
+   2026-10-19 改版：表格统一加了 1px 边框，宽度上限会变成「一张窄框 + 右边一大块空白」，
+   比原来更难看，所以上限收掉，让表铺满主区域。 */
+.wrap-table.cap-sm, .wrap-table.cap-md { max-width: none; }
 
 /* ---------- 成绩页：把宽度用满 ----------
  * 2026-10-15 用户反馈「成绩表格只占主区域左侧一部分，右侧留下大片空白」。
@@ -660,6 +692,15 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 20px 60px;
  * 只挂在 #stage.sc-wide 上，卡片页 / 表格页 / 电联页不受影响。 */
 #stage.sc-wide table.grid th.col-num { width: 1%; }
 #stage.sc-wide table.grid th.col-grow { width: 100%; }
+/* 「全部」那张跨考试总表：数字列右对齐 + 等宽数字，姓名吃富余宽度。
+   2026-10-19：这张表以前数字全左对齐，72/122 贴着格子左边，右边一片空，
+   想比大小得一个格一个格找 —— 现在跟单场表一个规矩：数字靠右、位数对齐。
+   列宽不收紧（保持原来的自然分配），只改对齐，免得姓名列被撑成一条大空白。 */
+#stage.sc-wide table.grid .sc-r { text-align: right; font-variant-numeric: tabular-nums; }
+/* 总表的姓名列给个比例宽（不用 col-grow 的 100%），剩下的宽度让各考试列按比例分，
+   这样列是「均匀铺开」而不是「姓名一柱擎天、数字全挤在右边」。 */
+#stage.sc-wide table.grid th.nm-col { width: 22%; }
+#stage.sc-wide table.grid td.nm-col { text-align: left; }
 
 /* 成绩页改「页面级滚动」（2026-10-15 用户第二次反馈滚动问题）：
  * 上一版让表格当唯一滚动容器 —— 好处是表头固定，代价是「页面一条、表格里一条」
@@ -743,8 +784,8 @@ table.grid th, table.grid td { padding: 10px 16px; border-bottom: 1px solid var(
    以前 th 是 z-index:1、冻结的 td 是 z-index:2 —— 纵向滚动时数据行压在表头上，
    这就是用户看到的「表头与数据行重叠」。现在 th=4、冻结列=2、冻结表头=6，层级不再反。
    底色也从 --panel-2（几乎跟白底一样）换成 --th-bg，表头一眼能认出来。 */
-table.grid th { background: var(--th-bg); color: var(--th-ink); font-weight: 650;
-  font-size: 12.5px; letter-spacing: .3px; position: sticky; top: 0; z-index: 4;
+table.grid th { background: var(--th-bg); color: var(--th-ink); font-weight: 600;
+  font-size: 12px; letter-spacing: .3px; position: sticky; top: 0; z-index: 4;
   cursor: pointer; user-select: none; border-bottom: 1px solid var(--th-line); }
 table.grid tbody tr { cursor: pointer; }
 /* 隔行底色：不加高行距也能一眼分清哪一格属于哪一行（比单纯加行高省地方） */
@@ -785,7 +826,12 @@ aside.detail.open { display: block; }
 .det-head .nm { font-size: 19px; font-weight: 700; }
 .det-sub { color: var(--ink-3); font-size: var(--fs-aux); margin-bottom: 13px; }
 .box { border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; margin-bottom: 11px; }
-.box h4 { margin: 0 0 8px; font-size: var(--fs-aux); color: var(--ink-3); letter-spacing: .5px; text-transform: uppercase; font-weight: 700; }
+.box h4 { margin: 0 0 8px; font-size: var(--fs-aux); color: var(--ink-3); letter-spacing: .5px; text-transform: uppercase; font-weight: 600; }
+/* 危险区：以前是「粉边框 + 红标题 + 红字按钮」三层红色一起喊。
+   现在只留红标题，边框跟别的盒子一样，按钮平时是普通描边，悬停才泛红。 */
+.box.danger h4 { color: var(--red); }
+.box.danger .btn.danger { border-color: var(--line); color: var(--red); }
+.box.danger .btn.danger:hover { background: #fbeeee; border-color: var(--red); }
 .kv { display: flex; gap: 8px; margin-bottom: 5px; font-size: var(--fs-cell); }
 .kv .k { color: var(--ink-3); flex: 0 0 60px; }
 textarea.note { width: 100%; min-height: 72px; resize: vertical; border: 1px solid var(--line);
@@ -802,7 +848,10 @@ textarea.note:focus { border-color: var(--accent); background: var(--panel); }
 .msg .meta { font-size: var(--fs-mini); color: var(--ink-3); margin-bottom: 3px; display: flex; gap: 8px; }
 .msg .meta .sp { color: var(--ink-2); font-weight: 600; }
 .msg .txt { font-size: var(--fs-cell); white-space: pre-wrap; word-break: break-word; }
-.empty-hint { color: var(--ink-3); font-size: var(--fs-cell); text-align: center; padding: 22px 0; }
+.empty-hint { color: var(--ink-3); font-size: var(--fs-cell); text-align: center;
+  padding: 76px 24px; line-height: 1.9; }
+.empty-hint .btn { margin-top: 2px; }
+.empty-hint b { color: var(--ink-2); display: block; font-size: 15px; font-weight: 600; margin-bottom: 4px; }
 
 /* ---------- 弹窗 ---------- */
 .mask { position: fixed; inset: 0; background: var(--mask); display: none;
@@ -6296,12 +6345,15 @@ const SYNC = (() => {
     $("root").innerHTML = `
       <div class="app">
         <header class="top">
-          <div class="brand">${esc(cfg.className || cfg.title)}
-            <small>${S.length} 人 · 数据在本地</small></div>
-          <div class="stats" id="stats"></div>
-          <div class="spacer"></div>
-          <div class="tools">
+          <div class="top-main">
+            <div class="brand">${esc(cfg.className || cfg.title)}
+              <small>数据在本地</small></div>
+            <div class="stats" id="stats"></div>
+            <div class="spacer"></div>
             <input class="search" id="search" type="search" placeholder="搜索姓名 / 备注 / 聊天…" value="${esc(view.query)}">
+            <button class="btn primary" id="btnQuick">快速录入</button>
+          </div>
+          <div class="top-sub">
             <div class="seg" id="seg">
               <button data-mode="cards" class="${view.mode === "cards" ? "on" : ""}">卡片</button>
               <button data-mode="table" class="${view.mode === "table" ? "on" : ""}">表格</button>
@@ -6311,14 +6363,17 @@ const SYNC = (() => {
               <button data-mode="call" class="${view.mode === "call" ? "on" : ""}">电联</button>
               <button data-mode="paper" class="${view.mode === "paper" ? "on" : ""}">答题卡</button>
             </div>
-            <button class="btn primary" id="btnQuick">快速录入</button>
-            <button class="btn" id="btnChat">导入聊天</button>
-            <button class="btn" id="btnScore">导入成绩</button>
-            <button class="btn" id="btnCheckin">导入打卡计划</button>
-            <button class="btn" id="btnImport">换名单</button>
-            <button class="btn" id="btnAdd">＋ 加学员</button>
-            <button class="btn" id="btnSet">设置</button>
-            <button class="btn" id="btnData">备份</button>
+            <div class="spacer"></div>
+            <div class="tools">
+              <button class="btn ghost" id="btnChat">导入聊天</button>
+              <button class="btn ghost" id="btnScore">导入成绩</button>
+              <button class="btn ghost" id="btnCheckin">导入打卡计划</button>
+              <span class="tools-sep"></span>
+              <button class="btn ghost" id="btnImport">换名单</button>
+              <button class="btn ghost" id="btnAdd">＋ 加学员</button>
+              <button class="btn ghost" id="btnSet">设置</button>
+              <button class="btn ghost" id="btnData">备份</button>
+            </div>
           </div>
         </header>
         <main>
@@ -6594,8 +6649,7 @@ const SYNC = (() => {
     const lv = levelOf(s);
     const pe = cardPaperExam(s);
     const on = (view.selIds || []).includes(s.id);
-    return `<div class="card ${view.selected === s.id ? "sel" : ""}${on ? " checked" : ""}" data-id="${s.id}"
-      style="border-left-color:${lv ? levelColor(lv) : "var(--line)"}">
+    return `<div class="card ${view.selected === s.id ? "sel" : ""}${on ? " checked" : ""}" data-id="${s.id}">
       <div class="row1">
         <input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${on ? "checked" : ""}
           title="勾上可以批量操作（打卡、加标签、派任务…）">
@@ -8541,6 +8595,82 @@ const SYNC = (() => {
     return hits.find((x) => x.paper) || hits.find((x) => hasScore(x)) || hits[0];
   }
 
+  /* ---- 成绩去重（2026-10-19 加）
+   *
+   * 老师有两条录分的路：「导入成绩」一次贴一整个班；学生详情里「＋ 添加一次考试」一个个补。
+   * 两条路撞在一起就出重复 —— 导入那天日期是 11-08，手补那天日期是今天；或者名字后面
+   * 多打一个空格，同一场「第一次月考」就成了两条，成绩页看着像考了两次。
+   *
+   * 所以考试的身份**只认名字**（去掉所有空白），日期只是属性、不参与判重。
+   * 一场考试 + 一个学生 = 一条记录，这才是老师心里的模型。
+   */
+  function examKeyOf(e) {
+    const n = String((e && e.name) || "").replace(/[\s\u3000]+/g, "");
+    if (n) return n;
+    const d = String((e && e.date) || "").trim();
+    return d ? `${d}未命名考试` : "未命名考试";
+  }
+
+  /** 累计合并了多少条重复记录（老师说要看「合并次数」） */
+  function addMergeHits(n) {
+    if (!n) return;
+    DB.config.mergeHits = (DB.config.mergeHits || 0) + n;
+    DB.config.mergeAt = todayStr();
+  }
+
+  /**
+   * 把同一个学生身上「同名考试」的多条记录并成一条。返回 {groups, removed}。
+   * - onlyKey：只处理这个考试名（不传 = 全部过一遍）
+   * - preferId：强制保留这一条（老师正在编辑的那条），其余字段缺什么补什么
+   */
+  function dedupeStudentExams(s, onlyKey, preferId) {
+    const groups = new Map();
+    for (const e of (s.exams || [])) {
+      // 顺手把名字里的多余空白收干净 —— 「第一次月考 」和「第一次月考」必须是一回事
+      if (typeof e.name === "string") e.name = e.name.replace(/[\s\u3000]+/g, " ").trim();
+      const k = examKeyOf(e);
+      if (onlyKey && k !== onlyKey) continue;
+      groups.set(k, (groups.get(k) || []).concat(e));
+    }
+    let g = 0, removed = 0;
+    for (const [, recs] of groups) {
+      if (recs.length < 2) continue;
+      g++;
+      removed += recs.length - 1;
+      // 保留谁：老师正在编辑的那条 > 真传过答题卡的 > 有分数的 > 最早的
+      const keep = (preferId && recs.find((x) => x.id === preferId))
+        || recs.find((x) => x.paper) || recs.find(hasScore) || recs[0];
+      for (const r of recs) {
+        if (r === keep) continue;
+        if (!hasScore(keep) && hasScore(r)) {
+          keep.score = r.score;
+          if (keep.full === null || keep.full === undefined) keep.full = r.full;
+        }
+        if (!(keep.full > 0) && r.full > 0) keep.full = r.full;
+        if (!keep.date && r.date) keep.date = r.date;
+        if (!keep.paper && r.paper) keep.paper = r.paper;
+        if ((r.attachments || []).length) keep.attachments = (keep.attachments || []).concat(r.attachments);
+        if (!String(keep.name || "").trim() && r.name) keep.name = r.name;
+      }
+      s.exams = (s.exams || []).filter((x) => !recs.includes(x) || x === keep);
+    }
+    return { groups: g, removed };
+  }
+
+  /** 这场考试在班里已经录过多少人、攒了几条重复 —— 导入前先跟老师交个底 */
+  function examDupInfo(name) {
+    const k = examKeyOf({ name });
+    const out = { people: 0, dupPeople: 0, dupRecords: 0 };
+    if (!k) return out;
+    for (const s of DB.students) {
+      const hits = (s.exams || []).filter((e) => examKeyOf(e) === k);
+      if (!hits.length) continue;
+      out.people++;
+      if (hits.length > 1) { out.dupPeople++; out.dupRecords += hits.length - 1; }
+    }
+    return out;
+  }
+
   /** 某个学生在某个批次里的状态：没这条记录 = 未上传 */
   function batchStateOf(s, key) {
     const e = batchExamOf(s, key);
@@ -9425,13 +9555,13 @@ const SYNC = (() => {
     for (const s of DB.students) {
       const byName = new Map();
       for (const e of (s.exams || [])) {
-        const k = batchKeyOf(e);
+        const k = examKeyOf(e);
         byName.set(k, (byName.get(k) || 0) + 1);
       }
       for (const [k, n] of byName) {
         if (n > 1) out.push({
-          type: "conflict", sid: s.id, name: s.name,
-          label: "成绩有两条", why: `「${k}」有 ${n} 条记录，可能是重复导入`,
+          type: "conflict", sid: s.id, name: s.name, key: k, n,
+          label: "成绩重复", why: `「${k}」有 ${n} 条记录 —— 点「合并」就并成一条`,
           at: 0,
         });
       }
@@ -9451,13 +9581,16 @@ const SYNC = (() => {
     const head = `<div class="sc-detail-h"><b>待处理</b>
       <span class="hint-inline">${list.length
         ? `共 ${list.length} 件事等你拿主意 · ${Object.keys(cnt).map((k) => (QTYPE[k] || k) + " " + cnt[k]).join(" · ")}`
-        : "一件事都没有"}</span></div>`;
+          + (DB.config.mergeHits ? ` · 累计已合并 ${DB.config.mergeHits} 条重复成绩` : "")
+        : "一件事都没有"}</span>
+      ${cnt.conflict ? `<button class="btn ghost" id="qMergeAll" style="margin-left:auto">全部合并（${cnt.conflict} 人）</button>` : ""}</div>`;
     stage.innerHTML = `<div class="pap-page">${head}
       ${list.length ? `<div class="qd-list">${list.map((it, i) => `
         <div class="qd-row">
           <span class="qd-tag t-${esc(it.type)}">${esc(QTYPE[it.type] || it.type)}</span>
           <b class="qd-name">${esc(it.name || "")}</b>
           <span class="qd-why">${esc(it.why || "")}</span>
+          ${it.type === "conflict" ? `<button class="btn ghost" data-qmerge="${i}">合并</button>` : ""}
           <button class="btn ghost" data-qgo="${i}">去处理</button>
         </div>`).join("")}</div>`
         : `<div class="pap-empty">太好了，没有待处理的事。<br>
@@ -9489,6 +9622,31 @@ const SYNC = (() => {
       // 聊天没归类：把人带到一个能处理的地方（快速录入）
       openQuick();
     });
+
+    /* ---- 成绩重复：逐个合并 / 一把合并（2026-10-19 加）---- */
+    stage.querySelectorAll("[data-qmerge]").forEach((b) => b.onclick = () => {
+      const it = list[+b.dataset.qmerge];
+      const s = it && DB.students.find((x) => x.id === it.sid);
+      if (!s) return;
+      const m = dedupeStudentExams(s, it.key);
+      if (!m.removed) return toast("这条已经并干净了");
+      addMergeHits(m.removed);
+      save(); renderStats(); renderSide(); renderStage();
+      toast(`${s.name} 的「${it.key}」合并了 ${m.removed} 条重复记录`, 2600);
+    });
+
+    const qAll = stage.querySelector("#qMergeAll");
+    if (qAll) qAll.onclick = () => {
+      let groups = 0, removed = 0, people = 0;
+      for (const s of DB.students) {
+        const m = dedupeStudentExams(s);
+        if (m.removed) { groups += m.groups; removed += m.removed; people++; }
+      }
+      if (!removed) return toast("没有要合并的");
+      addMergeHits(removed);
+      save(); renderStats(); renderSide(); renderStage();
+      toast(`合并了 ${people} 人的 ${groups} 组重复成绩，清掉 ${removed} 条记录`, 3200);
+    };
   }
 
   function renderPaperPage() {
@@ -10179,8 +10337,8 @@ const SYNC = (() => {
         : `<div class="empty-hint">还没有这个学生的聊天记录<br><span style="font-size:12px">点顶部「导入聊天」粘贴</span></div>`}
       </div>
 
-      <div class="box" style="border-color:#f6cfd1">
-        <h4 style="color:var(--red)">危险操作</h4>
+      <div class="box danger">
+        <h4>危险操作</h4>
         <button class="btn danger" id="dDelete">把这个学生从名单里删掉</button>
       </div>`;
 
@@ -10412,6 +10570,16 @@ const SYNC = (() => {
         const f = el.dataset.ex;
         e[f] = (f === "score" || f === "full") ? (el.value === "" ? null : Number(el.value)) : el.value;
         commitSoft();
+        // 名字填成了已有的一场：当场并掉，别让它变成第二条（2026-10-19 加）
+        if (f === "name") {
+          const m = dedupeStudentExams(s, examKeyOf(e), e.id);
+          if (m.removed) {
+            addMergeHits(m.removed);
+            save(); renderStats(); renderSide(); renderDetail();
+            toast(`这场之前就录过了，合并掉 ${m.removed} 条重复记录`);
+            return;
+          }
+        }
         // 只把趋势行换掉，不重建整块——否则改完分数光标就没了
         const trend = $("dTrend");
         if (trend) trend.innerHTML = examTrendHtml(s);
@@ -11314,13 +11482,17 @@ const SYNC = (() => {
     for (const r of SC) { if (r.sid && seen.has(r.sid)) dup.add(r.sid); seen.set(r.sid, 1); }
 
     // 这次考试是「更新已有」还是「新增」—— 老师最怕的是重复导两遍变成两次考试
+    // 判重只认考试名（2026-10-19 改）：以前要求「名字+日期都一样」才算同一场，
+    // 于是同一次月考换个日期再导一遍就多出一条，待处理里堆 33 条重复。
+    const tKey = examKeyOf({ name: t.name });
     let upd = 0, add = 0;
     for (const r of SC) {
       if (!r.sid || typeof r.score !== "number") continue;
       const s = DB.students.find((x) => x.id === r.sid);
-      const same = (s?.exams || []).find((e) => (e.name || "") === t.name && (e.date || "") === t.date);
+      const same = (s?.exams || []).some((e) => examKeyOf(e) === tKey);
       same ? upd++ : add++;
     }
+    const dupInfo = examDupInfo(t.name);
 
     const guessed = SC.filter((r) => r.sid && r.fuzzy).length;
     $("scoreHint").innerHTML = `识别到 <b>${SC.length}</b> 行，认出 <b>${matched}</b> 人` +
@@ -11329,7 +11501,14 @@ const SYNC = (() => {
       (guessed ? ` <b style="color:var(--amber)">有 ${guessed} 行是「猜」的（原文里名字对不上，按同音/形近/繁简推的）—— 请扫一眼下面带「猜」标记的行。</b>` : "") +
       (dup.size ? ` <b style="color:var(--red)">有 ${dup.size} 人重复出现，写入时只留最后一条。</b>` : "");
     $("scoreMode").innerHTML = `考试「<b>${esc(t.name || "（未填名称）")}</b>」${esc(t.date)} · 满分 ${t.full}。` +
-      ` 同名同日期的已有成绩会被<b>更新</b>（${upd} 条），其余<b>新增</b>（${add} 条）——所以重复导入不会变成两次考试。`;
+      ` 这场已有的成绩会被<b>更新</b>（${upd} 条），其余的<b>新增</b>（${add} 条）——同名考试只留一条，重复导入不会变成两次考试。` +
+      (dupInfo.people
+        ? `<br><span style="color:var(--ink-2)">智能检索：班里已经有 <b>${dupInfo.people}</b> 人录过这场考试` +
+          (dupInfo.dupRecords
+            ? `，其中 <b>${dupInfo.dupPeople}</b> 人攒了 <b style="color:var(--amber)">${dupInfo.dupRecords}</b> 条重复记录，保存时会自动合并成一条`
+            : "，没有重复") +
+          `。</span>`
+        : "");
 
     box.innerHTML = `
       <div class="preview" style="margin-top:12px;max-height:300px;overflow:auto">
@@ -11370,26 +11549,38 @@ const SYNC = (() => {
     const lastOf = new Map();
     for (const r of SC) if (r.sid) lastOf.set(r.sid, r);
 
-    let nAdd = 0, nUpd = 0, skipped = 0;
+    const tKey = examKeyOf({ name: t.name });
+    let nAdd = 0, nUpd = 0, skipped = 0, nMerge = 0;
     for (const r of lastOf.values()) {
       if (typeof r.score !== "number") { skipped++; continue; }
       const s = DB.students.find((x) => x.id === r.sid);
       if (!s) { skipped++; continue; }
       const full = typeof r.full === "number" && r.full > 0 ? r.full : t.full;
       s.exams ||= [];
-      const same = s.exams.find((e) => (e.name || "") === t.name && (e.date || "") === t.date);
-      if (same) { same.score = r.score; same.full = full; nUpd++; }
+      // 同名考试只该有一条：先把这个学生身上的历史重复并掉，再决定更新还是新增
+      nMerge += dedupeStudentExams(s, tKey).removed;
+      const same = s.exams.find((e) => examKeyOf(e) === tKey);
+      if (same) {
+        same.score = r.score; same.full = full;
+        if (!String(same.name || "").trim()) same.name = t.name;
+        if (!same.date) same.date = t.date;
+        nUpd++;
+      }
       else { s.exams.push({ id: uid(), name: t.name, date: t.date, score: r.score, full }); nAdd++; }
     }
 
     // 把这次考试记进模板：下次导同一场成绩，考试名直接有下拉可选（2026-10-16 加）
     rememberExam(t.name, t.full);
+    addMergeHits(nMerge);
     save();
     renderStats(); renderSide(); renderStage();
     const done = nAdd + nUpd;
-    $("scoreResult").innerHTML = done ? `新增 <b>${nAdd}</b> 条、更新 <b>${nUpd}</b> 条` : "";
+    $("scoreResult").innerHTML = done
+      ? `新增 <b>${nAdd}</b> 条、更新 <b>${nUpd}</b> 条`
+        + (nMerge ? `，顺带把 <b>${nMerge}</b> 条重复记录合并掉了` : "")
+      : "";
     if (!done) return toast(`一条都没写进去：${skipped} 行没有分数或没指定学生`);
-    toast(`已写入 ${done} 条成绩${skipped ? `，跳过 ${skipped} 行` : ""}`, 2600);
+    toast(`已写入 ${done} 条成绩${nMerge ? `，合并 ${nMerge} 条重复` : ""}${skipped ? `，跳过 ${skipped} 行` : ""}`, 2800);
     SC = [];
     setTimeout(() => $("mScore").classList.remove("open"), 900);
   }
@@ -11512,7 +11703,7 @@ const SYNC = (() => {
 
     if (!tasks.length) {
       listbar.innerHTML = `<b>语文打卡</b> · 0 次任务`;
-      stage.innerHTML = `<div class="empty-hint">还没导入打卡计划。<br><br>
+      stage.innerHTML = `<div class="empty-hint"><b>还没有打卡计划</b>导入 xlsx 计划表，这里就会按周排好每天要做的事。<br><br>
         <button class="btn primary" id="ckGo">导入打卡计划（xlsx）</button></div>`;
       const g = $("ckGo");
       if (g) g.onclick = openCheckin;
@@ -12097,7 +12288,7 @@ const SYNC = (() => {
       stage.innerHTML = `
         <div class="sc-tabs">${tabs}</div>
         <div class="wrap-table"><table class="grid"><thead><tr>
-          <th class="sticky-l">姓名</th>${names.map((nm) => `<th>${esc(nm)}</th>`).join("")}<th>平均</th></tr></thead>
+          <th class="sticky-l nm-col">姓名</th>${names.map((nm) => `<th class="sc-r">${esc(nm)}</th>`).join("")}<th class="sc-r">平均</th></tr></thead>
           <tbody>${scored.map((s) => {
             const vals = names.map((nm) => {
               const e = (s.exams || []).find((x) => (x.name || "").trim() === nm && hasScore(x));
@@ -12106,11 +12297,11 @@ const SYNC = (() => {
             const got = vals.filter(Boolean).map((v) => v.e.score);
             const mineAvg = got.length ? got.reduce((a, b) => a + b, 0) / got.length : null;
             return `<tr data-id="${s.id}">
-            <td class="sticky-l"><b>${esc(s.name)}</b></td>
+            <td class="sticky-l nm-col"><b>${esc(s.name)}</b></td>
             ${vals.map((v) => v
-              ? `<td><b>${v.e.score}</b>${typeof v.e.full === "number" ? "/" + v.e.full : ""}</td>`
-              : `<td class="none">—</td>`).join("")}
-            <td><b>${fmtScore(mineAvg)}</b></td>
+              ? `<td class="sc-r"><b>${v.e.score}</b>${typeof v.e.full === "number" ? "/" + v.e.full : ""}</td>`
+              : `<td class="sc-r none">—</td>`).join("")}
+            <td class="sc-r"><b>${fmtScore(mineAvg)}</b></td>
           </tr>`; }).join("")}</tbody>
           <tfoot>
             ${statRow("参考人数", (st) => (st.n ? st.n + " 人" : "—"))}
