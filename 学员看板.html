@@ -1955,6 +1955,23 @@ section.list.solo table.grid tbody tr:last-child td:last-child { border-bottom-r
 /* 答题卡页的按钮/小按钮也抬一档圆角，跟卡片、筛选条对齐 */
 .pap-page .btn { border-radius: 10px; }
 .pap-page .btnmini { border-radius: 10px; }
+
+/* ---------------------------------------------------------------------------
+ * 页面标题条吸顶（2026-10-20，补「其他版块仿照打卡页」最后一项）
+ *
+ * solo 页（成绩 / 电联全部 / 答题卡名单）滚的是 #stage，标题条天然不动；
+ * 但卡片页、表格页、待跟进页滚的是 section.list 本身 —— 人一多，
+ * 「全部学员 · 46 人」和右上角「＋ 加学员 / 换名单」就跟着滚走了，
+ * 想加个人还得先滚回顶部。这里让标题条在列表里吸住。
+ *
+ * 打卡页排除：它自己有一条 .ck-tools 吸顶工具栏，两条会叠在一起。
+ * ------------------------------------------------------------------------- */
+section.list:not(.ck-page) > .listbar {
+  position: sticky; top: 0; z-index: 9;
+  margin: -18px -24px 10px; padding: 16px 24px 12px;
+  background: var(--panel-solid);
+  box-shadow: 0 -20px 0 0 var(--panel-solid), 0 10px 16px -14px rgba(30, 26, 20, .5);
+}
 </style>
 </head>
 <body>
