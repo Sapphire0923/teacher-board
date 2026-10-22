@@ -4806,12 +4806,24 @@ const SYNC = (() => {
       if (location.protocol === "file:") {
         const w = window.open("file:///D:/xdf/" + encodeURIComponent("电联录音") + "/", "_blank");
         opened = !!w;
+      } else {
+        // 线上是 https 页面，浏览器不让直接开本地文件夹 —— 走本机登记的自定义协议。
+        // 系统会弹一次「是否允许打开」，点允许后资源管理器直接跳到录音目录。
+        // 协议没登记（换了台电脑）就什么都不发生，所以下面还要把路径复制好兜底。
+        const a = document.createElement("a");
+        a.href = "xdfrec://open";
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        opened = true;
       }
     } catch (e) { opened = false; }
     const say = (ok) => toast(
       ok
-        ? (opened ? "已经打开「电联录音」文件夹；路径也复制好了：" + REC_DIR
-                  : "路径已复制：" + REC_DIR + "　→ 按 Win+E 打开资源管理器，Ctrl+L 粘贴回车")
+        ? (location.protocol === "file:"
+            ? "已经打开「电联录音」文件夹；路径也复制好了：" + REC_DIR
+            : "正在打开「电联录音」文件夹…（第一次会问「是否允许打开」，点允许就行）没反应的话，路径已复制：" + REC_DIR)
         : "录音都存在这里：" + REC_DIR + "　→ 按 Win+E 打开资源管理器，Ctrl+L 把这个路径粘进去回车（浏览器没给剪贴板权限，所以没自动复制）",
       ok ? 9000 : 10000);
     // 剪贴板在「页面没聚焦 / 没授权」时会一直挂着不 resolve —— 不能让老师点了没反应，
