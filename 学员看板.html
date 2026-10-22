@@ -4477,7 +4477,7 @@ const SYNC = (() => {
     const who = ($("clgWho") && $("clgWho").textContent) || "电联";
     REC.pending = {
       blob,
-      meta: { name: `${who}-${nowStamp().replace(/[:T]/g, "")}.${ext}`, type: mime, size: blob.size, sec, src: REC.src || "mic", at: nowStamp() },
+      meta: { name: recFileBase(who) + "." + ext, type: mime, size: blob.size, sec, src: REC.src || "mic", at: nowStamp() },
     };
     REC.src = "";
     renderCallSheet();
@@ -4768,6 +4768,61 @@ const SYNC = (() => {
     const nw = box.querySelector("[data-clhnew]");
     if (nw) nw.onclick = () => { $("mCallHist").classList.remove("open"); openCallLog(sid, bid, ""); };
     $("mCallHist").classList.add("open");
+  }
+
+  /**
+   * 录音存下来的文件名：`学生_2026-10-15_1751_第一轮电联.webm`
+   * 为什么这么改（2026-10-22 用户要求「统一分类命名」）：
+   *   老的 `学生-202610151751.webm` 只有一串数字，隔一个月根本分不清哪次是哪次，
+   *    也没法按轮次归档；下划线分开之后，`整理电联录音.ps1` 能按字段直接归到
+   *    `D:\xdf\电联录音\<学生>\` 下面，老师找某个人某一次的录音一眼就到。
+   * 轮次取不到就不写（旧数据、或直接点了「记一次」还没保存）。
+   */
+  function recFileBase(who) {
+    const d = view.callDraft || {};
+    const b = (DB.calls?.batches || []).find((x) => callBatchId(x) === d.bid);
+    const t = new Date();
+    const p2 = (n) => String(n).padStart(2, "0");
+    const stamp = `${t.getFullYear()}-${p2(t.getMonth() + 1)}-${p2(t.getDate())}_${p2(t.getHours())}${p2(t.getMinutes())}`;
+    return [who, stamp, b ? b.name : ""]
+      .filter(Boolean)
+      .join("_")
+      .replace(/[\\/:*?"<>|]/g, "_")
+      .slice(0, 120);
+  }
+
+  /**
+   * 「📁 录音文件夹」。
+   * 实话：网页没有权限直接唤起资源管理器（从 https 页面跳 file:// 会被浏览器拦），
+   * 所以这里做两件事 ——
+   *   ① 如果看板本身是本地打开的（file://），直接开一个资源管理器窗口；
+   *   ② 不管开不开得成，都把路径塞进剪贴板，告诉老师 Win+E 粘贴就能到。
+   * 不做假动作：不会假装"已打开"。
+   */
+  const REC_DIR = "D:\\xdf\\电联录音";
+  function openRecFolder() {
+    let opened = false;
+    try {
+      if (location.protocol === "file:") {
+        const w = window.open("file:///D:/xdf/" + encodeURIComponent("电联录音") + "/", "_blank");
+        opened = !!w;
+      }
+    } catch (e) { opened = false; }
+    const say = (ok) => toast(
+      ok
+        ? (opened ? "已经打开「电联录音」文件夹；路径也复制好了：" + REC_DIR
+                  : "路径已复制：" + REC_DIR + "　→ 按 Win+E 打开资源管理器，Ctrl+L 粘贴回车")
+        : "录音都存在这里：" + REC_DIR + "　→ 按 Win+E 打开资源管理器，Ctrl+L 把这个路径粘进去回车（浏览器没给剪贴板权限，所以没自动复制）",
+      ok ? 9000 : 10000);
+    // 剪贴板在「页面没聚焦 / 没授权」时会一直挂着不 resolve —— 不能让老师点了没反应，
+    // 1.2 秒还没回来就按「没复制成」提示，至少路径和打开方式看得见。
+    let said = false;
+    const once = (ok) => { if (said) return; said = true; say(ok); };
+    const guard = setTimeout(() => once(false), 1200);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(REC_DIR)
+        .then(() => { clearTimeout(guard); once(true); }, () => { clearTimeout(guard); once(false); });
+    } else { clearTimeout(guard); once(false); }
   }
 
   function closeCallLog() {
@@ -14024,6 +14079,7 @@ const SYNC = (() => {
       cur ? ` · ${esc(cur.name)}沟通上 ${callBatchStats(curId)["已沟通"]} 人` : ""}
       <span style="flex:1"></span>
       ${cur ? "" : headCompactBtn("clCompact")}
+      <button class="btn" id="clFolder" title="存放电联录音的文件夹（浏览器下载的录音也在这里）">📁 录音文件夹</button>
       <button class="btn" id="clAdd">＋ 新建一轮</button>`;
 
     if (!cur) {
@@ -14165,6 +14221,8 @@ const SYNC = (() => {
       view.callBatch = curId;
       openCallLog(el.dataset.sid, curId, "");
     });
+    const fb = $("clFolder");
+    if (fb) fb.onclick = openRecFolder;
     const a = $("clAdd");
     if (a) a.onclick = addCallBatch;
     bindHeadCompact("clCompact");
