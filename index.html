@@ -2118,6 +2118,23 @@ section.list { background: var(--bg); }
 .callrow .cr-trp { font-size: var(--fs-aux); color: var(--ink-2); background: var(--panel-2);
   border-radius: var(--radius-s); padding: 6px 9px; margin-top: 6px; line-height: 1.5; }
 .callrow .cr-none { color: var(--ink-3); font-style: normal; }
+
+/* ==========================================================================
+ * 2026-10-22 · 卡片姓名被挤成竖排
+ *
+ * 现象：卡片页有的学生姓名变成「赵 / 宇 / 辰」一行一个字，等级徽章也跟着竖起来
+ *       （用户截图：赵宇辰、王清莹两张卡）。
+ * 原因：.card .row1 是 flex 且不换行，里面除了姓名还有「家长类型 / 问题标签」那几枚
+ *       徽章；卡片一窄，这几枚胶囊把姓名压到只剩一个字宽，中文就一字一行了。
+ * 修法：姓名和等级徽章不许压缩、不许折行；其余徽章允许整体换到下一行。
+ * ========================================================================== */
+.card .row1 { flex-wrap: wrap; row-gap: 6px; }
+.card .row1 .nm,
+.card .row1 .lv { flex: 0 0 auto; white-space: nowrap; }
+.card .row1 .chip,
+.card .row1 .ntag { flex: 0 1 auto; order: 1; }
+/* 等级徽章跟着姓名走（它是一眼的判断，不该被挤到第二行去）；徽章排在它后面 */
+.card .row1 .lv { order: 0; }
 </style>
 </head>
 <body>
