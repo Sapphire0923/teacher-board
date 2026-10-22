@@ -709,6 +709,28 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 18px 24px 60px;
    再带个 👤，扫一眼就知道「这条说的是家长，不是学生的问题」 */
 .chip.ptag { font-weight: 600; border-style: solid; }
 
+/* ------------------------------------------------------------------
+   常驻标签（住校 / 走读）：跟在姓名后面的那枚小徽标
+   2026-10-21 加。用户反馈「住校」只在总表格里有，点进打卡/电联/成绩/
+   答题卡就看不见了 —— 所以做成一个「贴在任何姓名后面都成立」的紧凑徽标。
+   跟「请假」区分：请假是打卡状态，走 .chip 那一套（琥珀/灰、带图标、
+   只出现在被打卡的那一行）；这里只上色、只有两个字、永远跟着名字走。
+   ------------------------------------------------------------------ */
+.ntag { display: inline-flex; align-items: center; justify-content: center;
+  margin-left: 5px; padding: 0 5px; height: 17px; border-radius: 5px;
+  font-size: 11px; font-weight: 700; line-height: 17px; letter-spacing: .2px;
+  border: 1px solid transparent; vertical-align: 1px; white-space: nowrap; }
+.ntag.nt-board { background: var(--accent-soft); color: var(--accent-2); border-color: var(--accent); }
+.ntag.nt-walk { background: var(--panel-4); color: var(--ink-2); border-color: var(--line-strong); }
+/* 老师自己加的标签：跟着 config.parentTags 的颜色走（--ntc 内联给），没配就中性灰 */
+.ntag.nt-other { background: color-mix(in srgb, var(--ntc, #8d97a6) 12%, var(--panel));
+  color: var(--ntc, #8d97a6); border-color: color-mix(in srgb, var(--ntc, #8d97a6) 45%, transparent); }
+/* 表格里姓名列本来就窄，徽标再小一号，别把名字挤换行 */
+.grid .ntag, .ck-list .ntag { height: 16px; line-height: 16px; font-size: 10.5px; padding: 0 4px; }
+.ac-item .ntag, .ck-ac-i .ntag { margin-left: 6px; }
+/* 详情面板大标题旁边给回正常大小 */
+.det-head .ntag { height: 19px; line-height: 19px; font-size: 12px; margin-left: 8px; padding: 0 6px; }
+
 /* 详情面板里的家长类型选择器 */
 .ptagrow { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 7px; }
 .ptagg { flex: 0 0 54px; font-size: var(--fs-mini); color: var(--ink-3); padding-top: 5px; text-align: right; }
@@ -1182,6 +1204,31 @@ button.aibtn { padding: 4px 10px; font-size: var(--fs-cell); }
 .sect h4 { margin: 0 0 4px; font-size: 14px; }
 .sect .desc { font-size: var(--fs-cell); color: var(--ink-3); margin: 0 0 10px; }
 input[type=range] { accent-color: var(--accent); }
+
+/* 数据与备份：快照清单、恢复确认（2026-10-22） */
+.bk-hint { font-size: var(--fs-aux); font-weight: 400; color: var(--ink-3); margin-left: 6px; }
+.bk-snaps { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--line);
+  border-radius: var(--radius); overflow: hidden; margin-bottom: 10px; }
+.bk-row { display: flex; align-items: center; gap: 12px; padding: 9px 12px;
+  border-top: 1px solid var(--line); background: var(--panel); }
+.bk-row:first-child { border-top: 0; }
+.bk-row.bk-important { background: var(--accent-soft); }
+.bk-main { flex: 1; min-width: 0; font-size: var(--fs-cell); color: var(--ink-2); }
+.bk-main b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.bk-tag { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px;
+  font-size: var(--fs-aux); background: var(--bg-soft); color: var(--ink-3); border: 1px solid var(--line); }
+.bk-row.bk-important .bk-tag { background: var(--accent); color: #fff; border-color: var(--accent); }
+.bk-note { margin-left: 8px; color: var(--ink-3); font-size: var(--fs-aux); }
+.bk-detail { margin-top: 3px; color: var(--ink-3); font-size: var(--fs-aux); font-variant-numeric: tabular-nums; }
+.bk-acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.bk-acts .btn { padding: 4px 10px; font-size: var(--fs-aux); }
+.bk-list { margin: 0 0 10px; padding-left: 20px; font-size: var(--fs-cell); color: var(--ink-2); line-height: 1.7; }
+.bk-list b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.bk-ack { display: flex; gap: 8px; align-items: flex-start; font-size: var(--fs-cell);
+  color: var(--ink-2); margin-top: 12px; cursor: pointer; }
+.bk-ack input { margin-top: 2px; accent-color: var(--accent); }
+.bk-howto { font-size: var(--fs-cell); color: var(--ink-2); }
+.bk-howto summary { cursor: pointer; color: var(--accent); margin-bottom: 8px; }
 
 /* 外观选择器 */
 .themepick { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -2050,6 +2097,27 @@ section.list.solo > .listbar { border-radius: var(--radius); }
       面板浮在这层底色上，边界一眼看得出来（用户要求「保留温暖柔和」）。 */
 html.wallpaper section.list { background: var(--bg); }
 section.list { background: var(--bg); }
+
+/* ---------- 电联记录面板（2026-10-22：把「详情」改成真正能看记录的地方） ---------- */
+#mCallHist .modal { width: min(760px, 100%); }
+#clhBody header { display: flex; align-items: center; gap: 10px; padding: 14px 18px;
+  border-bottom: 1px solid var(--line); font-size: var(--fs-title); font-weight: 700; color: var(--ink); }
+#clhBody header .result { font-size: var(--fs-cell); font-weight: 600; color: var(--ink-2);
+  background: var(--panel-3); border-radius: var(--radius-s); padding: 3px 10px; }
+#clhBody .clh-sum { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 10px 18px;
+  border-bottom: 1px solid var(--line); background: var(--panel-2);
+  font-size: var(--fs-cell); color: var(--ink-2); }
+#clhBody .clh-sum b { font-size: 16px; color: var(--ink); font-variant-numeric: tabular-nums; }
+#clhBody .clh-k { display: inline-flex; align-items: center; gap: 6px; }
+#clhBody .clh-body { padding: 14px 18px; overflow: auto; flex: 1 1 auto; }
+#clhBody footer { display: flex; align-items: center; gap: 8px; padding: 12px 18px;
+  border-top: 1px solid var(--line); background: var(--panel-2); border-radius: 0 0 var(--radius-l) var(--radius-l); }
+#clhBody .callrow { cursor: pointer; }
+.callrow .cr-tr { font-size: var(--fs-mini); color: var(--accent); font-weight: 650; }
+.callrow .cr-nextat { font-size: var(--fs-mini); color: var(--amber); font-weight: 650; }
+.callrow .cr-trp { font-size: var(--fs-aux); color: var(--ink-2); background: var(--panel-2);
+  border-radius: var(--radius-s); padding: 6px 9px; margin-top: 6px; line-height: 1.5; }
+.callrow .cr-none { color: var(--ink-3); font-style: normal; }
 </style>
 </head>
 <body>
@@ -2217,6 +2285,7 @@ section.list { background: var(--bg); }
 
 <!-- 电联：一次沟通的完整记录（备注 / 录音 / 转写 / AI 纪要 / 导出） -->
 <div class="mask" id="mCallLog"><div class="modal wide" id="clgBody"></div></div>
+<div class="mask" id="mCallHist"><div class="modal" id="clhBody"></div></div>
 
 <!-- 录音进行中的悬浮条（只要还在录就一直看得到，能随时停） -->
 <div class="recbar" id="recBar">
@@ -2272,17 +2341,40 @@ section.list { background: var(--bg); }
     <header>数据与备份</header>
     <div class="body">
       <div class="sect">
-        <h4>备份 / 迁移</h4>
+        <h4>应用内自动快照 <span class="bk-hint">每天自动留一份，存在浏览器里，不会产生下载文件</span></h4>
         <p class="desc" id="attStat">—</p>
         <p class="desc">
-          导出的 ZIP 里包含名单、备注、聊天记录和<b>全部试卷附件</b>。
-          换电脑或清理浏览器之前，一定要导一份。
+          每天第一次打开看板、或当天改过数据时，自动存一份当时的名单和记录（最多留最近 7 份）。
+          标成「重要」的那份不会被自动清掉。恢复任何一份之前，系统都会先把当前数据留底，恢复错了可以再撤回。
+        </p>
+        <div class="bk-snaps" id="bkSnapList"><p class="desc">加载中…</p></div>
+      </div>
+      <div class="sect">
+        <h4>手动导出备份</h4>
+        <p class="desc">
+          <b>只有点这个按钮才会生成文件</b>，平时的编辑、打卡、保存都不会下载任何东西。
+          导出的 ZIP 里包含名单、备注、聊天记录、打卡任务和<b>全部试卷附件</b>，文件名带看板名和日期时间。
+          换电脑、清理浏览器之前，一定要导一份。
         </p>
         <div class="rowset">
           <button class="btn primary" id="expJson">导出备份（ZIP，含图片）</button>
-          <button class="btn" id="impJsonBtn">导入备份</button>
+          <button class="btn" id="impJsonBtn">从文件恢复</button>
           <input type="file" id="impJsonFile" accept=".json,.zip" hidden>
         </div>
+        <p class="desc" id="bkExportTip"></p>
+      </div>
+      <div class="sect">
+        <h4>关于下载文件夹</h4>
+        <p class="desc" id="bkDownloadDir">—</p>
+        <details class="bk-howto">
+          <summary>怎么把备份固定存到一个文件夹</summary>
+          <ol class="bk-list">
+            <li>打开浏览器的「设置 → 下载」。</li>
+            <li>勾上「<b>每次下载都询问保存位置</b>」（Edge 在「设置 → 下载」一栏里），以后每次导出都会弹窗让你选文件夹。</li>
+            <li>或者直接把「位置」改成你想要的文件夹（例如 D 盘下的备份目录），之后的备份就自动进去。</li>
+            <li>不建议勾「下载完成后自动打开」——导出备份时它会弹一堆窗口。</li>
+          </ol>
+        </details>
       </div>
       <div class="sect">
         <h4>导出表格</h4>
@@ -2302,6 +2394,15 @@ section.list { background: var(--bg); }
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- 恢复确认：把「这份备份里有什么 / 会替换掉什么」摆清楚再让人点 -->
+<div class="mask" id="bkRestore">
+  <div class="modal">
+    <header>恢复备份 — 请先确认</header>
+    <div class="body" id="bkRestoreBody"></div>
+    <footer><span class="desc">恢复前会自动把当前数据留底，随时可撤回</span></footer>
+  </div>
+</div>
 
 <!-- 打印专用容器：平时是空的，点「导出 PDF」时才填内容 -->
 <div id="printHost"></div>
@@ -3382,6 +3483,11 @@ const SYNC = (() => {
    *   话语权   → 决定该找谁谈
    */
   const DEFAULT_PARENT_TAGS = [
+    // 「住校 / 走读」是身份标签，不是沟通态度 —— 单独一组放最前面，
+    // 并且会在卡片、打卡、电联、成绩、答题卡、搜索、详情里跟着姓名一起显示（见 ntBadges）
+    { label: "住校", color: "#1f8a5f", group: "身份" },
+    { label: "走读", color: "#2f6feb", group: "身份" },
+
     { label: "热情", color: "#1f8a5f", group: "沟通态度" },
     { label: "冷淡", color: "#8d97a6", group: "沟通态度" },
     { label: "忙碌", color: "#c47f17", group: "沟通态度" },
@@ -3551,6 +3657,8 @@ const SYNC = (() => {
       }
       // 改了数据就排一次后台同步（没开同步时它什么也不做）
       try { if (typeof scheduleSyncPush === "function") scheduleSyncPush(); } catch (e) {}
+      // 当天改过数据 → 自动快照（每天只拍一张，没改过就不重复拍）
+      try { if (typeof maybeAutoSnapshot === "function") maybeAutoSnapshot("save"); } catch (e) {}
     }, 120);
   }
 
@@ -3622,7 +3730,7 @@ const SYNC = (() => {
         box.addEventListener("mousedown", (e) => e.preventDefault()); // 别抢输入框焦点
       }
       list.innerHTML = hits.map((s, i) =>
-        `<div class="ac-item ${i === active ? "on" : ""}" data-i="${i}">${esc(s.name)}</div>`).join("");
+        `<div class="ac-item ${i === active ? "on" : ""}" data-i="${i}">${esc(s.name)}${ntBadges(s)}</div>`).join("");
       list.querySelectorAll(".ac-item").forEach((it) => it.onclick = () => {
         accept(hits[+it.dataset.i].name);
       });
@@ -3706,6 +3814,13 @@ const SYNC = (() => {
     if (e.key !== "Escape") return;
     _nsFocusId = "";   // 按 Esc = 搜索结束：别再让下一次重画把面板又弹回来
     document.querySelectorAll(".ac-list").forEach((b) => b.remove());
+    // 电联记录面板也一样：它比录音面板轻，Esc 直接收掉
+    const ch = document.getElementById("mCallHist");
+    if (ch && ch.classList.contains("open")) {
+      const g = document.getElementById("clhBody");
+      if (g) g.innerHTML = "";
+      ch.classList.remove("open");
+    }
   });
 
   let _nsFocusId = "";   // 最后一次聚焦过的姓名搜索框 —— 页面重画之后要把它还回去
@@ -3750,7 +3865,7 @@ const SYNC = (() => {
         ? hits.map((s, i) => {
           const many = dup[s.name] > 1;
           return `<div class="ac-item ${i === active ? "on" : ""}" data-i="${i}">`
-            + `<b>${esc(s.name)}</b>`
+            + `<b>${esc(s.name)}</b>${ntBadges(s)}`
             + (many ? `<span class="ac-sub">${esc(stuTag(s))}</span>` : "")
             + (many ? `<span class="ac-dup">重名 ${dup[s.name]} 个</span>` : "")
             + `</div>`;
@@ -3831,6 +3946,40 @@ const SYNC = (() => {
     const t = (DB.config.parentTags || []).find((x) => x.label === label);
     return (t && t.color) || "#8d97a6";
   }
+
+  /* ---- 常驻标签：名单/表格里跟在名字后面的那枚小徽标 ---------------------
+   * 2026-10-21 用户反馈：「住校」标签只在总表格里看得见，切到打卡、电联、
+   * 成绩、答题卡就没了。
+   *
+   * 为什么不能直接复用 .chip.ptag：那枚胶囊在卡片/表格里整整一行都是，
+   * 而「住校」这种身份标签要跟在姓名后面、每一行都出现 —— 所以单独做一个
+   * 紧凑样式 .ntag，只上色不铺满。
+   *
+   * 两个硬约束（改的时候别破）：
+   *   ① 颜色跟「请假」区分开 —— 请假是打卡状态（琥珀/灰），常驻标签一律走品牌绿；
+   *   ② 只能读 s.parentTags 这个唯一的数据源，不许另存一份到别处，
+   *      否则刷新/导入之后两处就会对不上。
+   */
+  const NTAG_ORDER = ["住校", "走读"];
+  /** 挑出要显示成名字后面小徽标的标签：住校/走读优先，**其余自定义标签也照常显示**
+   *  （2026-10-21 修：原来只放行住校/走读，老师自己加的标签在名字后面就看不见了，
+   *   而总表格走的是 .chip.ptag 那条路，于是又变成「只有总表格看得见」。）
+   *  排在前面的先显示，最多 3 枚，免得一行名字后面挂一长串。 */
+  const NTAG_MAX = 3;
+  const ntOf = (s) => {
+    const all = parentTagsOf(s);
+    const head = NTAG_ORDER.filter((t) => all.includes(t));
+    const rest = all.filter((t) => !NTAG_ORDER.includes(t));
+    return head.concat(rest).slice(0, NTAG_MAX);
+  };
+  /** s 为空（比如改名记录、名单外的姓名）时返回空串，不报错 */
+  function ntBadges(s) {
+    if (!s) return "";
+    return ntOf(s).map((t) =>
+      `<span class="ntag nt-${t === "住校" ? "board" : "walk"}" title="${esc(t)}">${esc(t)}</span>`).join("");
+  }
+  /** 表格里的一格：姓名 + 小徽标 */
+  const ntName = (s, html) => `${html}${ntBadges(s)}`;
 
   /** 详情面板里的家长类型选择器：按组铺开，点一下就切换；最后一行留给自己加 */
   function ptagPickerHtml(s) {
@@ -4557,6 +4706,70 @@ const SYNC = (() => {
     $("mCallLog").classList.add("open");
   }
 
+  /**
+   * 「📋 记录」—— 这个学生在这一轮记过的全部电联，一屏看完：
+   * 时间、结果、备注、下一步、录音时长、有没有转写 / AI 纪要，逐次都在。
+   * 以前这个位置是「详情」，点开却是录音录入面板，跟旁边的「记一次」一模一样
+   * —— 老师真正想看的「我到底什么时候打得、聊了啥、录音在哪」根本看不见（用户 2026-10-22 反馈）。
+   * 这里只读 + 跳转：想听录音/改内容点某一条即可，不会新建一条空记录。
+   */
+  function openCallHist(sid, bid) {
+    const s = DB.students.find((x) => x.id === sid);
+    const box = $("clhBody");
+    if (!s || !box) return;
+    const b = (DB.calls?.batches || []).find((x) => callBatchId(x) === bid);
+    const all = [];
+    for (const bb of DB.calls?.batches || []) {
+      const id = callBatchId(bb);
+      for (const L of callLogList(id, s.id)) all.push({ b: bb, L });
+    }
+    all.sort((a, c) => String(c.L.at || "").localeCompare(String(a.L.at || "")));
+    const recN = all.filter((x) => x.L.rec).length;
+    const trN = all.filter((x) => x.L.tr).length;
+    const st = callStatusOf(bid, sid);
+    box.innerHTML = `<header><span>📋 ${esc(s.name)} · 电联记录</span>${ntBadges(s)}
+        <span class="spacer"></span>
+        <span class="result">${esc(b ? b.name + " · " + shortDate(b.date) : "全部轮次")}</span>
+        <button class="btnmini" data-clhclose="1" title="关掉">✕</button></header>
+      <div class="clh-sum">
+        <span class="clh-k"><b>${all.length}</b> 条记录</span>
+        <span class="clh-k"><b>${recN}</b> 条带录音</span>
+        <span class="clh-k"><b>${trN}</b> 条有转写</span>
+        <span class="clh-k">这一轮结果 <span class="ck-badge st-${CALL_BADGE[st] || "todo"}"><span class="ck-badge-ico">${esc(CALL_ICON[st] || "○")}</span>${esc(st)}</span></span>
+      </div>
+      <div class="body clh-body">
+        ${all.length ? `<div class="callhist">${all.map(({ b: bb, L }) => `
+          <div class="callrow" data-clhopen="${esc(L.id)}" data-clhb="${esc(callBatchId(bb))}" title="点开听录音 / 看转写 / 改这一条">
+            <div class="cr-top">
+              <b>${esc(stampShort(L.at))}</b>
+              <span class="tag ck-badge st-${CALL_BADGE[L.status] || "todo"}"><span class="ck-badge-ico">${esc(CALL_ICON[L.status] || "○")}</span>${esc(L.status || "—")}</span>
+              <span class="cr-b">${esc(bb.name)}</span>
+              <span class="spacer"></span>
+              ${L.rec ? `<span class="cr-rec" title="有录音">🎙 ${L.rec.sec ? esc(recFmt(L.rec.sec)) : "录音"}</span>` : ""}
+              ${L.tr ? `<span class="cr-tr">📝 转写</span>` : ""}
+              ${L.ai && L.ai.text ? `<span class="cr-ai">AI 纪要</span>` : ""}
+            </div>
+            ${L.note ? `<div class="cr-note">${esc(L.note)}</div>` : `<div class="cr-note cr-none">（这次没写备注）</div>`}
+            ${L.next || L.nextAt ? `<div class="cr-next">下一步：${esc(L.next || "—")}${L.nextAt ? "（" + esc(L.nextAt) + "）" : ""}</div>` : ""}
+            ${L.tr ? `<div class="cr-trp">${esc(String(L.tr).slice(0, 90))}${String(L.tr).length > 90 ? "…" : ""}</div>` : ""}
+          </div>`).join("")}</div>`
+        : `<div class="empty-hint">这个人还没有逐次记录。<br><span style="font-size:12px">点下面的「＋ 记一次」记一条，录音、转写都会挂在这条记录上。</span></div>`}
+      </div>
+      <footer>
+        <button class="btn" data-clhclose="1">关闭</button>
+        <span class="spacer"></span>
+        <button class="btn" data-clhnew="${esc(sid)}">＋ 记一次</button>
+      </footer>`;
+    box.querySelectorAll("[data-clhclose]").forEach((x) => { x.onclick = () => $("mCallHist").classList.remove("open"); });
+    box.querySelectorAll("[data-clhopen]").forEach((x) => { x.onclick = () => {
+      $("mCallHist").classList.remove("open");
+      openCallLog(sid, x.dataset.clhb, x.dataset.clhopen);
+    }; });
+    const nw = box.querySelector("[data-clhnew]");
+    if (nw) nw.onclick = () => { $("mCallHist").classList.remove("open"); openCallLog(sid, bid, ""); };
+    $("mCallHist").classList.add("open");
+  }
+
   function closeCallLog() {
     closeCallFallback();
     if (REC.mr) { if (!confirm("还在录音呢 —— 关掉就把这段丢了，确定？")) return false; recStop(); }
@@ -4684,7 +4897,7 @@ const SYNC = (() => {
     const canRec = recCanRecord();
     const on = !!REC.mr;
 
-    return `<header><span id="clgWho">${esc(s.name)}</span>
+    return `<header><span id="clgWho">${esc(s.name)}</span>${ntBadges(s)}
         <span class="hint-inline" style="margin-left:8px">${esc(b ? b.name + " · " + shortDate(b.date) : "（没有轮次）")}</span>
         <span class="spacer"></span>
         <span class="hint-inline" id="clgSrhint"></span>
@@ -5249,8 +5462,10 @@ const SYNC = (() => {
     fd.append("response_format", "json");
     let res;
     try {
-      res = await fetch(url, { method: "POST", headers: { Authorization: "Bearer " + key }, body: fd });
+      // 转写要等模型把录音听完，给足 3 分钟；到点就中止，别让按钮一直转
+      res = await fetchTimeout(url, { method: "POST", headers: { Authorization: "Bearer " + key }, body: fd }, 180000);
     } catch (e) {
+      if (e && e.timeout) throw e;
       throw new Error("连不上转写服务（" + ((e && e.message) || e) + "）—— 检查地址对不对、这台电脑能不能上网");
     }
     if (!res.ok) {
@@ -5293,7 +5508,7 @@ const SYNC = (() => {
     if (!key) return { ok: false, msg: "还没填密钥" };
     let res;
     try {
-      res = await fetch(url, {
+      res = await fetchTimeout(url, {
         method: "POST",
         headers: { Authorization: "Bearer " + key },
         body: (() => {
@@ -5306,6 +5521,7 @@ const SYNC = (() => {
         })(),
       });
     } catch (e) {
+      if (e && e.timeout) return { ok: false, msg: "⏱ " + e.message };
       return { ok: false, msg: "连不上这个地址（" + ((e && e.message) || e) + "）—— 检查网址对不对、这台电脑能不能上网" };
     }
     const raw = await (async () => { try { return (await res.text()).slice(0, 240); } catch (e) { return ""; } })();
@@ -5434,12 +5650,34 @@ const SYNC = (() => {
     return P.join("\n");
   }
 
+  /**
+   * 带「真超时」的 fetch（2026-10-22 加）。
+   * 原来这四处请求都没设超时：网络卡住 / 代理吞包时按钮会一直转圈，
+   * 老师只会以为「点坏了」，再点一次又多发一份请求。现在到点就中止并给出能看懂的话。
+   */
+  const AI_TIMEOUT_MS = 95000;
+  async function fetchTimeout(url, opt = {}, ms = AI_TIMEOUT_MS) {
+    const ac = typeof AbortController === "function" ? new AbortController() : null;
+    let hit = false;
+    const t = setTimeout(() => { hit = true; if (ac) ac.abort(); }, ms);
+    try {
+      return await fetch(url, ac ? { ...opt, signal: ac.signal } : opt);
+    } catch (err) {
+      if (hit) {
+        const e = new Error(`等了 ${Math.round(ms / 1000)} 秒还没回来，这次请求已经取消（网络慢或被代理拦了）。稍后再点一次就行。`);
+        e.timeout = true;
+        throw e;
+      }
+      throw err;
+    } finally { clearTimeout(t); }
+  }
+
   async function dsText(sys, user) {
     const key = aiKey();
     if (!key) throw new Error("还没填 API key —— 去「设置 → AI 分析」填一个");
     let r;
     try {
-      r = await fetch(DS_API, {
+      r = await fetchTimeout(DS_API, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
         body: JSON.stringify({
@@ -5451,6 +5689,7 @@ const SYNC = (() => {
         }),
       });
     } catch (err) {
+      if (err && err.timeout) throw err;
       throw new Error("连不上 DeepSeek（" + (err.message || err.name) + "）");
     }
     let j = null;
@@ -5647,11 +5886,20 @@ const SYNC = (() => {
     </div>`;
   }
 
-  /** 某学生在这一轮的全部逐次记录（点开一条看全部） */
-  function callHistHtml(s) {
+  /**
+   * 某学生的逐次电联记录。
+   * 2026-10-22 用户：「详情」和「记一次」功能重复了，详情要点开就能看到录音和次数。
+   * 所以这里每条都把「录音时长、有没有转写、有没有 AI 纪要」直接画出来，
+   * 点一行仍然进编辑面板（能听录音、能改）。root 传电联页的舞台就只画这一轮，
+   * 传详情面板就画全部轮次。
+   */
+  function callHistHtml(s, opts) {
+    const onlyBid = opts && opts.bid;
+    const inDetail = !!(opts && opts.detail);
     const rows = [];
     for (const b of DB.calls?.batches || []) {
       const bid = callBatchId(b);
+      if (onlyBid && bid !== onlyBid) continue;
       for (const L of callLogList(bid, s.id)) rows.push({ b, bid, L });
     }
     rows.sort((a, c) => String(c.L.at || "").localeCompare(String(a.L.at || "")));
@@ -5665,12 +5913,14 @@ const SYNC = (() => {
           <span class="tag ck-badge st-${CALL_BADGE[L.status] || "todo"}"><span class="ck-badge-ico">${esc(CALL_ICON[L.status] || "○")}</span>${esc(L.status || "—")}</span>
           <span class="cr-b">${esc(b.name)}</span>
           <span class="spacer"></span>
-          ${L.rec ? `<span class="cr-rec" title="有录音">🎙 ${L.rec.sec ? recFmt(L.rec.sec) : ""}</span>` : ""}
+          ${L.rec ? `<span class="cr-rec" title="这次通话的录音，点这一行就能听">🎙 录音 ${L.rec.sec ? esc(recFmt(L.rec.sec)) : "（时长未记）"}</span>` : ""}
+          ${L.tr ? `<span class="cr-tr" title="这条有转写">📝 转写</span>` : ""}
           ${L.ai && L.ai.text ? `<span class="cr-ai">AI 纪要</span>` : ""}
+          ${L.next ? `<span class="cr-nextat">↗ 待跟进</span>` : ""}
         </div>
         ${L.note ? `<div class="cr-note">${esc(L.note)}</div>` : ""}
         ${L.next || L.nextAt ? `<div class="cr-next">下一步：${esc(L.next || "—")}${L.nextAt ? "（" + esc(L.nextAt) + "）" : ""}</div>` : ""}
-        <div class="cr-more">点开看转写和录音 →</div>
+        <div class="cr-more">${L.rec || L.tr || (L.ai && L.ai.text) ? "点开听录音 / 看转写 →" : "点开补齐备注、录音 →"}</div>
       </div>`).join("")}</div>`;
   }
   /* ---- 等级：自动 or 手动 ------------------------------------------------
@@ -6519,7 +6769,7 @@ const SYNC = (() => {
     $("fileCsv").onchange = (e) => e.target.files[0] && handleCsvFile(e.target.files[0]);
     $("obPaste").onclick = pasteTable;
     $("obSet").onclick = openSettings;
-    $("obData").onclick = () => { refreshAttStat(); $("mData").classList.add("open"); };
+    $("obData").onclick = () => openDataPanel();
     bindDrop($("drop"));
   }
 
@@ -6910,6 +7160,29 @@ const SYNC = (() => {
     const built = buildStudents();
     if (!built.students.length) return toast("没有识别到任何学生");
 
+    // 覆盖导入时整体替换 DB.students，所以必须先把「按姓名能对上的人」身上
+    // 老师手贴的标签（住校/家长类型…）抠出来，导完再按姓名贴回去。
+    // 不按 id 贴：覆盖模式的 id 全是新生成的。同名多人时谁的标签给谁 —— 按出现顺序一一配对。
+    const keepTags = new Map();
+    if (DB.students.length) {
+      for (const s of DB.students) {
+        const tk = parentTagsOf(s);
+        if (!tk.length) continue;
+        const k = coreName(s.name) || String(s.name || "").trim();
+        const list = keepTags.get(k) || [];
+        list.push(tk.slice());
+        keepTags.set(k, list);
+      }
+    }
+    const reattach = (list) => {
+      for (const s of list) {
+        const k = coreName(s.name) || String(s.name || "").trim();
+        const bucket = keepTags.get(k);
+        if (!bucket || !bucket.length) continue;
+        s.parentTags = bucket.shift();       // 一一配对，同名的第二个拿第二份
+      }
+    };
+
     const existing = DB.students.length;
     let summary = "";
     if (existing && W.mode === "merge") {
@@ -6919,8 +7192,10 @@ const SYNC = (() => {
         (r.kept ? `、保留不在名单里的 ${r.kept} 人` : "") + (r.dropped ? `、移除 ${r.dropped} 人` : "");
     } else {
       if (existing && !confirm("覆盖导入会清空现有的备注、聊天记录和跟进状态。\n\n确定继续？")) return;
+      reattach(built.students);
       DB.students = built.students;
-      summary = `已导入 ${built.students.length} 名学生`;
+      const kept = DB.students.filter((s) => parentTagsOf(s).length).length;
+      summary = `已导入 ${built.students.length} 名学生` + (kept ? `（原 ${kept} 人的标签已保留）` : "");
     }
 
     // 列映射带来的维度/跟进项：合并模式下要小心别把用户改过的配置冲掉
@@ -7008,7 +7283,7 @@ const SYNC = (() => {
     $("btnImport").onclick = () => $("fileXlsx2").click();
     $("btnAdd").onclick = addStudent;
     $("btnSet").onclick = openSettings;
-    $("btnData").onclick = () => { refreshAttStat(); $("mData").classList.add("open"); };
+    $("btnData").onclick = () => openDataPanel();
   }
 
   function renderStats() {
@@ -7257,7 +7532,7 @@ const SYNC = (() => {
       <div class="row1">
         <input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${on ? "checked" : ""}
           title="勾上可以批量操作（打卡、加标签、派任务…）">
-        <span class="nm">${esc(s.name)}</span>${levelBadge(s)}</div>
+        <span class="nm">${esc(s.name)}</span>${ntBadges(s)}${levelBadge(s)}</div>
       ${scoreBox(s)}${chipsOf(s)}
       <div class="cons ${s.cons ? "" : "empty"}">${s.cons ? "⚠ " + esc(s.cons) : "（未记录问题）"}</div>
       ${pe ? `<div class="cardfoot">
@@ -7482,7 +7757,7 @@ const SYNC = (() => {
           k === "name" ? `<input type="checkbox" class="cbsel cball" data-cball="1" ${allOn ? "checked" : ""} title="全选/取消这 ${list.length} 人"> ` : ""
         }${esc(l)}${view.sort.key === k ? (view.sort.dir > 0 ? " ↑" : " ↓") : ""}</th>`).join("")
       }</tr></thead><tbody>${list.map((s) => `<tr data-id="${s.id}"${selSet.has(s.id) ? ' class="rowsel"' : ""}>
-        <td class="sticky-l"><input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${selSet.has(s.id) ? "checked" : ""} title="勾上可以批量操作"> <b>${esc(s.name)}</b></td>
+        <td class="sticky-l"><input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${selSet.has(s.id) ? "checked" : ""} title="勾上可以批量操作"> <b>${esc(s.name)}</b>${ntBadges(s)}</td>
         ${hasLevels() ? `<td class="sticky-l sticky-2">${esc(levelOf(s))}${DB.config.levelAuto && !s.levelManual ? `<i class="lva" title="按评分自动算出">ⓐ</i>` : ""}</td>` : ""}
         ${DB.config.dims.map((d) => scoreCell(s, d)).join("")}
         ${hasDims() ? `<td class="num">${scoreTotal(s)}</td>` : ""}
@@ -7542,7 +7817,7 @@ const SYNC = (() => {
         return `<div class="card${on ? " checked" : ""}" data-id="${s.id}" style="border-left-color:${levelOf(s) ? levelColor(levelOf(s)) : "var(--line)"}">
           <div class="row1">
             <input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${on ? "checked" : ""} title="勾上可以批量操作">
-            <span class="nm">${esc(s.name)}</span>${levelBadge(s)}
+            <span class="nm">${esc(s.name)}</span>${ntBadges(s)}${levelBadge(s)}
             <span style="flex:1"></span>
             <span class="chip ${s.followUp?.done ? "ok" : "no"}">${s.followUp?.done ? "已跟进" : "待跟进"}</span></div>
           ${scoreBox(s)}
@@ -7900,12 +8175,13 @@ const SYNC = (() => {
 
     let r;
     try {
-      r = await fetch(DS_API, {
+      r = await fetchTimeout(DS_API, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
         body: JSON.stringify(body),
       });
     } catch (err) {
+      if (err && err.timeout) throw err;
       throw new Error("连不上 DeepSeek（" + err.message + "）。检查网络，或确认没被代理/防火墙拦了。");
     }
 
@@ -7969,7 +8245,7 @@ const SYNC = (() => {
     const key = aiKey();
     if (!key) return toast("先填 key");
     try {
-      const r = await fetch(DS_API, {
+      const r = await fetchTimeout(DS_API, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
         body: JSON.stringify({ model: aiModel(), messages: [{ role: "user", content: "回复两个字：正常" }], max_tokens: 10 }),
@@ -7982,7 +8258,7 @@ const SYNC = (() => {
       const t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
       toast("✅ 通了！模型回了：「" + String(t || "").trim().slice(0, 20) + "」");
     } catch (e) {
-      toast("请求失败：" + e.message, 6000);
+      toast((e && e.timeout ? "⏱ " : "请求失败：") + e.message, e && e.timeout ? 9000 : 6000);
     }
   }
 
@@ -8085,7 +8361,7 @@ const SYNC = (() => {
 
     let r;
     try {
-      r = await fetch(DS_API, {
+      r = await fetchTimeout(DS_API, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
         body: JSON.stringify(body),
@@ -10385,7 +10661,7 @@ const SYNC = (() => {
 
     stage.innerHTML = `<div class="pap-page papsheet">
       <div class="sc-detail-h">
-        <b>${esc(s.name)}</b>
+        <b>${esc(s.name)}</b>${ntBadges(s)}
         <span class="hint-inline">${esc(b.name)} · ${esc(b.date || "没写日期")}${typeof b.full === "number" ? " · 满分 " + b.full : ""}</span>
         <span class="chip ${st === "analyzed" || st === "confirmed" ? "ok" : st === "none" ? "ex" : "warn"}">${esc(stT)}</span>
         ${sc ? `<span class="chip">${esc(sc)}</span>` : ""}
@@ -10460,7 +10736,7 @@ const SYNC = (() => {
           const extra = (e && !paperDone(e) && paperHas(e)) || (e && paperDone(e) && !an)
             ? "" : (e && n ? `<button class="btn ghost" data-paprec="${esc(e.id)}">🔍 重新识别</button>` : "");
           return `<tr data-prow="${esc(s.id)}" data-papex="${e ? esc(e.id) : ""}" title="点开这个学生的详情">
-            <td class="sticky-l">${esc(s.name)}</td>
+            <td class="sticky-l">${esc(s.name)}${ntBadges(s)}</td>
             <td><span class="chip ${PAPER_ST[st].c}">${PAPER_ST[st].t}</span></td>
             <td class="num">${sc}</td>
             <td class="num">${cardCell}</td>
@@ -10903,6 +11179,7 @@ const SYNC = (() => {
     d.innerHTML = `
       <div class="det-head">
         <input class="nameinput" id="dName" value="${esc(s.name)}" title="改名字">
+        ${ntBadges(s)}
         ${lvCtl}
         <button class="btn ghost" id="dClose">关闭</button>
       </div>
@@ -10925,8 +11202,9 @@ const SYNC = (() => {
         ${tagsOf(s).length ? `<div class="chips" style="margin-top:7px">${tagsOf(s).map((t) => `<span class="chip tag">${esc(t)}</span>`).join("")}</div>` : ""}
       </div>
 
-      <div class="box"><h4>家长类型</h4>
-        <p class="hint" style="margin:-2px 0 8px">一个家长可以贴好几个。这些标签也会一起发给 AI，帮它给更贴合的建议。</p>
+      <div class="box"><h4>家长类型${ntOf(s).length ? " " + ntBadges(s) : ""}</h4>
+        <p class="hint" style="margin:-2px 0 8px">一个家长可以贴好几个。这些标签也会一起发给 AI，帮它给更贴合的建议。<br>
+          这里的标签是<strong>长期标签</strong>：点一下标上、再点一下取消，刷新、重启、导入新名单都不会丢。</p>
         ${ptagPickerHtml(s)}
       </div>
 
@@ -10943,7 +11221,7 @@ const SYNC = (() => {
           <button class="btn primary" id="dAddCall">＋ 记一次电联</button>
           ${callLogCount(s.id) ? `<button class="btn" id="dCallExport">⬇ 导出记录（Word）</button>` : ""}
         </div>
-        <div id="dCallHist">${callHistHtml(s)}</div>
+        <div id="dCallHist">${callHistHtml(s, { detail: true })}</div>
         <p class="hint" style="margin:8px 0 0">一次电联 = 一条独立记录，新记录不会盖掉旧的。备注、录音、转写都只存在这台电脑的浏览器里。</p></div>
 
       <div class="box"><h4>我的备注</h4>
@@ -12536,7 +12814,7 @@ const SYNC = (() => {
     const picked = view.ckSel.includes(s.id);
     return `<div class="ck-student${picked ? " on" : ""}" data-sid="${esc(s.id)}">
       <label class="ck-pick" title="勾选 ${esc(s.name)}"><input type="checkbox" data-ckpick="${esc(s.id)}"${picked ? " checked" : ""} aria-label="勾选 ${esc(s.name)}"></label>
-      <span class="ck-st-name">${esc(s.name)}</span>
+      <span class="ck-st-name">${esc(s.name)}</span>${ntBadges(s)}
       <span class="ck-st-lvl" title="等级">${esc(levelOf(s) || "—")}</span>
       ${ckBadgeHtml(cur)}
       <span class="ck-st-meta">${s.cons ? "⚠ " + esc(s.cons) : (s.note ? esc(s.note) : "")}</span>
@@ -12622,7 +12900,7 @@ const SYNC = (() => {
     }
     box.innerHTML = hits.map((s, i) =>
       `<div class="ck-ac-i${view.ckAcIdx === i ? " on" : ""}" data-ac="${esc(s.id)}" role="option">
-        <span class="ck-ac-name">${esc(s.name)}</span>
+        <span class="ck-ac-name">${esc(s.name)}</span>${ntBadges(s)}
         <span class="ck-ac-lvl">${esc(levelOf(s) || "—")}</span>
         ${ckBadgeHtml(checkinStatusOf(view.checkinTask, s.id))}
       </div>`).join("");
@@ -13408,7 +13686,7 @@ const SYNC = (() => {
             const got = vals.filter(Boolean).map((v) => v.e.score);
             const mineAvg = got.length ? got.reduce((a, b) => a + b, 0) / got.length : null;
             return `<tr data-id="${s.id}">
-            <td class="sticky-l nm-col"><b>${esc(s.name)}</b></td>
+            <td class="sticky-l nm-col"><b>${esc(s.name)}</b>${ntBadges(s)}</td>
             ${vals.map((v) => v
               ? `<td class="sc-r"><b>${v.e.score}</b>${typeof v.e.full === "number" ? "/" + v.e.full : ""}</td>`
               : `<td class="sc-r none">—</td>`).join("")}
@@ -13440,7 +13718,8 @@ const SYNC = (() => {
       const hasPrev = recs.some((r) => prevExamOf(r.sid, cur));
       const cell = (x, k) => {
         if (k === "rank") return `<td class="sticky-l" data-col="rank">${x.rank}</td>`;
-        if (k === "name") return `<td class="sticky-l sticky-2" data-col="name"><b>${esc(x.name)}</b></td>`;
+        if (k === "name") return `<td class="sticky-l sticky-2" data-col="name"><b>${esc(x.name)}</b>${
+          ntBadges(DB.students.find((s) => s.id === x.sid))}</td>`;
         if (k === "score") return `<td data-col="score"><b>${x.score}</b>${typeof x.full === "number" ? "/" + x.full : ""}</td>`;
         if (k === "rate") return `<td data-col="rate">${x.rate === null ? "—" : x.rate + "%"}</td>`;
         if (k === "diff") return `<td class="diff ${x.diff === null ? "" : (x.diff >= 0 ? "up" : "down")}" data-col="diff">${
@@ -13762,7 +14041,7 @@ const SYNC = (() => {
           <tbody>${anyone.length ? anyone.map((s) => {
             const cc = callCountOf(s.id);
             return `<tr data-id="${s.id}">
-            <td class="sticky-l"><b>${esc(s.name)}</b></td>
+            <td class="sticky-l"><b>${esc(s.name)}</b>${ntBadges(s)}</td>
             ${batches.map((b) => {
               const st = callStatusOf(callBatchId(b), s.id);
               // 没打过的人写「—」：低调但看得懂。「—」满屏的时候比真实数据还亮就没法扫读了
@@ -13839,13 +14118,14 @@ const SYNC = (() => {
             const cc = callCountOf(s.id);
             // 「未联系」是筛出来的结果，不是这个人真被打成了「未联系」（那是懒存：没记过就是它）
             return `<div class="ck-student">
-              <span class="ck-st-name"><span class="ck-st-link" data-clgnew="1" data-sid="${s.id}" title="点名字直接打开录音 / 转写面板（不离开电联页）">${esc(s.name)}</span></span>
+              <span class="ck-st-name"><span class="ck-st-link" data-clhist="1" data-sid="${s.id}" title="看这个学生这一轮的全部电联记录（含录音、转写）">${esc(s.name)}</span>${ntBadges(s)}</span>
               ${callBadgeHtml(view.callStatus)}
-              <span class="ck-st-meta">${cc.n > 1 ? `已聊 ${cc.n} 次 · ` : ""}${s.cons ? "⚠ " + esc(s.cons) : ""}</span>
+              <span class="ck-st-meta">${cc.n > 1 ? `已聊 ${cc.n} 次 · ` : ""}${(() => { const k = callLogList(curId, s.id).length; return k ? `逐次 ${k} 条 · ` : ""; })()}${s.cons ? "⚠ " + esc(s.cons) : ""}</span>
               <span class="ck-st-last">${callLastCellHtml(s)}</span>
               <span class="ck-st-actions">
-                <button class="btn btnmini" data-clgnew="1" data-sid="${s.id}" title="打开录音 / 转写面板（就地记一次，不跳页）">🎙 详情</button>
-                <button class="btn btnmini" data-clgnew="1" data-sid="${s.id}">✎ 记一次</button>
+                <button class="btn btnmini" data-clhist="1" data-sid="${s.id}"
+                  title="看这个人这一轮记过的全部电联：时间、结果、备注、录音、转写，点一条就能听 / 改">📋 记录${(() => { const k = callLogList(curId, s.id).length; return k ? " " + k : ""; })()}</button>
+                <button class="btn btnmini" data-clgnew="1" data-sid="${s.id}" title="新记一次电联（录音 / 转写都在这）">＋ 记一次</button>
                 ${CALL_STATUSES.map((ss) =>
                 `<button class="chip ${ss === view.callStatus ? "on" : ""}" data-cset="${esc(ss)}" data-sid="${s.id}" ${ss === view.callStatus ? "disabled" : ""}
                   aria-pressed="${ss === view.callStatus}" title="把这个学生的电联结果记成「${esc(ss)}」"><span class="ck-set-ico">${esc(CALL_ICON[ss] || "○")}</span>${esc(ss)}</button>`).join("")}
@@ -13917,6 +14197,11 @@ const SYNC = (() => {
     if (!cur) return;
 
     // 「✎ 记一次」：直接开这一轮里这个学生的记录面板
+    // 「📋 记录」/ 点名字 → 这个学生**这一轮**的全部电联记录（录音、转写、次数都在里面）
+    stage.querySelectorAll("[data-clhist]").forEach((b) => b.onclick = (ev) => {
+      ev.stopPropagation();
+      openCallHist(b.dataset.sid, curId);
+    });
     stage.querySelectorAll("[data-clgnew]").forEach((b) => b.onclick = (ev) => {
       ev.stopPropagation();
       view.callBatch = curId;
@@ -14987,40 +15272,440 @@ const SYNC = (() => {
     setTimeout(() => URL.revokeObjectURL(a.href), 10000);
   }
 
-  /** 备份 = board.json + 所有还在用的附件，打成一个 ZIP */
-  async function exportBackup() {
-    const btn = $("expJson");
-    const old = btn && btn.textContent;
-    if (btn) { btn.disabled = true; btn.textContent = "打包中…"; }
+  /* ================================================================
+   * 备份与恢复（2026-10-22 重做）
+   *
+   * 老办法只有一个「导出备份」按钮，保存习惯靠老师自己点 —— 结果下载文件夹里
+   * 堆了上百个同名的「XX_备份.zip」，浏览器自己加 (1)(2)(3) 后缀，谁也分不清
+   * 哪份是哪天的。现在分成两件事：
+   *   ① 应用内自动快照：每天第一次打开或改数据时，在浏览器里存一份（最多 7 天），
+   *      **不产生任何下载文件**；老师可以给某一份打「重要」标记，它就不会被轮换掉。
+   *   ② 手动导出：只有点「导出备份」才打包下载，文件名带看板名 + 日期时间。
+   * 恢复前一定先把当前数据存一份（自动快照「恢复前」），并且逐项告诉你
+   * 这份备份里有什么、会替换掉什么，还要再点一次确认才能真的恢复。
+   * ================================================================ */
+
+  const SNAP_KEY = "teacher-board/snapshots";
+  const SNAP_MAX = 7;                       // 自动快照最多留几份（不含「重要」）
+  const SNAP_ATT_LIMIT = 40 * 1024 * 1024;  // 附件超过这么多就不往快照里塞，避免撑爆浏览器
+
+  const pad2 = (n) => String(n).padStart(2, "0");
+  const esc0 = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  /** 「2026-10-22 14:05:37」 */
+  function fmtWhen(ts) {
+    const d = new Date(ts);
+    if (!ts || isNaN(d.getTime())) return "时间未知";
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ` +
+      `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  }
+
+  /** 「20261022-1405」：导出文件名用，一眼能看出是哪天的几点 */
+  function stampForName(d) {
+    return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-` +
+      `${pad2(d.getHours())}${pad2(d.getMinutes())}`;
+  }
+
+  /** 文件名里不能出现的字符换掉，其余原样保留 */
+  function safePart(s) {
+    return String(s || "").replace(/[\\/:*?"<>|\r\n]/g, "_").trim() || "学员看板";
+  }
+
+  /**
+   * 这份看板到底有哪些字段。既是「备份里包含什么」的清单，也用于恢复时
+   * 把各字段大小列出来。extra 是导出文件（不是 localStorage）时会多出来的提示。
+   */
+  function boardSections(board, isFile) {
+    const B = board || {};
+    return [
+      { key: "students", label: "学生名单（等级、总分、各维度分数）", size: (B.students || []).length, unit: "人" },
+      { key: "exams", label: "考试记录与成绩", size: (B.students || []).reduce((a, s) => a + ((s.exams || []).length), 0), unit: "场" },
+      { key: "chats", label: "家长聊天记录", size: (B.students || []).reduce((a, s) => a + ((s.chats || []).length), 0), unit: "条" },
+      { key: "notes", label: "备注（优点 / 问题 / 家长类型 / 跟进）", size: (B.students || []).reduce((a, s) => a + (s.note ? 1 : 0), 0), unit: "人" },
+      { key: "calls", label: "电联批次与状态", size: ((B.calls && B.calls.batches) || []).length, unit: "批" },
+      { key: "checkin", label: "语文打卡任务与状态", size: ((B.checkin && B.checkin.tasks) || []).length, unit: "项" },
+      { key: "daily", label: "每日名单", size: ((B.daily && B.daily.ids) || []).length, unit: "人" },
+      { key: "unmatched", label: "未匹配名单", size: (B.unmatched || []).length, unit: "条" },
+      { key: "config", label: "看板设置（名称、维度、标签）", size: (B.config && B.config.dims) ? B.config.dims.length : 0, unit: "项" },
+    ].concat(isFile ? [
+      { key: "attachments", label: "附件（答题卡、试卷照片等）", size: (B._attCount || 0), unit: "个" },
+    ] : []);
+  }
+
+  /** 只读一遍 localStorage 的量（快照清单要显示每份多大） */
+  function snapshotBytes(s) {
+    try { return new Blob([JSON.stringify(s.board)]).size + (s.attBytes || 0); } catch (e) { return 0; }
+  }
+
+  function getSnapshots() {
     try {
-      // ⚠️ board.json 是整份 DB，会把 API key 一起带走。
-      // 备份是要发给别人/传网盘的，key 绝不能跟着出门 —— 导出前先抹掉。
-      const snapshot = JSON.parse(JSON.stringify(DB));
-      if (snapshot.config && snapshot.config.ai) delete snapshot.config.ai.key;
-      for (const st of snapshot.students || []) {
-        for (const ex of st.exams || []) if (ex.ai) delete ex.ai.usage;
+      const raw = localStorage.getItem(SNAP_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { console.warn("读快照失败", e); return []; }
+  }
+
+  /**
+   * 写快照。浏览器存储不够时从最旧的开始让位再重试 —— 宁可少留两天，
+   * 也不能因为快照写不进去把看板主数据挤坏。
+   */
+  function setSnapshots(arr) {
+    for (let attempt = 0; attempt < 8; attempt++) {
+      try {
+        localStorage.setItem(SNAP_KEY, JSON.stringify(arr.map((s) => Object.assign({}, s, { board: null, boardJson: s.boardJson || JSON.stringify(s.board || {}) }))));
+        return true;
+      } catch (e) {
+        if (attempt === 7) { console.warn("快照写不进去", e); return false; }
+        const idx = arr.findIndex((s) => !s.important);
+        if (idx >= 0) arr = arr.filter((_, i) => i !== idx);
+        else return false;
       }
-      const entries = [{
-        name: "board.json",
-        data: new TextEncoder().encode(JSON.stringify(snapshot, null, 2)),
-      }];
-      const alive = new Map(allAttachments().map((a) => [a.id, a]));
-      let n = 0, bytes = 0;
+    }
+    return false;
+  }
+
+  /** 拿一份快照的完整内容（写进来时做了压平，这里还原） */
+  function snapshotBoard(s) {
+    if (!s) return null;
+    if (s.board) return s.board;
+    try { return JSON.parse(s.boardJson || "null"); } catch (e) { return null; }
+  }
+
+  /**
+   * 自动快照的生成时机：每天第一次「打开页面」或「改过数据」时拍一张。
+   * 刻意不用定时器、不用每次保存都拍 —— 那样既吵又救不了「今天的误改」。
+   */
+  let snapBooting = true;
+  function maybeAutoSnapshot(reason) {
+    try {
+      const snaps = getSnapshots();
+      const today = todayStr();
+      const autoToday = snaps.find((s) => !s.manual && s.day === today);
+      if (autoToday) return;                       // 今天已经有一张了
+      const board = JSON.parse(JSON.stringify(DB));
+      const snap = {
+        id: "snap-" + Date.now().toString(36),
+        at: Date.now(),
+        day: today,
+        manual: false,
+        important: false,
+        note: snapBooting ? "今日自动快照（打开看板时）" : "今日自动快照（改过数据后）",
+        attCount: 0, attBytes: 0, attMissing: 0,
+        board,
+      };
+      // 注意：写进去时会把 board 压平成 boardJson（见 setSnapshots），所以这里不读 snap.board
+      const next = [snap, ...snaps];
+      // 只留最近 SNAP_MAX 份自动快照；「重要」和手动恢复前的一律不动
+      let autoCount = 0;
+      const kept = [];
+      for (const s of next) {
+        if (!s.manual && !s.important) {
+          autoCount++;
+          if (autoCount > SNAP_MAX) continue;
+        }
+        kept.push(s);
+      }
+      // 撑爆浏览器的话，先把最旧的自动快照也让位，再不行就放弃这次快照
+      let list = kept;
+      while (list.some((s) => !s.important)) {
+        if (setSnapshots(list)) { snapshotAttachments(snap.id).catch((e) => console.warn("快照附件扫描失败", e)); return; }
+        const idx = list.findIndex((s) => !s.important);
+        list = list.filter((_, i) => i !== idx);
+      }
+      snapBooting = false;
+    } catch (e) { console.warn("自动快照失败（不影响使用）", e); }
+  }
+
+  /** 给某张快照补上附件（单独的、异步的，失败只标记不打扰） */
+  async function snapshotAttachments(id) {
+    const snaps = getSnapshots();
+    const snap = snaps.find((s) => s.id === id);
+    if (!snap) return;
+    const alive = allAttachments();
+    let missing = 0, bytes = 0, n = 0;
+    try {
+      const list = await FB().all();
+      const have = new Set(list.map((x) => x.id));
+      for (const a of alive) {
+        if (!have.has(a.id)) { missing++; continue; }
+        bytes += a.size || 0; n++;
+      }
+    } catch (e) { /* FileBox 不可用时附件状态未知 */ }
+    snap.attCount = n;
+    snap.attBytes = bytes;
+    snap.attMissing = missing;
+    // 附件本身在浏览器 IndexedDB 里另存，不塞进快照；这里记录的是清单
+    snap.attIds = alive.map((a) => a.id);
+    setSnapshots(getSnapshots().map((s) => (s.id === id ? snap : s)));
+  }
+
+  /**
+   * 打包。同一份打包逻辑给「手动导出」和「恢复前自动留底」共用。
+   * 返回 ZIP blob + 统计；附件读不到的会记在 missing 里并明确告诉老师。
+   */
+  async function packBackup(board) {
+    // ⚠️ board.json 是整份 DB，会把 API key 一起带走。
+    // 备份是要发给别人/传网盘的，key 绝不能跟着出门 —— 打包前先抹掉。
+    const snapshot = JSON.parse(JSON.stringify(board));
+    if (snapshot.config && snapshot.config.ai) delete snapshot.config.ai.key;
+    for (const st of snapshot.students || []) {
+      for (const ex of st.exams || []) if (ex.ai) delete ex.ai.usage;
+    }
+    const entries = [{
+      name: "board.json",
+      data: new TextEncoder().encode(JSON.stringify(snapshot, null, 2)),
+    }];
+    const alive = new Map(allAttachments().map((a) => [a.id, a]));
+    let n = 0, bytes = 0, missing = 0;
+    try {
+      const have = new Set();
       for (const { id, blob } of await FB().all()) {
+        have.add(id);
         const meta = alive.get(id);
         if (!meta) continue;                       // 已经删掉的残留，不打包
         const ext = /png/.test(meta.type || "") ? ".png" : /pdf/.test(meta.type || "") ? ".pdf" : ".jpg";
         entries.push({ name: "attachments/" + id + ext, data: new Uint8Array(await blob.arrayBuffer()) });
         n++; bytes += blob.size;
       }
-      downloadBlob((DB.config.className || "学员看板") + "_备份.zip", FB().makeZip(entries));
-      toast(`已导出：名单 + ${n} 个附件（${fmtSize(bytes)}）`);
+      for (const id of alive.keys()) if (!have.has(id)) missing++;
+    } catch (e) {
+      console.warn("附件读取失败", e);
+      missing = alive.size;
+    }
+    return { blob: FB().makeZip(entries), count: n, bytes, missing };
+  }
+
+  /** 手动导出备份：只在点按钮时发生，文件名=看板名_备份_日期-时分.zip */
+  async function exportBackup() {
+    const btn = $("expJson");
+    const old = btn && btn.textContent;
+    if (btn) { btn.disabled = true; btn.textContent = "打包中…"; }
+    try {
+      const now = new Date();
+      const res = await packBackup(DB);
+      const cls = safePart(DB.config.className || "学员看板");
+      const name = `${cls}_备份_${stampForName(now)}.zip`;
+      downloadBlob(name, res.blob);
+      const tip = res.missing
+        ? `已导出 ${name}（${res.count} 个附件，${res.missing} 个附件读取不到，未包含）`
+        : `已导出：${name}（名单 + ${res.count} 个附件，${fmtSize(res.bytes)}）`;
+      toast(tip, 5200);
+      const box = $("bkExportTip");
+      if (box) {
+        box.innerHTML = res.missing
+          ? `⚠ 有 <b>${res.missing}</b> 个附件读不到，这份 ZIP 里没包含它们，其余内容完整。文件名：<b>${esc0(name)}</b>`
+          : `✓ 已导出 <b>${esc0(name)}</b>（名单 + ${res.count} 个附件）。浏览器会把它放进下载文件夹。`;
+      }
     } catch (e) {
       console.error(e);
-      toast("打包失败：" + e.message);
+      toast("打包失败：" + e.message, 5000);
     } finally {
       if (btn) { btn.disabled = false; btn.textContent = old; }
     }
+  }
+
+  /** 保存当前数据的另一种说法：写进 localStorage 马上生效（不留 120ms 缓冲） */
+  function flushSave() {
+    try {
+      clearTimeout(saveTimer);
+      localStorage.setItem(KEY, JSON.stringify(DB));
+    } catch (e) { console.warn("写入当前数据失败", e); }
+  }
+
+  /** 打开「数据与备份」：先把统计和快照清单刷新好，再显示 */
+  function openDataPanel() {
+    refreshAttStat();
+    refreshBackupPanel();
+    $("mData").classList.add("open");
+  }
+
+  /** 打开「数据与备份」时刷新备份相关区域 */
+  async function refreshBackupPanel() {
+    const el = $("bkSnapList");
+    if (el) {
+      const snaps = getSnapshots();
+      if (!snaps.length) {
+        el.innerHTML = `<p class="desc">还没有自动快照。今天第一次改数据后会自动生成一份，不用你操作。</p>`;
+      } else {
+        el.innerHTML = snaps.map((s) => {
+          const b = snapshotBoard(s);
+          const secs = boardSections(b);
+          const stu = (secs[0] || {}).size || 0;
+          const ex = (secs[1] || {}).size || 0;
+          const at = (secs[2] || {}).size || 0;
+          const att = s.attCount || 0;
+          const miss = s.attMissing || 0;
+          return `<div class="bk-row ${s.important ? "bk-important" : ""}" data-snap="${esc0(s.id)}">
+            <div class="bk-main">
+              <b>${esc0(fmtWhen(s.at))}</b>
+              <span class="bk-tag">${s.manual ? "恢复前留底" : s.important ? "重要·不会被自动清掉" : "自动"}</span>
+              ${s.note ? `<span class="bk-note">${esc0(s.note)}</span>` : ""}
+              <div class="bk-detail">${stu} 名学生 · ${ex} 场考试 · ${at} 条聊天 · ${att} 个附件${miss ? `（${miss} 个读不到）` : ""} · ${fmtSize(snapshotBytes(s))}</div>
+            </div>
+            <div class="bk-acts">
+              <button class="btn ghost" data-snap-restore="${esc0(s.id)}">恢复这份</button>
+              <button class="btn ghost" data-snap-star="${esc0(s.id)}">${s.important ? "取消重要" : "标记重要"}</button>
+              <button class="btn ghost" data-snap-fill="${esc0(s.id)}">导出这份</button>
+            </div>
+          </div>`;
+        }).join("");
+        el.querySelectorAll("[data-snap-restore]").forEach((btn) => {
+          btn.onclick = () => restoreSnapshot(btn.dataset.snapRestore);
+        });
+        el.querySelectorAll("[data-snap-star]").forEach((btn) => {
+          btn.onclick = () => {
+            const id = btn.dataset.snapStar;
+            const snaps2 = getSnapshots().map((x) => (x.id === id ? Object.assign({}, x, { important: !x.important }) : x));
+            setSnapshots(snaps2);
+            refreshBackupPanel();
+          };
+        });
+        el.querySelectorAll("[data-snap-fill]").forEach((btn) => {
+          btn.onclick = () => exportSnapshot(btn.dataset.snapFill);
+        });
+      }
+    }
+    const where = $("bkDownloadDir");
+    if (where) {
+      where.textContent = "浏览器从不告诉网页「下载文件夹在哪」，网页也没法自己指定或整理下载文件。" +
+        "你的备份都会落在浏览器当前的下载文件夹里（Edge 默认是「下载」）。" +
+        "想要一个固定又干净的位置，按下面「关于下载文件夹」改一次浏览器设置即可。";
+    }
+  }
+
+  /** 把某个历史快照也导出成文件（比如想把上周的版本单独留档） */
+  async function exportSnapshot(id) {
+    const snap = getSnapshots().find((s) => s.id === id);
+    const board = snapshotBoard(snap);
+    if (!board) { toast("这份快照的内容读不出来"); return; }
+    try {
+      toast("打包中…");
+      const res = await packBackup(board);
+      const cls = safePart((board.config && board.config.className) || "学员看板");
+      const name = `${cls}_快照_${stampForName(new Date(snap.at))}.zip`;
+      downloadBlob(name, res.blob);
+      toast(`已导出 ${name}`, 4200);
+    } catch (e) {
+      console.error(e);
+      toast("打包失败：" + e.message, 5000);
+    }
+  }
+
+  /** 恢复前的确认：先把差异列清楚，再要求二次确认 */
+  function openRestoreDialog(source, board, attList) {
+    const cur = DB;
+    let curExams = 0, newExams = 0, curChats = 0, newChats = 0;
+    for (const s of (cur.students || [])) { curExams += (s.exams || []).length; curChats += (s.chats || []).length; }
+    for (const s of (board.students || [])) { newExams += (s.exams || []).length; newChats += (s.chats || []).length; }
+    const secs = boardSections(Object.assign({}, board, { _attCount: (attList || []).length }), !!(attList && attList.length));
+    const attr = source.attrcount != null ? source.attrcount : (attList || []).length;
+    const miss = source.missing || 0;
+    const html = `
+      <p class="desc"><b>这份备份的来源：</b>${esc0(source.kind)}</p>
+      <p class="desc"><b>备份日期：</b>${esc0(source.when || "文件里没有时间，看你的下载时间")}</p>
+      <p class="desc"><b>备份里有什么：</b></p>
+      <ul class="bk-list">${secs.map((s) => `<li>${esc0(s.label)}：<b>${s.size}</b> ${s.unit}</li>`).join("")}</ul>
+      <p class="desc"><b>会替换掉现在的：</b>现在有 ${(cur.students || []).length} 名学生、${curExams} 场考试、${curChats} 条聊天；恢复后会变成备份里的 ${(board.students || []).length} 名学生、${newExams} 场考试、${newChats} 条聊天。</p>
+      ${miss ? `<p class="desc" style="color:#b4532a"><b>注意：有 ${miss} 个附件没在备份里</b>（备份打包时读不到），这部分<u>无法恢复</u>，恢复后这些附件会变成「缺文件」。</p>` : ""}
+      <p class="desc"><b>不能恢复或不会跟随备份的东西：</b>自定义背景图、浏览器本机存的表情记忆、AI 密钥（备份里本来就被抹掉了，需要重新填）。</p>
+      <label class="bk-ack"><input type="checkbox" id="bkAck"> 我已经看过上面的内容，明白恢复会覆盖当前数据</label>
+      <div class="rowset" style="margin-top:10px">
+        <button class="btn primary" id="bkDo" disabled>恢复这份备份</button>
+        <button class="btn" id="bkCancel">取消</button>
+      </div>`;
+    const modal = $("bkRestore");
+    if (!modal) { toast("少了恢复弹窗"); return; }
+    $("bkRestoreBody").innerHTML = html;
+    modal.classList.add("open");
+    $("bkCancel").onclick = () => modal.classList.remove("open");
+    const ack = $("bkAck"), dobtn = $("bkDo");
+    ack.onchange = () => { dobtn.disabled = !ack.checked; };
+    dobtn.onclick = async () => {
+      dobtn.disabled = true; dobtn.textContent = "恢复中…";
+      await restoreBoard(board, attList, source);
+      modal.classList.remove("open");
+    };
+  }
+
+  /**
+   * 真正执行恢复：① 先把当前数据存成「恢复前留底」快照 ←→ 这是撤回的保证
+   *              ② 写入备份内容 ③ 附件补回 ④ 重画
+   */
+  async function restoreBoard(board, attList, source) {
+    try {
+      // ① 留底（始终保留，不会被自动轮换清掉）
+      const snaps = getSnapshots();
+      const cur = JSON.parse(JSON.stringify(DB));
+      const keep = {
+        id: "snap-pre-" + Date.now().toString(36),
+        at: Date.now(),
+        day: todayStr(),
+        manual: true,
+        important: true,
+        note: "恢复「" + (source && source.short ? source.short : "备份") + "」之前的留底（可撤回）",
+        attCount: allAttachments().length,
+        attBytes: allAttachments().reduce((a, x) => a + (x.size || 0), 0),
+        attMissing: 0,
+        board: cur,
+      };
+      localStorage.setItem(KEY + "/pre-restore", JSON.stringify(cur));
+      const kept = [keep, ...snaps];
+      // 留底太多也吃空间：同类留底只留最近 3 份（都标了重要，不会被自动清）
+      let preCount = 0;
+      const finalList = kept.filter((s) => {
+        if (!s.manual) return true;
+        preCount++;
+        return preCount <= 3;
+      });
+      if (!setSnapshots(finalList)) {
+        console.warn("恢复前留底没能写进快照，但有 localStorage 备份副本");
+      }
+
+      // ② 写入备份内容
+      const merged = JSON.parse(JSON.stringify(board));
+      delete merged._attCount;
+      localStorage.setItem(KEY, JSON.stringify(merged));
+      DB = load();
+
+      // ③ 附件补回（备份里有的话）
+      if (attList && attList.length) {
+        try { await FB().putMany(attList); } catch (e) { console.warn("附件写回失败", e); }
+      }
+
+      // ④ 重画
+      // ⚠️ 恢复完把**所有**弹窗都关掉（2026-10-22 踩坑）：原来只关 mData，
+      //    如果是从「恢复这份」进来，弹窗还压在上面，屏幕上看着什么都没发生。
+      closeAllModals();
+      render();
+      refreshAttStat();
+      // 刚恢复完允许自动快照再拍一张，好让「今天的动作」有追溯
+      snapBooting = false;
+      toast(`已恢复 ${(merged.students || []).length} 名学生` +
+        (attList && attList.length ? `、${attList.length} 个附件` : "") + "；当前版本已留底，可在备份面板里撤回", 6000);
+    } catch (e) {
+      console.error(e);
+      toast("恢复失败：" + e.message, 6000);
+    }
+  }
+
+  /** 一次关掉所有弹窗（恢复成功后用，别让老师面对一个半开的界面） */
+  function closeAllModals() {
+    document.querySelectorAll(".mask.open").forEach((m) => m.classList.remove("open"));
+  }
+
+  /** 恢复某一份应用内快照 */
+  async function restoreSnapshot(id) {
+    const snap = getSnapshots().find((s) => s.id === id);
+    const board = snapshotBoard(snap);
+    if (!snap || !board) { toast("这份快照读不出来"); return; }
+    openRestoreDialog({
+      kind: "应用内快照（" + (snap.manual ? "恢复前留底" : "自动") + "）",
+      short: fmtWhen(snap.at),
+      when: fmtWhen(snap.at),
+      attrcount: snap.attCount || 0,
+      missing: snap.attMissing || 0,
+    }, board, null);
   }
 
   async function importBackup(file) {
@@ -15042,13 +15727,37 @@ const SYNC = (() => {
         db = JSON.parse(new TextDecoder().decode(new Uint8Array(buf)));   // 兼容旧版纯 JSON 备份
       }
       if (!Array.isArray(db.students)) throw new Error("格式不对");
-      if (!confirm(`导入备份会覆盖当前所有数据${atts.length ? `，并恢复 ${atts.length} 个附件` : ""}。\n\n继续？`)) return;
-      localStorage.setItem(KEY, JSON.stringify(db));
-      if (atts.length) await FB().putMany(atts);
-      DB = load();
-      $("mData").classList.remove("open");
-      render();
-      toast(`已恢复 ${db.students.length} 名学生` + (atts.length ? `、${atts.length} 个附件` : ""));
+      // 备份文件里如果没带标签，但当前数据里那个人有标签，就别让标签跟着没了：
+      // 只补空着的，备份里明确写着（哪怕是空数组）的一律以备份为准。
+      try {
+        const now = load();
+        const mine = new Map();
+        for (const s of (now.students || [])) {
+          const k = coreName(s.name) || String(s.name || "").trim();
+          const list = mine.get(k) || [];
+          list.push(parentTagsOf(s));
+          mine.set(k, list);
+        }
+        let filled = 0;
+        for (const s of db.students) {
+          if (Array.isArray(s.parentTags)) continue;
+          const k = coreName(s.name) || String(s.name || "").trim();
+          const bucket = mine.get(k);
+          if (!bucket || !bucket.length) continue;
+          const tags = bucket.shift();
+          if (tags.length) { s.parentTags = tags.slice(); filled++; }
+        }
+        if (filled) console.info(`导入备份时按姓名补回了 ${filled} 人的标签`);
+      } catch (e) { console.warn("保留标签失败（不影响导入）", e); }
+      // 不再用 confirm 一口气覆盖：先摆清楚这份文件里有什么、会替换掉什么，
+      // 勾了确认才能往下点；真正写入时 restoreBoard 还会把当前数据留底。
+      openRestoreDialog({
+        kind: "备份文件「" + (file.name || "未命名") + "」",
+        short: file.name,
+        when: fmtWhen(file.lastModified),
+        attrcount: atts.length,
+        missing: 0,
+      }, db, atts);
     } catch (e) {
       console.error(e);
       toast("备份文件读不了：" + e.message);
@@ -15127,6 +15836,7 @@ const SYNC = (() => {
 
   DB = load();
   render();
+  maybeAutoSnapshot("boot");   // 每天第一张自动快照：打开看板时拍（不产生任何下载文件）
   loadCustomWall();   // 自定义背景图存在 IndexedDB，异步取回来后再刷一次主题
   askPersistentStorage();
 })();
