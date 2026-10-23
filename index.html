@@ -2135,6 +2135,47 @@ section.list { background: var(--bg); }
 .card .row1 .ntag { flex: 0 1 auto; order: 1; }
 /* 等级徽章跟着姓名走（它是一眼的判断，不该被挤到第二行去）；徽章排在它后面 */
 .card .row1 .lv { order: 0; }
+
+/* ==========================================================================
+ * 2026-10-23 · 卡片页重排（身份 / 标签 / 指标 / 状态 / 问题 五段）
+ *
+ * 原来 .row1 + .chips 把姓名、家长类型、等级、打卡、电联、成绩、跟进全塞在两排里：
+ * 红黄绿挤成一片分不清「标签」和「进度」，姓名还会被挤成竖排。
+ * 现在按语义分五段，段与段之间用留白拉开；没有内容的段不渲染。
+ * 只作用于卡片页自己的 .cd-* / .cfoo t 类，待跟进页的老 .row1 结构不受影响。
+ * ========================================================================== */
+
+/* ① 身份行：勾选框 + 姓名 + 住校/走读 + 等级（等级靠右当次要信息） */
+.cd-hd { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; row-gap: 6px; }
+.cd-hd .nm { font-size: 17px; font-weight: 750; letter-spacing: .2px;
+  white-space: nowrap; flex: 0 0 auto; }
+.cd-hd .cd-nt { display: inline-flex; flex-wrap: wrap; gap: 4px; flex: 0 1 auto; min-width: 0; }
+.cd-hd .cd-lv { margin-left: auto; flex: none; }
+
+/* ② 标签行：问题标签（灰）+ 家长类型（彩），允许自然换行 */
+.card .cd-tags { display: flex; flex-wrap: wrap; gap: 6px; row-gap: 6px; }
+
+/* ③ 指标行：三列等宽，列间留白（数字和标签上下对齐） */
+.card .scores { gap: 10px; }
+
+/* ④ 状态与成绩：跟标签分开，上边一条虚线表示「这一排是进度」 */
+.card .cd-stat { display: flex; flex-wrap: wrap; gap: 6px; row-gap: 6px;
+  padding-top: 11px; border-top: 1px dashed var(--line); }
+
+/* ⑤ 问题：最多三行，超出省略（下面还有「完整分析」可以进去看全文） */
+.card .cons { -webkit-line-clamp: 3; }
+
+/* ⑤ 底部入口 */
+.card .cfoot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding-top: 11px; border-top: 1px dashed var(--line); }
+.card .cfoot .hint-inline { flex: 1 1 auto; }
+
+/* 卡片按内容自然增高：信息少的卡片不用被同行的高卡拉出一大截空白；
+   每张卡内部结构一样，所以整体仍然是齐的 */
+.cards { align-items: start; }
+
+/* 卡片本身：内部留白再宽一点，免得文字贴着边框 */
+.card { padding: 16px 18px; }
 </style>
 </head>
 <body>
@@ -7555,39 +7596,52 @@ const SYNC = (() => {
     }).join("")}</div>`;
   }
 
-  function chipsOf(s) {
-    const out = [];
+  /**
+   * 卡片上的芯片分成两排（2026-10-23）：
+   *   ① 标签排 —— 问题标签（灰底胶囊）+ 家长类型（彩色胶囊），回答「这个学生是谁」；
+   *   ② 状态排 —— 打卡 / 电联 / 跟进 / 最近成绩 / 聊天，回答「现在做到哪一步」。
+   *
+   * 之前两排混在一个 .chips 里，红黄绿挤成一片，老师分不清哪个是标签、哪个是进度；
+   * 另外「住校 / 走读」本来就在姓名旁有一枚 ntag 徽章，家长类型里又出现一次，
+   * 所以这里把跟 ntag 重名的从标签排里剔掉，同一类内部也去重。
+   */
+  function cardChipsOf(s) {
+    const ntSet = new Set(ntOf(s));
+    const tags = [...new Set(tagsOf(s))].filter((t) => !ntSet.has(t));
+    const ptags = [...new Set(parentTagsOf(s))].filter((t) => !ntSet.has(t));
+    const tagHtml = [
+      ...tags.map((t) => `<span class="chip tag">${esc(t)}</span>`),
+      ...ptags.map((t) => {
+        const c = parentTagColor(t);
+        return `<span class="chip ptag" style="background:${hexSoft(c)};color:${c};border-color:${hexSoft(c)}" title="家长类型">👤 ${esc(t)}</span>`;
+      }),
+    ].join("");
+
+    const st = [];
     for (const f of DB.config.flags) {
       const done = flagDone(s, f);
       const raw = (s.flags || {})[f.key] || {};
       // 「其它」状态（原表里写的"没时间"这种）既不算完成也不算未完成，单独用琥珀色
       const other = flagType(f) === "yesno" && raw.status === "other";
-      // 2026-10-16 混搭改版：未完成从红色（.chip.no = 红底红字）改成暖橘（.chip.act）。
-      // 73 人的班里「今天还没打卡 / 还没电联」是**常态**，一屏几十个粉红色芯片
-      // 看着像全班都出事了、也把真正要报警的红色淹掉了。红色现在只留给
-      // 「待跟进逾期」和「短板」这类真异常；未完成只是「还没做」，用暖橘提醒即可。
-      out.push(`<span class="chip ${done ? "ok" : other ? "ex" : "act"}">${esc(flagText(s, f))}</span>`);
-    }
-    for (const t of tagsOf(s)) out.push(`<span class="chip tag">${esc(t)}</span>`);
-    // 家长类型用左上角一个小圆点区分，一眼能看出「这条是关于家长的，不是学生的问题」
-    for (const t of parentTagsOf(s)) {
-      const c = parentTagColor(t);
-      out.push(`<span class="chip ptag" style="background:${hexSoft(c)};color:${c};border-color:${hexSoft(c)}" title="家长类型">👤 ${esc(t)}</span>`);
+      // 2026-10-16：未完成从红色改成暖橘。73 人的班里「今天还没打卡」是常态，
+      // 一屏几十个粉红芯片看着像全班都出事了，红色只留给真异常（逾期、短板）。
+      st.push(`<span class="chip ${done ? "ok" : other ? "ex" : "act"}">${esc(flagText(s, f))}</span>`);
     }
     const ex = examInfo(s);
     if (ex.latest) {
       const arrow = ex.delta === null ? "" : ex.delta > 0 ? ` ↑${ex.delta}` : ex.delta < 0 ? ` ↓${Math.abs(ex.delta)}` : " –";
-      out.push(`<span class="chip" title="${esc(ex.latest.name || "最近一次考试")}">📝 ${ex.latest.score}${
+      st.push(`<span class="chip" title="${esc(ex.latest.name || "最近一次考试")}">📝 ${ex.latest.score}${
         typeof ex.latest.full === "number" ? "/" + ex.latest.full : ""}${
         arrow ? `<span style="color:${ex.delta > 0 ? "var(--green)" : ex.delta < 0 ? "var(--red)" : "var(--ink-3)"}">${arrow}</span>` : ""}</span>`);
     } else if (ex.count) {
-      out.push(`<span class="chip">📝 ${ex.count} 次</span>`);
+      st.push(`<span class="chip">📝 ${ex.count} 次</span>`);
     }
-    if (s.chats?.length) out.push(`<span class="chip">💬 ${s.chats.length}</span>`);
+    if (s.chats?.length) st.push(`<span class="chip">💬 ${s.chats.length}</span>`);
     // 批量派的任务要能一眼看见 —— 派了却看不见等于白派（2026-10-16 加）
-    if (s.followUp?.text && !s.followUp?.done) out.push(`<span class="chip no" title="待跟进：${esc(s.followUp.text)}">📌 ${esc(s.followUp.text)}</span>`);
-    if (s.followUp?.done) out.push(`<span class="chip ok">已跟进</span>`);
-    return `<div class="chips">${out.join("")}</div>`;
+    if (s.followUp?.text && !s.followUp?.done) st.push(`<span class="chip no" title="待跟进：${esc(s.followUp.text)}">📌 ${esc(s.followUp.text)}</span>`);
+    if (s.followUp?.done) st.push(`<span class="chip ok">已跟进</span>`);
+
+    return { tagHtml, statHtml: st.join("") };
   }
 
   /** 等级徽章（自动算出来的会带一个「自动」标记，免得老师以为是自己填的） */
@@ -7608,22 +7662,42 @@ const SYNC = (() => {
     return list.length ? list[list.length - 1] : null;
   }
 
+  /**
+   * 学员卡片（2026-10-23 重排）—— 从上到下五段，各管一件事：
+   *   ① 身份：勾选框 + 姓名（视觉重点）+ 住校/走读 + 等级（靠右，次要信息）
+   *   ② 标签：问题标签 / 家长类型，自然换行
+   *   ③ 指标：学员粘合度 / 家长沟通 / 学员表现，三列对齐
+   *   ④ 状态与成绩：打卡、电联、跟进、最近成绩、聊天（不再和标签混排）
+   *   ⑤ 问题与入口：⚠ 问题（没有就一行淡色空状态）+ 📋 完整分析
+   *
+   * 没有内容的段直接不渲染，不留大块空白；卡片高度随内容自然增长，
+   * 标签多的卡片会高一些，但不截断、不压缩字号。
+   */
   function card(s) {
-    const lv = levelOf(s);
     const pe = cardPaperExam(s);
     const on = (view.selIds || []).includes(s.id);
-    return `<div class="card ${view.selected === s.id ? "sel" : ""}${on ? " checked" : ""}" data-id="${s.id}">
-      <div class="row1">
+    const ck = cardChipsOf(s);
+    // 问题跟标签同文时只留标签那一处：一张卡上同一个词出现两遍，看着像重复录入。
+    const consText = (s.cons || "").trim();
+    const consShown = consText && !tagsOf(s).includes(consText);
+    return `<article class="card${view.selected === s.id ? " sel" : ""}${on ? " checked" : ""}" data-id="${s.id}">
+      <header class="cd-hd">
         <input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${on ? "checked" : ""}
           title="勾上可以批量操作（打卡、加标签、派任务…）">
-        <span class="nm">${esc(s.name)}</span>${ntBadges(s)}${levelBadge(s)}</div>
-      ${scoreBox(s)}${chipsOf(s)}
-      <div class="cons ${s.cons ? "" : "empty"}">${s.cons ? "⚠ " + esc(s.cons) : "（未记录问题）"}</div>
-      ${pe ? `<div class="cardfoot">
+        <span class="nm">${esc(s.name)}</span>
+        <span class="cd-nt">${ntBadges(s)}</span>
+        <span class="cd-lv">${levelBadge(s)}</span>
+      </header>
+      ${ck.tagHtml ? `<div class="cd-tags">${ck.tagHtml}</div>` : ""}
+      ${scoreBox(s)}
+      ${ck.statHtml ? `<div class="cd-stat">${ck.statHtml}</div>` : ""}
+      ${consShown ? `<div class="cons">⚠ ${esc(consText)}</div>`
+        : (consText ? "" : `<div class="cons empty">（未记录问题）</div>`)}
+      ${pe ? `<div class="cfoot">
         <button class="btnmini" data-cardfull="${esc(s.id)}" data-cardfbatch="${esc(batchKeyOf(pe))}"
           title="答题卡、板块分析、复习计划、话术、导出 —— 整页看">📋 完整分析</button>
         <span class="hint-inline">${esc(pe.name || "没写考试名")}</span></div>` : ""}
-    </div>`;
+    </article>`;
   }
 
   // 成绩页专用：把内容区切成「不自己滚、由里面那张表格滚」，
