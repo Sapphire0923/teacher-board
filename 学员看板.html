@@ -2176,6 +2176,52 @@ section.list { background: var(--bg); }
 
 /* 卡片本身：内部留白再宽一点，免得文字贴着边框 */
 .card { padding: 16px 18px; }
+
+/* ==========================================================================
+ * 2026-10-23 晚 · 卡片五段对齐（subgrid）
+ *
+ * 上一版每张卡自己往下排：标签多两行，评分区就被顶下去 —— 同一行看着参差。
+ * 现在 .cards 是 grid，.card 用 `grid-template-rows: subgrid` 占父网格的 5 条行轨道，
+ * 同一行的卡片共享这 5 条轨道，于是：
+ *   · 标签多的卡片把「标签轨道」撑高，同行的卡一起变高 → 评分区仍然齐；
+ *   · 无标签的卡片也占着同样的标签轨道高度 → 评分区和旁边对齐；
+ *   · 标签多到换三行也不截断，整行一起长高。
+ * 代价是内容少的卡片会留白，所以留白统一收在最后一段（问题区），
+ * 「📋 完整分析」按钮用 margin-top:auto 贴底 —— 底边看起来是齐的。
+ * ========================================================================== */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+
+.card {
+  display: grid;
+  grid-template-rows: subgrid;   /* 关键：跟同行的卡片共享 5 条行轨道 */
+  grid-row: span 5;
+  row-gap: 10px;
+  column-gap: 0;
+  align-content: start;
+}
+
+/* ② 标签区：空的时候高度为 0，但轨道仍与同行共用 */
+.card .cd-tags { display: flex; flex-wrap: wrap; gap: 6px; row-gap: 6px; }
+
+/* ③ 评分区：等宽三列（数字与标题上下对齐，见 .scores/.sc 原有规则） */
+.card .cd-met { min-width: 0; }
+
+/* ④ 状态区：最多自然换成两行；仍然只放打卡/电联/跟进/成绩/聊天 */
+.card .cd-stat { display: flex; flex-wrap: wrap; gap: 6px; row-gap: 6px;
+  padding-top: 11px; border-top: 1px dashed var(--line); align-content: flex-start; }
+
+/* ⑤ 问题 + 入口：留白收在这里，按钮贴底 */
+.card .cd-foot { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.card .cd-foot .cons { -webkit-line-clamp: 3; }
+.card .cd-foot .cfoot { margin-top: auto; display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap; padding-top: 11px; border-top: 1px dashed var(--line); }
+.card .cd-foot .cfoot .hint-inline { flex: 1 1 auto; }
 </style>
 </head>
 <body>
@@ -7670,8 +7716,9 @@ const SYNC = (() => {
    *   ④ 状态与成绩：打卡、电联、跟进、最近成绩、聊天（不再和标签混排）
    *   ⑤ 问题与入口：⚠ 问题（没有就一行淡色空状态）+ 📋 完整分析
    *
-   * 没有内容的段直接不渲染，不留大块空白；卡片高度随内容自然增长，
-   * 标签多的卡片会高一些，但不截断、不压缩字号。
+   * 这五个容器**永远都渲染**（内容可以是空的）：卡片用 subgrid 占 5 条行轨道，
+   * 同一行卡片共享轨道，所以标签多的卡不会把评分区顶下去，上下对齐；
+   * 标签多的时候整行一起长高，内容不截断、字号不缩小。
    */
   function card(s) {
     const pe = cardPaperExam(s);
@@ -7688,15 +7735,17 @@ const SYNC = (() => {
         <span class="cd-nt">${ntBadges(s)}</span>
         <span class="cd-lv">${levelBadge(s)}</span>
       </header>
-      ${ck.tagHtml ? `<div class="cd-tags">${ck.tagHtml}</div>` : ""}
-      ${scoreBox(s)}
-      ${ck.statHtml ? `<div class="cd-stat">${ck.statHtml}</div>` : ""}
-      ${consShown ? `<div class="cons">⚠ ${esc(consText)}</div>`
+      <div class="cd-tags">${ck.tagHtml}</div>
+      <div class="cd-met">${scoreBox(s)}</div>
+      <div class="cd-stat">${ck.statHtml}</div>
+      <div class="cd-foot">
+        ${consShown ? `<div class="cons">⚠ ${esc(consText)}</div>`
         : (consText ? "" : `<div class="cons empty">（未记录问题）</div>`)}
-      ${pe ? `<div class="cfoot">
+        ${pe ? `<div class="cfoot">
         <button class="btnmini" data-cardfull="${esc(s.id)}" data-cardfbatch="${esc(batchKeyOf(pe))}"
           title="答题卡、板块分析、复习计划、话术、导出 —— 整页看">📋 完整分析</button>
         <span class="hint-inline">${esc(pe.name || "没写考试名")}</span></div>` : ""}
+      </div>
     </article>`;
   }
 
