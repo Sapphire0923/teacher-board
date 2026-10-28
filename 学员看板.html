@@ -2222,6 +2222,112 @@ section.list { background: var(--bg); }
 .card .cd-foot .cfoot { margin-top: auto; display: flex; align-items: center; gap: 8px;
   flex-wrap: wrap; padding-top: 11px; border-top: 1px dashed var(--line); }
 .card .cd-foot .cfoot .hint-inline { flex: 1 1 auto; }
+
+
+/* ==========================================================================
+ * 2026-10-28 · 成绩页「考试分析与跟进」
+ * 档次条 / 档次表单 / 沟通按钮 / 薄弱标签 / 批量条。
+ * 全部挂在成绩页（.sc-*），不碰其它页面；颜色走 :root 令牌。
+ * ========================================================================== */
+
+.sc-track {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: 0 0 10px; padding: 10px 14px;
+  background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.sc-track-h { font-size: var(--fs-cell); font-weight: 700; color: var(--ink-2); }
+.sc-track-line { font-size: var(--fs-cell); color: var(--ink); }
+.sc-track-line b { font-variant-numeric: tabular-nums; }
+.sc-track-line.none { color: var(--ink-3); }
+.sc-track-n { display: inline-flex; gap: 8px; font-size: var(--fs-aux); }
+.sc-track-n .b-A { color: var(--green); font-weight: 700; }
+.sc-track-n .b-B { color: var(--amber); font-weight: 700; }
+.sc-track-n .b-C { color: var(--red); font-weight: 700; }
+.sc-track-n .b-none { color: var(--ink-3); }
+.sc-track-comm { font-size: var(--fs-aux); color: var(--ink-2); }
+.sc-track-comm b { font-size: var(--fs-cell); color: var(--red); }
+
+.sc-trackform {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: 0 0 10px; padding: 12px 14px;
+  background: var(--accent-2-soft); border: 1px solid var(--accent-2-line); border-radius: var(--radius);
+}
+.sc-trackform label { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-cell); color: var(--ink-2); }
+.sc-trackform input {
+  width: 88px; height: 32px; padding: 0 8px; font-size: var(--fs-cell); font-family: inherit;
+  color: var(--ink); background: var(--panel-solid);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-s);
+}
+.sc-trackform input:focus { outline: none; border-color: var(--accent); }
+.sc-tracktips { font-size: var(--fs-aux); color: var(--ink-3); }
+.sc-tracktips.bad { color: var(--red); font-weight: 600; }
+
+.sc-batch {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin: 0 0 10px; padding: 9px 14px;
+  background: var(--accent-soft); border: 1px solid var(--accent-2-line); border-radius: var(--radius);
+  font-size: var(--fs-cell);
+}
+.sc-batch b { color: var(--accent); font-size: var(--fs-body); }
+.sc-batch-warn { font-size: var(--fs-aux); color: var(--ink-2); }
+
+.sc-sel {
+  height: 32px; padding: 0 8px; font-size: var(--fs-aux); font-family: inherit;
+  color: var(--ink); background: var(--panel-solid);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-s); cursor: pointer;
+}
+
+.sc-band {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 24px; height: 22px; padding: 0 7px;
+  font-size: var(--fs-aux); font-weight: 700; border-radius: 6px; border: 1px solid transparent;
+}
+.sc-band.b-A { color: var(--green); background: var(--green-soft); border-color: var(--green-line); }
+.sc-band.b-B { color: var(--amber); background: var(--amber-soft); border-color: var(--amber-line); }
+.sc-band.b-C { color: var(--red); background: var(--red-soft); border-color: var(--red-line); }
+.sc-band.none { color: var(--ink-3); background: var(--panel-3); border-color: var(--line); font-weight: 600; }
+
+.sc-comm {
+  min-height: 26px; padding: 0 9px; font-size: var(--fs-aux); font-family: inherit;
+  border-radius: 999px; cursor: pointer; border: 1px solid var(--line-strong);
+  background: var(--panel-2); color: var(--ink-2);
+}
+.sc-comm.no { border-style: dashed; }
+.sc-comm.yes { background: var(--green-soft); border-color: var(--green-line); color: var(--green); font-weight: 700; }
+.sc-comm:hover { border-color: var(--accent); color: var(--accent); }
+
+.sc-weak {
+  display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap;
+  min-height: 26px; padding: 3px 8px; font-family: inherit;
+  background: var(--panel-2); border: 1px dashed var(--line-strong); border-radius: 8px; cursor: pointer;
+}
+.sc-weak:hover { border-color: var(--accent); }
+.sc-wtag {
+  font-size: var(--fs-mini); color: var(--ink); background: var(--tag-bg);
+  border-radius: 6px; padding: 2px 7px; white-space: nowrap;
+}
+/* 列一窄，inline-flex 会把每个标签挤成一列竖排的方块（看着像竖着写）。
+   这里定住：标签不换行，表头给最小宽度，让表格自己分。 */
+#stage.sc-wide table.grid th[data-col="weak"] { min-width: 132px; white-space: nowrap; }
+#stage.sc-wide table.grid td[data-col="weak"] { white-space: nowrap; }
+.sc-weak { flex-wrap: nowrap; white-space: nowrap; }
+.sc-wnone { font-size: var(--fs-mini); color: var(--ink-3); }
+
+.sc-weakpop {
+  position: fixed; right: 28px; bottom: 28px; z-index: 60; width: 320px;
+  padding: 14px 16px; background: var(--panel-solid);
+  border: 1px solid var(--line-strong); border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+}
+.sc-weakpop-h { font-size: var(--fs-body); color: var(--ink); margin-bottom: 10px; }
+.sc-weakpop-h span { display: block; font-size: var(--fs-mini); color: var(--ink-3); margin-top: 2px; }
+.sc-weakpop-b { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sc-weakpop-b label { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-cell); color: var(--ink); cursor: pointer; }
+.sc-weakpop-tip { margin-top: 10px; font-size: var(--fs-mini); color: var(--ink-3); line-height: 1.5; }
+.sc-weakpop-a { display: flex; gap: 8px; margin-top: 12px; }
+
+.col-pick { width: 34px; text-align: center; }
+.col-pick input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
 </style>
 </head>
 <body>
@@ -6430,6 +6536,8 @@ const SYNC = (() => {
     // 成绩页的临时视图状态：搜索词 / 排序键 / 方向 / 第几页 / 输入框是否还该拿着焦点
     //（列开关和每页人数是长期偏好，存在 config.scv 里，不在这儿）
     scQ: "", scSort: "", scDir: 1, scPage: 1, scQFocus: false,
+    // 考试跟踪（2026-10-28）：筛选 + 勾选 + 面板开关；全部挂在 view 上，换考试时重置
+    scBand: "all", scComm: "all", scWeak: "all", scSel: [], scTrackOpen: false, scWeakFor: null,
     // 电联侧栏：选中的批次 id（null = 全部）/ 当前结果筛选
     callBatch: null, callStatus: "未联系",
     // 电联页的姓名搜索：跟「结果筛选」叠加，都只筛名单、不动上面的统计
@@ -13650,13 +13758,215 @@ const SYNC = (() => {
   }
 
   /** 本场考试的列清单（固定列 + 已开且真有数据的列） */
+  /* ================================================ 成绩跟踪（2026-10-28）
+   * 每场考试自己的一套：档次线、沟通标记、薄弱板块。三样都挂在「考试名」上，
+   * 换一场考试就是另一套，绝不串场（用户明确要求：别把某场的问题带到别的考试）。
+   *
+   * DB.scoreTrack[考试名] = {
+   *   full, a, b,                    // 满分 + A 线 + B 线（C = 低于 B 线）
+   *   comm: { [sid]: {st:1|0, date, note} },
+   *   weak: { [sid]: ["基础", ...] },
+   * }
+   * 老数据里没有 scoreTrack —— 一律当「没设置过」，不补默认线、不猜档次。
+   */
+  const WEAK_TAGS = ["基础", "文言文", "诗歌", "阅读理解", "作文"];
+
+  function trackOf(name) {
+    DB.scoreTrack ||= {};
+    if (!DB.scoreTrack[name] || typeof DB.scoreTrack[name] !== "object") DB.scoreTrack[name] = {};
+    return DB.scoreTrack[name];
+  }
+
+  /** 这场考试的档次线；没设或不合法就返回 null（不拿及格线/优秀率去顶替） */
+  function trackLines(name) {
+    const t = DB.scoreTrack && DB.scoreTrack[name];
+    if (!t) return null;
+    const full = typeof t.full === "number" && t.full > 0 ? t.full : examFull(name);
+    const a = Number(t.a), b = Number(t.b);
+    if (!(a > 0) || !(b > 0) || !(a <= full) || !(b < a)) return null;
+    return { full, a, b };
+  }
+
+  /** 分数 → 档次；没分数返回 null（未录入 / 缺考 / 无效都不归类） */
+  function bandOfScore(score, L) {
+    if (!L || typeof score !== "number" || !isFinite(score)) return null;
+    if (score >= L.a) return "A";
+    if (score >= L.b) return "B";
+    return "C";
+  }
+
+  function bandOf(name, sid) {
+    const e = examOf(sid, name);
+    const score = e && typeof e.score === "number" && !isNaN(e.score) ? e.score : null;
+    return bandOfScore(score, trackLines(name));
+  }
+
+  /** 沟通标记：没记过 = 未沟通；marked 用来区分「老师明确标了未沟通」和「压根没标」 */
+  function commOf(name, sid) {
+    const c = DB.scoreTrack && DB.scoreTrack[name] && DB.scoreTrack[name].comm;
+    const v = c && c[sid];
+    if (!v) return { st: 0, marked: false, date: "", note: "" };
+    return { st: v.st === 1 ? 1 : 0, marked: true, date: v.date || "", note: v.note || "" };
+  }
+
+  function weakOf(name, sid) {
+    const w = DB.scoreTrack && DB.scoreTrack[name] && DB.scoreTrack[name].weak;
+    const arr = Array.isArray(w && w[sid]) ? w[sid] : [];
+    return arr.filter((t) => WEAK_TAGS.includes(t));
+  }
+
+  /** 档次/沟通/薄弱统计。分数只算「有分数」的；未录入单独计数，不进分母。 */
+  function trackStats(name) {
+    const L = trackLines(name);
+    const bands = { A: [], B: [], C: [], none: [], unrecorded: [] };
+    let commYes = 0;
+    const weakCount = {};
+    for (const t of WEAK_TAGS) weakCount[t] = 0;
+    for (const s of DB.students) {
+      const e = (s.exams || []).find((x) => (x.name || "").trim() === name);
+      const ok = e && typeof e.score === "number" && !isNaN(e.score);
+      if (!ok) { bands.unrecorded.push(s.id); }
+      else { bands[bandOfScore(e.score, L) || "none"].push(s.id); }
+      if (commOf(name, s.id).st === 1) commYes++;
+      for (const t of weakOf(name, s.id)) weakCount[t]++;
+    }
+    return { L, bands, commYes, commNo: DB.students.length - commYes, weakCount, unrecorded: bands.unrecorded.length };
+  }
+
+  /** 档次徽标：A/B/C 三色 + 文字；没有档次就写「未录入」 */
+  function bandBadge(b) {
+    if (!b) return `<span class="sc-band none" title="没有有效成绩，不归类">—</span>`;
+    return `<span class="sc-band b-${b}">${b}</span>`;
+  }
+
+  function commChip(name, sid) {
+    const c = commOf(name, sid);
+    if (!c.st) return `<button class="sc-comm no" data-comm="${sid}" title="点一下标成已沟通">未沟通</button>`;
+    const tip = [c.date ? "沟通于 " + c.date : "", c.note].filter(Boolean).join("｜");
+    return `<button class="sc-comm yes" data-comm="${sid}" title="${esc(tip || "点一下改回未沟通")}">已沟通</button>`;
+  }
+
+  function weakCell(name, sid) {
+    const w = weakOf(name, sid);
+    const tags = w.length ? w.map((t) => `<span class="sc-wtag">${esc(t)}</span>`).join("")
+      : `<span class="sc-wnone">+ 标记</span>`;
+    return `<button class="sc-weak" data-weak="${sid}" title="点开多选薄弱板块">${tags}</button>`;
+  }
+
+  function trackFormHtml(name) {
+    const L = trackLines(name);
+    const full = L ? L.full : examFull(name);
+    return `<div class="sc-trackform" id="scTrackForm">
+      <label>满分<input id="scTFull" type="number" min="1" max="999" value="${full}"></label>
+      <label>A 线<input id="scTA" type="number" min="1" max="999" value="${L ? L.a : ""}" placeholder="达到即 A"></label>
+      <label>B 线<input id="scTB" type="number" min="1" max="999" value="${L ? L.b : ""}" placeholder="达到即 B"></label>
+      <span class="sc-tracktips" id="scTTip">A：≥ A 线｜B：≥ B 线但没到 A 线｜C：低于 B 线。B 线必须小于 A 线，A 线不能高于满分。</span>
+      <span style="flex:1"></span>
+      <button class="btn primary" id="scTSave">保存档次线</button>
+      <button class="btn ghost" id="scTCancel">取消</button>
+    </div>`;
+  }
+
+  function batchBarHtml() {
+    const n = (view.scSel || []).length;
+    return `<div class="sc-batch" id="scBatch">
+      <b>已选 ${n} 人</b>
+      <span class="sc-batch-warn">只改这 ${n} 人的沟通 / 薄弱，不动成绩</span>
+      <button class="btnmini" id="scBYes">设为已沟通</button>
+      <button class="btnmini" id="scBNo">设为未沟通</button>
+      <button class="btnmini" id="scBWeak">加薄弱板块…</button>
+      <button class="btnmini" id="scBClear">清空薄弱</button>
+      <span style="flex:1"></span>
+      <button class="btnmini ghost" id="scBNone">取消选择</button>
+    </div>`;
+  }
+
+  function weakPopHtml(name) {
+    const sid = view.scWeakFor;
+    if (!sid) return "";
+    const st = DB.students.find((x) => x.id === sid);
+    if (!st) return "";
+    const cur = weakOf(name, sid);
+    return `<div class="sc-weakpop" id="scWeakPop" data-wsid="${esc(sid)}">
+      <div class="sc-weakpop-h"><b>${esc(st.name)}</b> · 薄弱板块<span>${esc(name)}</span></div>
+      <div class="sc-weakpop-b">${WEAK_TAGS.map((t) =>
+        `<label><input type="checkbox" data-wtag="${esc(t)}"${cur.includes(t) ? " checked" : ""}>${esc(t)}</label>`).join("")}</div>
+      <div class="sc-weakpop-tip">按这份卷子的失分板块判断；没有答题卡就先留空，别凭总分猜。</div>
+      <div class="sc-weakpop-a">
+        <button class="btn primary" id="scWeakSave">保存</button>
+        <button class="btn ghost" id="scWeakCancel">取消</button>
+      </div>
+    </div>`;
+  }
+
+  function saveTrackLines(name, full, a, b) {
+    const t = trackOf(name);
+    t.full = full; t.a = a; t.b = b;
+    t.updatedAt = nowStamp();
+    save();
+  }
+
+  function setComm(name, sid, st, date, note) {
+    const t = trackOf(name);
+    t.comm ||= {};
+    t.comm[sid] = { st: st ? 1 : 0, date: date || "", note: note || "" };
+    save();
+  }
+
+  function setWeak(name, sid, tags) {
+    const t = trackOf(name);
+    t.weak ||= {};
+    if (tags && tags.length) t.weak[sid] = tags.slice();
+    else delete t.weak[sid];
+    save();
+  }
+
+  function batchComm(name, st) {
+    const ids = (view.scSel || []).slice();
+    if (!ids.length) return;
+    const word = st ? "已沟通" : "未沟通";
+    if (!window.confirm(`把这 ${ids.length} 名学生在这场考试下标成「${word}」？\n只改沟通标记，不动成绩。`)) return;
+    for (const sid of ids) { const c = commOf(name, sid); setComm(name, sid, st, c.date, c.note); }
+    view.scSel = [];
+    renderStage();
+    toast(`已把 ${ids.length} 人标成「${word}」`, 2600);
+  }
+
+  function batchWeak(name) {
+    const ids = (view.scSel || []).slice();
+    if (!ids.length) return;
+    const pick = window.prompt(`给这 ${ids.length} 人加哪些薄弱板块？可多选，用「、」或逗号隔开。\n可选：${WEAK_TAGS.join("、")}`, "");
+    if (pick === null) return;
+    const tags = String(pick).split(/[、,，\s]+/).filter((x) => WEAK_TAGS.includes(x));
+    if (!tags.length) return toast(`没认出板块名，可选：${WEAK_TAGS.join("、")}`, 3200);
+    if (!window.confirm(`给这 ${ids.length} 人加上「${tags.join("、")}」？\n已标记的其它板块会保留。`)) return;
+    for (const sid of ids) setWeak(name, sid, [...new Set([...weakOf(name, sid), ...tags])]);
+    view.scSel = [];
+    renderStage();
+    toast(`已给 ${ids.length} 人加上「${tags.join("、")}」`, 2800);
+  }
+
+  function batchClearWeak(name) {
+    const ids = (view.scSel || []).slice();
+    if (!ids.length) return;
+    if (!window.confirm(`清空这 ${ids.length} 人在这场考试下的薄弱板块？`)) return;
+    for (const sid of ids) setWeak(name, sid, []);
+    view.scSel = [];
+    renderStage();
+    toast(`已清空 ${ids.length} 人的薄弱板块`, 2400);
+  }
+
   function scoreCols(name) {
     const C = scv().cols;
     const showSec = examRecords(name).some((r) => studentSections(r.sid, name));
     const showPrev = examRecords(name).some((r) => prevExamOf(r.sid, name));
     return [
       { k: "rank", label: "名次", cls: "sticky-l col-num", always: true },
+      { k: "pick", label: "", cls: "col-pick", always: true },
       { k: "name", label: "姓名", cls: "sticky-l sticky-2 col-grow", always: true },
+      { k: "band", label: "档次", cls: "col-num" },
+      { k: "comm", label: "沟通", cls: "col-num" },
+      { k: "weak", label: "薄弱板块", cls: "col-sect" },
       ...SC_OPT_COLS.filter((o) => C[o.k]
         && (o.k !== "sec" || showSec) && (o.k !== "prev" || showPrev)).map((o) => ({
         k: o.k, label: o.label, sort: o.sort,
@@ -13682,11 +13992,20 @@ const SYNC = (() => {
         diff: st.avg === null ? null : r.score - st.avg,
         secs: studentSections(r.sid, name),
         prev, d2: prev ? r.score - prev.score : null,
+        band: bandOf(name, r.sid),
+        comm: commOf(name, r.sid),
+        weak: weakOf(name, r.sid),
       };
     });
     const total = rows.length;
     const q = String(view.scQ || "").trim();
     if (q) rows = rows.filter((x) => x.name.indexOf(q) >= 0);
+    // 三个筛选互相叠加；档次筛选用「未录入」时落到 none（没有效成绩的人）
+    if (view.scBand && view.scBand !== "all") rows = rows.filter((x) => (x.band || "none") === view.scBand);
+    if (view.scComm && view.scComm !== "all") rows = rows.filter((x) => (view.scComm === "yes" ? x.comm.st === 1 : x.comm.st !== 1));
+    if (view.scWeak && view.scWeak !== "all") {
+      rows = rows.filter((x) => (view.scWeak === "none" ? !x.weak.length : x.weak.includes(view.scWeak)));
+    }
     const sk = view.scSort;
     const keyOf = {
       rank: (x) => x.rank, score: (x) => x.score, rate: (x) => x.rate,
@@ -13714,7 +14033,8 @@ const SYNC = (() => {
   function exportScoreXlsx(name) {
     const c = DB.config;
     const V = scoreView(name);
-    const cols = scoreCols(name);
+    const cols = scoreCols(name).filter((x) => x.k !== "pick");
+    const TT = trackStats(name);
     if (!V.total) { toast("这场考试还没有人录分数"); return; }
     if (!V.rows.length) { toast("当前搜索条件下一个人都没有"); return; }
     const st = V.st;
@@ -13727,12 +14047,20 @@ const SYNC = (() => {
       if (k === "diff") return x.diff === null ? "" : Number(fmtScore(x.diff));
       if (k === "sec") return secsText(x.secs);
       if (k === "prev") return x.d2 === null ? "" : Number(fmtScore(x.d2));
+      if (k === "band") return x.band || "未录入";
+      if (k === "comm") return (x.comm.st ? "已沟通" : "未沟通") + (x.comm.date ? " " + x.comm.date : "");
+      if (k === "weak") return x.weak.join("、");
       return "";
     };
     // 导出的是「当前筛选后、当前排好序」的全部行（不分页）—— 跟眼前看到的规则一致
     const body = V.rows.map((x) => cols.map((k) => cellOf(x, k.k)));
     // 末尾附一段统计和筛选说明，老师对着 Excel 也知道这张表是怎么来的
     body.push([]);
+    // 表尾先把「这张表按什么口径出的」写清楚：考试名 / 满分 / 档次线 / 筛选条件
+    body.push(["考试", name]);
+    body.push(["满分", TT.L ? TT.L.full : V.full]);
+    if (TT.L) body.push(["档次线", `A ≥ ${TT.L.a}`, `B ≥ ${TT.L.b}`, `C < ${TT.L.b}`]);
+    else body.push(["档次线", "未设置（档次列不归类）"]);
     body.push(["参考人数", V.total]);
     if (st.avg !== null) body.push(["平均分", Number(fmtScore(st.avg))]);
     if (st.max !== null) body.push(["最高分", st.max]);
@@ -13741,6 +14069,9 @@ const SYNC = (() => {
     if (st.passRate !== null) body.push(["及格率", fmtPct(st.passRate)]);
     if (st.goodRate !== null) body.push(["优秀率", fmtPct(st.goodRate)]);
     if (V.q) body.push(["本次导出已按姓名筛选", V.q + `（${V.hit}/${V.total} 人）`]);
+    if (view.scBand && view.scBand !== "all") body.push(["筛选·档次", view.scBand === "none" ? "未归类" : view.scBand + " 档"]);
+    if (view.scComm && view.scComm !== "all") body.push(["筛选·沟通", view.scComm === "yes" ? "已沟通" : "未沟通"]);
+    if (view.scWeak && view.scWeak !== "all") body.push(["筛选·薄弱", view.scWeak === "none" ? "未标记" : view.scWeak]);
     if (view.scSort) body.push(["排序", (cols.find((x) => x.k === view.scSort)?.label || view.scSort)
       + (view.scDir === -1 ? " 降序" : " 升序")]);
     const wide = (k) => (k === "name" ? 14 : k === "sec" ? 18 : k === "rank" ? 6 : 9);
@@ -13913,6 +14244,7 @@ const SYNC = (() => {
       // 单场考试：默认按分数降序，表头可点着换列重排；带名次 + 成绩单上常见的统计
       const recs = examRecords(cur);
       const full = examFull(cur);
+      const T = trackStats(cur);
       const date = recs[0]?.date || "";
       const st = examStats(cur);
       const V = scoreView(cur);
@@ -13925,6 +14257,11 @@ const SYNC = (() => {
       const hasPrev = recs.some((r) => prevExamOf(r.sid, cur));
       const cell = (x, k) => {
         if (k === "rank") return `<td class="sticky-l" data-col="rank">${x.rank}</td>`;
+        if (k === "pick") return `<td class="col-pick"><input type="checkbox" data-pick="${x.sid}"${
+          (view.scSel || []).includes(x.sid) ? " checked" : ""}></td>`;
+        if (k === "band") return `<td class="col-num" data-col="band">${bandBadge(x.band)}</td>`;
+        if (k === "comm") return `<td class="col-num" data-col="comm">${commChip(cur, x.sid)}</td>`;
+        if (k === "weak") return `<td class="col-sect" data-col="weak">${weakCell(cur, x.sid)}</td>`;
         if (k === "name") return `<td class="sticky-l sticky-2" data-col="name"><b>${esc(x.name)}</b>${
           ntBadges(DB.students.find((s) => s.id === x.sid))}</td>`;
         if (k === "score") return `<td data-col="score"><b>${x.score}</b>${typeof x.full === "number" ? "/" + x.full : ""}</td>`;
@@ -13969,9 +14306,43 @@ const SYNC = (() => {
           <div class="sc-detail-src">${recs.length} 人已录 ${date ? "· " + esc(date) : ""} · 满分 ${full}</div>
         </div>
         ${statsHtml}
+        <div class="sc-track">
+          <span class="sc-track-h">档次线</span>
+          ${T.L
+            ? `<span class="sc-track-line">A ≥ <b>${T.L.a}</b> · B ≥ <b>${T.L.b}</b> · C &lt; ${T.L.b} · 满分 ${T.L.full}</span>`
+            : `<span class="sc-track-line none">还没设置档次线（不影响旧数据）</span>`}
+          <span class="sc-track-n">
+            <span class="b-A">A ${T.bands.A.length}</span>
+            <span class="b-B">B ${T.bands.B.length}</span>
+            <span class="b-C">C ${T.bands.C.length}</span>
+            <span class="b-none">未录入 ${T.unrecorded}</span>
+          </span>
+          <span style="flex:1"></span>
+          <span class="sc-track-comm">待沟通 <b>${T.commNo}</b> / ${DB.students.length}</span>
+          <button class="btnmini" id="scTrackBtn">${T.L ? "改档次线" : "设置档次线"}</button>
+        </div>
+        ${view.scTrackOpen ? trackFormHtml(cur) : ""}
+        ${(view.scSel || []).length ? batchBarHtml() : ""}
         <div class="sc-tools stick">
           <input class="sc-q" id="scQ" placeholder="搜姓名…" autocomplete="off" value="${esc(V.q)}">
           <span class="sc-hit">${V.q ? `筛出 ${V.hit} / ${V.total} 人` : ""}</span>
+          <select class="sc-sel" id="scBand">
+            <option value="all"${view.scBand === "all" || !view.scBand ? " selected" : ""}>全部档次</option>
+            <option value="A"${view.scBand === "A" ? " selected" : ""}>A 档</option>
+            <option value="B"${view.scBand === "B" ? " selected" : ""}>B 档</option>
+            <option value="C"${view.scBand === "C" ? " selected" : ""}>C 档</option>
+            <option value="none"${view.scBand === "none" ? " selected" : ""}>未归类</option>
+          </select>
+          <select class="sc-sel" id="scCommSel">
+            <option value="all"${view.scComm === "all" || !view.scComm ? " selected" : ""}>全部沟通</option>
+            <option value="no"${view.scComm === "no" ? " selected" : ""}>未沟通</option>
+            <option value="yes"${view.scComm === "yes" ? " selected" : ""}>已沟通</option>
+          </select>
+          <select class="sc-sel" id="scWeakSel">
+            <option value="all"${view.scWeak === "all" || !view.scWeak ? " selected" : ""}>全部板块</option>
+            ${WEAK_TAGS.map((t) => `<option value="${esc(t)}"${view.scWeak === t ? " selected" : ""}>${esc(t)}</option>`).join("")}
+            <option value="none"${view.scWeak === "none" ? " selected" : ""}>未标记薄弱</option>
+          </select>
           <span style="flex:1"></span>
           <span class="sc-colwrap">
             <button class="btn ghost" id="scColBtn">列 ▾</button>
@@ -13992,7 +14363,8 @@ const SYNC = (() => {
           <tbody>${V.shown.length ? V.shown.map((x) => `<tr data-id="${x.sid}">${cols.map((k) => cell(x, k.k)).join("")}</tr>`).join("")
             : `<tr><td class="sc-nohit" colspan="${cols.length}">没有名字含「${esc(V.q)}」的人</td></tr>`}</tbody>
         </table></div>
-        ${foot}`;
+        ${foot}
+        ${weakPopHtml(cur)}`;
       if (!recs.length) stage.innerHTML = `<div class="sc-tabs">${tabs}</div>
         <div class="sc-detail-h">
           <div class="sc-detail-title"><span>${esc(cur)}</span>
@@ -14023,7 +14395,8 @@ const SYNC = (() => {
       renderStage();
     });
     // 表格行点击 → 打开学生详情
-    stage.querySelectorAll("tbody tr[data-id]").forEach((tr) => tr.onclick = () => {
+    stage.querySelectorAll("tbody tr[data-id]").forEach((tr) => tr.onclick = (e) => {
+      if (e.target.closest("input, button, .sc-comm, .sc-weak, .col-pick, .sc-weakpop")) return;
       view.selected = tr.dataset.id;
       renderDetail();
     });
@@ -14089,6 +14462,66 @@ const SYNC = (() => {
     const a = $("scAdd"); if (a) a.onclick = addExam;
     const b = $("scImport"); if (b) b.onclick = openScore;
     bindHeadCompact("scCompact");
+    // ------- 档次线 / 沟通 / 薄弱 / 筛选 / 批量（2026-10-28）
+    const tb = $("scTrackBtn");
+    if (tb) tb.onclick = () => { view.scTrackOpen = !view.scTrackOpen; renderStage(); };
+    const tc = $("scTCancel");
+    if (tc) tc.onclick = () => { view.scTrackOpen = false; renderStage(); };
+    const ts = $("scTSave");
+    if (ts) ts.onclick = () => {
+      const full = Number($("scTFull").value), a = Number($("scTA").value), b = Number($("scTB").value);
+      const tip = $("scTTip");
+      const err = !(full > 0) ? "满分要大于 0"
+        : (!(a > 0) || !(b > 0)) ? "A 线和 B 线都要填"
+        : !(b < a) ? "B 线必须小于 A 线"
+        : !(a <= full) ? "A 线不能高于满分"
+        : "";
+      if (err) { if (tip) { tip.textContent = err; tip.classList.add("bad"); } return; }
+      saveTrackLines(cur, full, a, b);
+      view.scTrackOpen = false;
+      renderStage();
+      toast(`「${cur}」档次线已保存：A ≥ ${a} · B ≥ ${b}`, 2800);
+    };
+    stage.querySelectorAll("[data-comm]").forEach((b) => b.onclick = (e) => {
+      e.stopPropagation();
+      const sid = b.dataset.comm;
+      const c = commOf(cur, sid);
+      setComm(cur, sid, c.st ? 0 : 1, c.date, c.note);
+      renderStage();
+    });
+    stage.querySelectorAll("[data-weak]").forEach((b) => b.onclick = (e) => {
+      e.stopPropagation();
+      view.scWeakFor = b.dataset.weak;
+      renderStage();
+    });
+    const ws = $("scWeakSave");
+    if (ws) ws.onclick = () => {
+      const sid = view.scWeakFor;
+      const tags = [...stage.querySelectorAll("[data-wtag]:checked")].map((x) => x.dataset.wtag);
+      setWeak(cur, sid, tags);
+      view.scWeakFor = null;
+      renderStage();
+      toast(tags.length ? `已标记：${tags.join("、")}` : "已清空薄弱板块", 2400);
+    };
+    const wc = $("scWeakCancel");
+    if (wc) wc.onclick = () => { view.scWeakFor = null; renderStage(); };
+    const sb = $("scBand"); if (sb) sb.onchange = () => { view.scBand = sb.value; view.scPage = 1; renderStage(); };
+    const scm = $("scCommSel"); if (scm) scm.onchange = () => { view.scComm = scm.value; view.scPage = 1; renderStage(); };
+    const swk = $("scWeakSel"); if (swk) swk.onchange = () => { view.scWeak = swk.value; view.scPage = 1; renderStage(); };
+    stage.querySelectorAll("[data-pick]").forEach((cb) => cb.onchange = (e) => {
+      e.stopPropagation();
+      const sid = cb.dataset.pick;
+      view.scSel ||= [];
+      if (cb.checked) { if (!view.scSel.includes(sid)) view.scSel.push(sid); }
+      else view.scSel = view.scSel.filter((x) => x !== sid);
+      renderStage();
+    });
+    const by = $("scBYes"); if (by) by.onclick = () => batchComm(cur, 1);
+    const bn = $("scBNo"); if (bn) bn.onclick = () => batchComm(cur, 0);
+    const bw = $("scBWeak"); if (bw) bw.onclick = () => batchWeak(cur);
+    const bc = $("scBClear"); if (bc) bc.onclick = () => batchClearWeak(cur);
+    const bnone = $("scBNone"); if (bnone) bnone.onclick = () => { view.scSel = []; renderStage(); };
+
     const ex1 = $("scExportX"); if (ex1) ex1.onclick = () => exportScoreXlsx(cur);
     const ex2 = $("scExportP"); if (ex2) ex2.onclick = () => printScore(cur);
     const rn = $("scRename");
