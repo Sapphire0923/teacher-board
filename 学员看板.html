@@ -2262,6 +2262,21 @@ section.list { background: var(--bg); }
 .sc-tracktips { font-size: var(--fs-aux); color: var(--ink-3); }
 .sc-tracktips.bad { color: var(--red); font-weight: 600; }
 
+.sc-hint {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin: 0 0 10px; padding: 9px 12px;
+  background: var(--accent-soft); border: 1px solid var(--accent-2-line); border-radius: 10px;
+  font-size: var(--fs-aux); color: var(--ink); line-height: 1.6;
+}
+.sc-hint b { font-size: var(--fs-cell); white-space: nowrap; }
+.sc-hint kbd {
+  font-family: inherit; font-size: var(--fs-mini); padding: 1px 5px; margin: 0 1px;
+  border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 4px;
+  background: var(--panel); color: var(--ink);
+}
+.sc-hint .btnmini { margin-left: auto; }
+.sc-batch-tip { font-size: var(--fs-mini); color: var(--ink-3); }
+
 .sc-batch {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   margin: 0 0 10px; padding: 9px 14px;
@@ -6680,6 +6695,16 @@ const SYNC = (() => {
    * 设计原则：**操作前先说清楚会影响谁**，做完永远留一颗「撤销」。
    * 没勾人的时候不占地方（返回空串）。
    */
+  // 批量勾选的小引导：第一次进单场成绩页给一条，点「知道了」后写进 config 不再弹
+  function scHintHtml() {
+    if (!DB.config || DB.config.scoreHintSeen) return "";
+    return `<div class="sc-hint" id="scHint">
+      <b>批量勾选小技巧</b>
+      <span>点第一个人 → 按住 <kbd>Shift</kbd> 点最后一个人，中间的全部选上；勾列表头的方框 = 全选本页；批量条右侧还有「反选」。</span>
+      <button class="btnmini" id="scHintOk">知道了</button>
+    </div>`;
+  }
+
   // 表头全选框的三态：没选 / 半选 / 全选（只看当前页）
   function toPickAll(el) {
     if (!el) return;
@@ -13884,6 +13909,7 @@ const SYNC = (() => {
     return `<div class="sc-batch" id="scBatch">
       <b>已选 ${n} 人</b>
       <span class="sc-batch-warn">只改这 ${n} 人的沟通 / 薄弱，不动成绩</span>
+      <span class="sc-batch-tip">Shift + 点可以连选</span>
       <button class="btnmini" id="scBYes">设为已沟通</button>
       <button class="btnmini" id="scBNo">设为未沟通</button>
       <button class="btnmini" id="scBWeak">加薄弱板块…</button>
@@ -14335,6 +14361,7 @@ const SYNC = (() => {
           <button class="btnmini" id="scTrackBtn">${T.L ? "改档次线" : "设置档次线"}</button>
         </div>
         ${view.scTrackOpen ? trackFormHtml(cur) : ""}
+        ${scHintHtml()}
         ${(view.scSel || []).length ? batchBarHtml() : ""}
         <div class="sc-tools stick">
           <input class="sc-q" id="scQ" placeholder="搜姓名…" autocomplete="off" value="${esc(V.q)}">
@@ -14481,6 +14508,8 @@ const SYNC = (() => {
     if (tb) tb.onclick = () => { view.scTrackOpen = !view.scTrackOpen; renderStage(); };
     const tc = $("scTCancel");
     if (tc) tc.onclick = () => { view.scTrackOpen = false; renderStage(); };
+    const hk = $("scHintOk");
+    if (hk) hk.onclick = () => { DB.config.scoreHintSeen = 1; save(); renderStage(); };
     const ts = $("scTSave");
     if (ts) ts.onclick = () => {
       const full = Number($("scTFull").value), a = Number($("scTA").value), b = Number($("scTB").value);
