@@ -6680,6 +6680,16 @@ const SYNC = (() => {
    * 设计原则：**操作前先说清楚会影响谁**，做完永远留一颗「撤销」。
    * 没勾人的时候不占地方（返回空串）。
    */
+  // 表头全选框的三态：没选 / 半选 / 全选（只看当前页）
+  function toPickAll(el) {
+    if (!el) return;
+    const ids = [...document.querySelectorAll("[data-pick]")].map((x) => x.dataset.pick);
+    const got = new Set(view.scSel || []);
+    const hit = ids.filter((id) => got.has(id)).length;
+    el.checked = ids.length > 0 && hit === ids.length;
+    el.indeterminate = hit > 0 && hit < ids.length;
+  }
+
   function batchBarHtml() {
     const ids = view.selIds || [];
     if (!ids.length) return "";
@@ -13879,6 +13889,7 @@ const SYNC = (() => {
       <button class="btnmini" id="scBWeak">加薄弱板块…</button>
       <button class="btnmini" id="scBClear">清空薄弱</button>
       <span style="flex:1"></span>
+      <button class="btnmini" id="scBInv">反选</button>
       <button class="btnmini ghost" id="scBNone">取消选择</button>
     </div>`;
   }
@@ -14360,7 +14371,8 @@ const SYNC = (() => {
           </span>
         </div>
         <div class="wrap-table"><table class="grid"><thead><tr>${cols.map((x) => `<th class="${x.cls}" data-col="${x.k}"${
-          x.sort ? ` data-sortby="${x.k}" title="点一下按这列排"` : ""}>${esc(x.label)}${
+          x.sort ? ` data-sortby="${x.k}" title="点一下按这列排"` : ""}>${
+          x.k === "pick" ? `<input type="checkbox" id="scPickAll" title="全选当前这一页（每页设成「全部」可一次选完）">` : esc(x.label)}${
           view.scSort === x.k ? `<span class="sc-ar">${view.scDir === -1 ? "▼" : "▲"}</span>` : ""}</th>`).join("")}</tr></thead>
           <tbody>${V.shown.length ? V.shown.map((x) => `<tr data-id="${x.sid}">${cols.map((k) => cell(x, k.k)).join("")}</tr>`).join("")
             : `<tr><td class="sc-nohit" colspan="${cols.length}">没有名字含「${esc(V.q)}」的人</td></tr>`}</tbody>
@@ -14510,19 +14522,50 @@ const SYNC = (() => {
     const sb = $("scBand"); if (sb) sb.onchange = () => { view.scBand = sb.value; view.scPage = 1; renderStage(); };
     const scm = $("scCommSel"); if (scm) scm.onchange = () => { view.scComm = scm.value; view.scPage = 1; renderStage(); };
     const swk = $("scWeakSel"); if (swk) swk.onchange = () => { view.scWeak = swk.value; view.scPage = 1; renderStage(); };
-    stage.querySelectorAll("[data-pick]").forEach((cb) => cb.onchange = (e) => {
-      e.stopPropagation();
-      const sid = cb.dataset.pick;
-      view.scSel ||= [];
-      if (cb.checked) { if (!view.scSel.includes(sid)) view.scSel.push(sid); }
-      else view.scSel = view.scSel.filter((x) => x !== sid);
-      renderStage();
+    // 勾选：Shift+点 = 从上次点的那行一直选到这一行（连点几十人不用手抽筋）
+    stage.querySelectorAll("[data-pick]").forEach((cb) => {
+      cb.onmousedown = (e) => { view.scShift = !!e.shiftKey; };
+      cb.onchange = (e) => {
+        e.stopPropagation();
+        const sid = cb.dataset.pick;
+        view.scSel ||= [];
+        const order = [...stage.querySelectorAll("[data-pick]")].map((x) => x.dataset.pick);
+        const from = view.scLastPick;
+        if (view.scShift && from && order.includes(from) && order.includes(sid)) {
+          const a = order.indexOf(from), b = order.indexOf(sid);
+          const lo = Math.min(a, b), hi = Math.max(a, b);
+          for (let i = lo; i <= hi; i++) {
+            const id = order[i];
+            if (cb.checked) { if (!view.scSel.includes(id)) view.scSel.push(id); }
+            else view.scSel = view.scSel.filter((x) => x !== id);
+          }
+        } else if (cb.checked) { if (!view.scSel.includes(sid)) view.scSel.push(sid); }
+        else view.scSel = view.scSel.filter((x) => x !== sid);
+        view.scLastPick = sid;
+        view.scShift = false;
+        renderStage();
+      };
     });
+    { const all = $("scPickAll"); toPickAll(all);
+      if (all) all.onchange = () => {
+        const ids = [...stage.querySelectorAll("[data-pick]")].map((x) => x.dataset.pick);
+        view.scSel ||= [];
+        if (all.checked) ids.forEach((id) => { if (!view.scSel.includes(id)) view.scSel.push(id); });
+        else view.scSel = view.scSel.filter((id) => !ids.includes(id));
+        renderStage();
+      }; }
     const by = $("scBYes"); if (by) by.onclick = () => batchComm(cur, 1);
     const bn = $("scBNo"); if (bn) bn.onclick = () => batchComm(cur, 0);
     const bw = $("scBWeak"); if (bw) bw.onclick = () => batchWeak(cur);
     const bc = $("scBClear"); if (bc) bc.onclick = () => batchClearWeak(cur);
     const bnone = $("scBNone"); if (bnone) bnone.onclick = () => { view.scSel = []; renderStage(); };
+    const binv = $("scBInv"); if (binv) binv.onclick = () => {
+      const ids = [...stage.querySelectorAll("[data-pick]")].map((x) => x.dataset.pick);
+      const got = new Set(view.scSel || []);
+      ids.forEach((id) => { if (got.has(id)) got.delete(id); else got.add(id); });
+      view.scSel = [...got];
+      renderStage();
+    };
 
     const ex1 = $("scExportX"); if (ex1) ex1.onclick = () => exportScoreXlsx(cur);
     const ex2 = $("scExportP"); if (ex2) ex2.onclick = () => printScore(cur);
