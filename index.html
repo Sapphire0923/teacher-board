@@ -901,6 +901,21 @@ section.list.solo table.grid tbody td { font-variant-numeric: tabular-nums; }
 .sc-per, .sc-pager { display: flex; gap: 6px; align-items: center; }
 table.grid td.sc-nohit { color: var(--ink-3); text-align: center; padding: 18px 0; cursor: default; }
 
+/* 成绩旁的「答题卡」外链（2026-10-28 加）：文字统一「答题卡」，
+   点开在**新标签页**看原始答题卡/报告地址；不是本机文件，换了电脑一样能点。
+   没链接的格子写「—」，不给假链接。 */
+a.sc-link {
+  display: inline-block; padding: 2px 9px; border-radius: 999px;
+  border: 1px solid var(--accent-2-line); background: var(--accent-soft);
+  color: var(--accent); font-size: 12px; font-weight: 600;
+  text-decoration: none; white-space: nowrap; line-height: 1.5;
+}
+a.sc-link:hover { background: var(--accent-2-soft); border-color: var(--accent); text-decoration: underline; }
+a.sc-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+td.col-link { white-space: nowrap; }
+td.col-link .sc-none { color: var(--ink-3); }
+.exlink { display: flex; align-items: center; gap: 8px; margin: 6px 0 0; }
+
 /* 「收起顶栏」：把整条工具栏的高度也让给名单（按钮只放在成绩页/电联页）。
    收起后名单按钮还在 listbar 里，随时点得回来，不会把人困住。 */
 body.head-compact header.top { display: none; }
@@ -8307,6 +8322,7 @@ const SYNC = (() => {
           <span>/</span>
           <input type="number" class="exfull" data-ex="full" value="${typeof e.full === "number" ? e.full : ""}" placeholder="满分">
         </div>
+        ${examLink(e) ? `<div class="exlink"><a class="sc-link" href="${esc(examLink(e))}" target="_blank" rel="noopener noreferrer" title="在新标签页打开原始答题卡">答题卡</a><span class="hint-inline">原始链接（外部网站，需联网）</span></div>` : ""}
         ${attStripHtml(e)}
         ${paperPointerHtml(s, e)}
         ${aiBlockHtml(s, e)}
@@ -13704,6 +13720,23 @@ const SYNC = (() => {
   }
 
   /**
+   * 这场考试的外链（原始答题卡 / 学习报告地址，如 cpnpad.xdf.cn）。
+   *
+   * 只认 http(s)：本机路径、file://、空值一律当「没有链接」，宁可不显示也不给一个
+   * 点了没反应的假链接。链接是老师自己导进来的原始地址，这里不改写、不补参数。
+   */
+  function examLink(e) {
+    const u = e && typeof e.link === "string" ? e.link.trim() : "";
+    return /^https?:\/\//i.test(u) ? u : "";
+  }
+
+  /** 某个学生在某场考试里的答题卡外链（没有就返回空串） */
+  function examLinkOf(sid, examName) {
+    const e = examOf(sid, examName);
+    return e ? examLink(e) : "";
+  }
+
+  /**
    * 某生在考场上被识别出来的「板块得分」（答题卡识别结果 e.paper.ocr.sections）。
    *
    * 这是**答卷上真读出来的**分，不是拿总分估的 —— 老师只给总分、没传答题卡的，
@@ -13780,6 +13813,7 @@ const SYNC = (() => {
     { k: "diff", label: "与平均分", sort: true },
     { k: "sec", label: "板块得分" },
     { k: "prev", label: "较上次", sort: true },
+    { k: "link", label: "答题卡" },
   ];
 
   function scv() {
@@ -13999,6 +14033,8 @@ const SYNC = (() => {
     const C = scv().cols;
     const showSec = examRecords(name).some((r) => studentSections(r.sid, name));
     const showPrev = examRecords(name).some((r) => prevExamOf(r.sid, name));
+    // 整场都没有答题卡外链 → 「答题卡」列根本不出现（跟板块得分一个规矩：没有就不摆空列）
+    const showLink = examRecords(name).some((r) => examLinkOf(r.sid, name));
     return [
       { k: "rank", label: "名次", cls: "sticky-l col-num", always: true },
       { k: "pick", label: "", cls: "col-pick", always: true },
@@ -14007,9 +14043,10 @@ const SYNC = (() => {
       { k: "comm", label: "沟通", cls: "col-num" },
       { k: "weak", label: "薄弱板块", cls: "col-sect" },
       ...SC_OPT_COLS.filter((o) => C[o.k]
-        && (o.k !== "sec" || showSec) && (o.k !== "prev" || showPrev)).map((o) => ({
+        && (o.k !== "sec" || showSec) && (o.k !== "prev" || showPrev)
+        && (o.k !== "link" || showLink)).map((o) => ({
         k: o.k, label: o.label, sort: o.sort,
-        cls: o.k === "sec" ? "col-sect" : "col-num",
+        cls: o.k === "sec" ? "col-sect" : o.k === "link" ? "col-link" : "col-num",
       })),
     ];
   }
@@ -14034,6 +14071,7 @@ const SYNC = (() => {
         band: bandOf(name, r.sid),
         comm: commOf(name, r.sid),
         weak: weakOf(name, r.sid),
+        link: examLinkOf(r.sid, name),
       };
     });
     const total = rows.length;
@@ -14086,6 +14124,7 @@ const SYNC = (() => {
       if (k === "diff") return x.diff === null ? "" : Number(fmtScore(x.diff));
       if (k === "sec") return secsText(x.secs);
       if (k === "prev") return x.d2 === null ? "" : Number(fmtScore(x.d2));
+      if (k === "link") return x.link || "";
       if (k === "band") return x.band || "未录入";
       if (k === "comm") return (x.comm.st ? "已沟通" : "未沟通") + (x.comm.date ? " " + x.comm.date : "");
       if (k === "weak") return x.weak.join("、");
@@ -14294,6 +14333,7 @@ const SYNC = (() => {
       // 宁可不显示这一列，也不拿总分去估、不拿考试名先后去猜哪场是上一次。
       const hasSec = recs.some((r) => studentSections(r.sid, cur));
       const hasPrev = recs.some((r) => prevExamOf(r.sid, cur));
+      const hasLink = recs.some((r) => examLinkOf(r.sid, cur));
       const cell = (x, k) => {
         if (k === "rank") return `<td class="sticky-l" data-col="rank">${x.rank}</td>`;
         if (k === "pick") return `<td class="col-pick"><input type="checkbox" data-pick="${x.sid}"${
@@ -14304,6 +14344,9 @@ const SYNC = (() => {
         if (k === "name") return `<td class="sticky-l sticky-2" data-col="name"><b>${esc(x.name)}</b>${
           ntBadges(DB.students.find((s) => s.id === x.sid))}</td>`;
         if (k === "score") return `<td data-col="score"><b>${x.score}</b>${typeof x.full === "number" ? "/" + x.full : ""}</td>`;
+        if (k === "link") return `<td class="col-link" data-col="link">${x.link
+          ? `<a class="sc-link" href="${esc(x.link)}" target="_blank" rel="noopener noreferrer" title="在新标签页打开原始答题卡">答题卡</a>`
+          : `<span class="sc-none">—</span>`}</td>`;
         if (k === "rate") return `<td data-col="rate">${x.rate === null ? "—" : x.rate + "%"}</td>`;
         if (k === "diff") return `<td class="diff ${x.diff === null ? "" : (x.diff >= 0 ? "up" : "down")}" data-col="diff">${
           x.diff === null ? "—" : (x.diff >= 0 ? "+" : "−") + fmtScore(Math.abs(x.diff))}</td>`;
@@ -14388,8 +14431,10 @@ const SYNC = (() => {
             <button class="btn ghost" id="scColBtn">列 ▾</button>
             <span class="sc-colpick${view.scColOpen ? " on" : ""}" id="scColPick">
               ${SC_OPT_COLS.map((o) => {
-                const has = o.k === "sec" ? hasSec : o.k === "prev" ? hasPrev : true;
-                const why = o.k === "sec" ? "这场考试还没有人传过答题卡，暂时没有板块分" : "还没有可比的上一场考试";
+                const has = o.k === "sec" ? hasSec : o.k === "prev" ? hasPrev : o.k === "link" ? hasLink : true;
+                const why = o.k === "sec" ? "这场考试还没有人传过答题卡，暂时没有板块分"
+                  : o.k === "link" ? "这场考试还没有人填过答题卡链接，暂时没有链接列"
+                  : "还没有可比的上一场考试";
                 return `<label class="${has ? "" : "off"}"${has ? "" : ` title="${why}"`}><input type="checkbox" data-sccol="${o.k}"${
                   C0[o.k] ? " checked" : ""}${has ? "" : " disabled"}>${esc(o.label)}</label>`;
               }).join("")}
@@ -14437,7 +14482,7 @@ const SYNC = (() => {
     });
     // 表格行点击 → 打开学生详情
     stage.querySelectorAll("tbody tr[data-id]").forEach((tr) => tr.onclick = (e) => {
-      if (e.target.closest("input, button, .sc-comm, .sc-weak, .col-pick, .sc-weakpop")) return;
+      if (e.target.closest("input, button, a, .sc-comm, .sc-weak, .col-pick, .sc-weakpop")) return;
       view.selected = tr.dataset.id;
       renderDetail();
     });
