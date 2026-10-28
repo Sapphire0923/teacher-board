@@ -6809,7 +6809,7 @@ const SYNC = (() => {
           <button class="btnmini" data-bbtask="1">派给这 ${studs.length} 人</button></span>
         ${tplDatalist("tplTasks", tplStore().tasks, (x) => x)}
         <span class="bb-sep"></span>
-        <button class="btnmini" data-bbcopy="1">复制名单</button>
+        <button class="btnmini" data-bbcopy="1">复制姓名（${studs.length} 人）</button>
         <button class="btnmini" data-bbexport="1">导出这 ${studs.length} 人</button>
       </div>
     </div>`;
@@ -6887,18 +6887,9 @@ const SYNC = (() => {
       save();
       done(`已给 ${n} 人派了任务「${txt}」—— 改错了点「撤销」`, n);
     };
-    // ④ 复制名单
+    // ④ 复制姓名（统一规则：勾选优先，每行一个，住校可排除）
     const cp = bar.querySelector("[data-bbcopy]");
-    if (cp) cp.onclick = async () => {
-      const txt = studs().map((s) => s.name).join("、");
-      try {
-        await navigator.clipboard.writeText(txt);
-        toast(`已复制 ${studs().length} 个姓名到剪贴板`, 4000);
-      } catch {
-        // 有些环境不给用剪贴板 —— 退化成让老师自己选中
-        window.prompt("复制下面这段名单：", txt);
-      }
-    };
+    if (cp) cp.onclick = () => copyStudentNames(studs(), { scope: "已勾选" });
     // ⑤ 导出这 N 人
     const ex = bar.querySelector("[data-bbexport]");
     if (ex) ex.onclick = () => {
@@ -8100,8 +8091,7 @@ const SYNC = (() => {
       list = list.slice().sort((a, b) => severity(b) - severity(a) || a.name.localeCompare(b.name, "zh"));
       const ds = dailyStats();
       const doneToday = dailyStudents().filter((s) => DB.daily.done.includes(s.id));
-      topBar = `<span style="flex:1"></span>
-        <span style="color:var(--ink-3);font-size:12px">已完成 ${ds.done}/${ds.total}</span>
+      topBar = `<span style="color:var(--ink-3);font-size:12px">已完成 ${ds.done}/${ds.total}</span>
         <button class="btn" id="dailyFill">再补 5 个</button>
         <button class="btn ghost" id="dailyReset">重新排</button>`;
       if (doneToday.length) {
@@ -8111,17 +8101,27 @@ const SYNC = (() => {
     } else if (view.mode === "follow") {
       // 待跟进 = 作战队列，必须按紧迫度排，而且默认只给今天要做的几个
       list = list.slice().sort((a, b) => severity(b) - severity(a) || a.name.localeCompare(b.name, "zh"));
-      topBar = `<span style="flex:1"></span><span style="color:var(--ink-3);font-size:12px">先做</span>
+      topBar = `<span style="color:var(--ink-3);font-size:12px">先做</span>
         <div class="seg">${[5, 10, 0].map((n) =>
           `<button data-top="${n}" class="${view.followTop === n ? "on" : ""}">${n === 0 ? "全部" : n + " 个"}</button>`).join("")}</div>`;
       if (view.followTop > 0) list = list.slice(0, view.followTop);
     }
 
+    // 复制范围：有勾选 = 勾选的人；没勾选 = 当前筛选/搜索后实际显示的这批人。
+    // 待跟进还会按「先做 5 个」截断，所以必须用截断后的 list，不能再用 visible()。
+    const copyPicked = (view.selIds || []).length > 0;
+    const copyList = copyPicked ? list.filter((s) => selSet.has(s.id)) : list;
+    const copyN = copyList.length;
+    const copyBtn = `<button class="btn" id="listCopy"${copyN ? "" : " disabled"}
+      title="${copyPicked ? `复制已勾选的 ${copyN} 名学生` : `复制当前筛选/列表里的 ${copyN} 名学生`}（每行一个姓名）">复制姓名（${copyN} 人）</button>`;
     $("listbar").innerHTML = `<b>${esc(label)}</b> · ${list.length}${list.length < total ? "/" + total : ""} 人` +
-      (view.query ? ` · 搜索「${esc(view.query)}」` : "") + topBar + tailBar;
+      (view.query ? ` · 搜索「${esc(view.query)}」` : "") +
+      `<span style="flex:1"></span>` + topBar + copyBtn + tailBar;
     $("listbar").querySelectorAll("[data-top]").forEach((b) => b.onclick = () => {
       view.followTop = +b.dataset.top; renderStage();
     });
+    const listCp = $("listCopy");
+    if (listCp) listCp.onclick = () => copyStudentNames(copyList, { scope: copyPicked ? "已勾选" : "当前筛选" });
     const dfill = $("dailyFill");
     if (dfill) dfill.onclick = () => {
       const n = fillDaily(5);
@@ -9827,15 +9827,15 @@ const SYNC = (() => {
     }
   }
 
-  /** 自动复制失败时的兜底：给一个能手动全选的框 */
-  function copyFallback(text, why) {
+  /** 自动复制失败时的兜底：给一个能手动全选的框（title / hint 可换，默认是整份方案） */
+  function copyFallback(text, why, title, hint) {
     closeCopyFallback();
     const ov = document.createElement("div");
     ov.id = "copyOv";
     ov.className = "pap-ov";
     ov.innerHTML = `<div class="pap-dlg" style="max-width:660px">
-      <div class="pap-head"><b>手动复制</b><span style="flex:1"></span><span class="x" id="copyX">✕</span></div>
-      <p class="hint" style="margin:8px 0">自动复制没成功${why ? "（" + esc(why) + "）" : ""}。下面是整份方案，点一下框、Ctrl+A 全选、Ctrl+C 复制。</p>
+      <div class="pap-head"><b>${esc(title || "手动复制")}</b><span style="flex:1"></span><span class="x" id="copyX">✕</span></div>
+      <p class="hint" style="margin:8px 0">自动复制没成功${why ? "（" + esc(why) + "）" : ""}。${esc(hint || "下面是整份方案，点一下框、Ctrl+A 全选、Ctrl+C 复制。")}</p>
       <textarea class="pap-edit" id="copyText" rows="16" style="width:100%"></textarea>
       <div class="papareabar"><button class="btn" id="copyAgain">再试一次自动复制</button>
         <button class="btn ghost" id="copyClose">关闭</button></div></div>`;
@@ -9858,6 +9858,132 @@ const SYNC = (() => {
   function closeCopyFallback() {
     const el = $("copyOv");
     if (el) el.remove();
+  }
+
+  /* ==================================================================
+     统一「复制姓名」（2026-10-28）
+     ------------------------------------------------------------------
+     用户要求（所有学员列表共用这一套，别再各页面各写一份）：
+       ① 有勾选 → 只复制勾选；没勾选 → 复制当前搜索 + 筛选后的名单。
+          不许忽略筛选条件，也不许意外复制全班。
+       ② 每行一个姓名、用 \n 分隔，不带序号 / 项目符号 / 空行，
+          直接粘进 Excel 就是单列。
+       ③ 名单里有人带「住校」标签时，先弹两个明确选项：
+          「复制全部学生」/「复制时去掉住校」；不含住校就直接复制。
+          只排除本次范围里带标签的人，**绝不改学生档案上的标签**。
+       ④ 复制前看得到人数；排除后显示排除人数 + 实际复制人数；
+          剪贴板失败给手动兜底，不假报成功。
+       ⑤ 重名不等于重复：按学生 id 去重，不按姓名去重。
+     「住校」只读 s.parentTags（parentTagsOf），跟姓名后面那枚 ntag
+     徽标是同一个数据源，不另建一套。
+     ================================================================== */
+  const COPY_BOARD_TAG = "住校";
+
+  /** 整理待复制名单：只按学生 id 去重，重名的人各占一行。 */
+  function copyNameList(list) {
+    const seen = new Set();
+    const out = [];
+    for (const s of list || []) {
+      if (!s || !s.id || seen.has(s.id)) continue;
+      seen.add(s.id);
+      out.push(s);
+    }
+    return out;
+  }
+
+  /** 本次范围里带「住校」标签的学生（只读，不写回学生档案）。 */
+  function copyBoardOf(list) {
+    return copyNameList(list).filter((s) => parentTagsOf(s).includes(COPY_BOARD_TAG));
+  }
+
+  /**
+   * 有住校学生时的两个选项。返回 Promise<"all" | "noboard" | null>。
+   * 用自定义弹窗而不是 confirm()：两个选项都要写明人数，confirm 的
+   * 「确定/取消」说不清哪个是「去掉住校」。
+   */
+  function askCopyBoard(allN, boardN) {
+    return new Promise((resolve) => {
+      const old = document.getElementById("copyNameOv");
+      if (old) old.remove();
+      const ov = document.createElement("div");
+      ov.className = "mask open";
+      ov.id = "copyNameOv";
+      ov.innerHTML = `<div class="modal" style="width:min(480px,100%)" role="dialog" aria-modal="true" aria-labelledby="copyNameT">
+        <header id="copyNameT">这批名单里有住校学生</header>
+        <div class="body">
+          <p class="hint" style="margin-top:0">本次将复制 <b>${allN}</b> 人，其中带「住校」标签的 <b>${boardN}</b> 人。</p>
+          <p class="hint">选「去掉住校」只排除本次名单里的这 ${boardN} 人，<b>不会修改</b>学生档案上的标签。</p>
+        </div>
+        <footer>
+          <button class="btn ghost" id="copyNameCancel">取消</button>
+          <button class="btn" id="copyNoBoard">复制时去掉住校（${allN - boardN} 人）</button>
+          <button class="btn primary" id="copyAllNames">复制全部学生（${allN} 人）</button>
+        </footer></div>`;
+      document.body.appendChild(ov);
+      const close = (v) => { if (ov.isConnected) ov.remove(); resolve(v); };
+      ov.querySelector("#copyNameCancel").onclick = () => close(null);
+      ov.querySelector("#copyNoBoard").onclick = () => close("noboard");
+      ov.querySelector("#copyAllNames").onclick = () => close("all");
+      ov.addEventListener("click", (e) => { if (e.target === ov) close(null); });
+      const first = ov.querySelector("#copyAllNames");
+      if (first) first.focus();
+    });
+  }
+
+  /** 自动复制；失败 / 超时给手动全选框，绝不假报成功。 */
+  async function copyPlainText(text, title, hint) {
+    const t = String(text || "");
+    if (!t) { toast("没有可复制的内容"); return false; }
+    let timer = null;
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error("这个浏览器不支持自动复制");
+      await Promise.race([
+        navigator.clipboard.writeText(t),
+        new Promise((_, reject) => {
+          timer = setTimeout(() => reject(new Error("剪贴板没有响应（页面可能没聚焦）")), 1800);
+        }),
+      ]);
+      return true;
+    } catch (err) {
+      copyFallback(t, (err && err.message) || "浏览器没给剪贴板权限", title, hint);
+      return false;
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+
+  /**
+   * 所有学员列表共用的「复制姓名」。
+   * @param {Array} list  当前实际显示的名单（勾选优先由调用方决定）
+   * @param {{scope?:string}} meta  scope = 「已勾选」/「当前筛选」等，只用于提示
+   */
+  async function copyStudentNames(list, meta) {
+    const all = copyNameList(list);
+    if (!all.length) return toast("当前没有可复制的学生");
+    const board = copyBoardOf(all);
+    let target = all;
+    let removed = 0;
+    if (board.length) {
+      const choice = await askCopyBoard(all.length, board.length);
+      if (!choice) return;
+      if (choice === "noboard") {
+        target = all.filter((s) => !parentTagsOf(s).includes(COPY_BOARD_TAG));
+        removed = all.length - target.length;
+      }
+    }
+    const names = target.map((s) => String(s.name || "").trim()).filter(Boolean);
+    if (!names.length) return toast("当前名单里没有可复制的姓名");
+    const scopeTxt = meta && meta.scope ? "（" + meta.scope + "）" : "";
+    const hint = "下面是本次 " + names.length + " 人"
+      + (removed ? "（已排除住校 " + removed + " 人，名单共 " + all.length + " 人）" : "")
+      + "，每行一个姓名。点一下框、Ctrl+A 全选、Ctrl+C 复制，再粘到 Excel 就行。";
+    const ok = await copyPlainText(names.join("\n"), "手动复制姓名", hint);
+    if (!ok) return;
+    const boardTxt = board.length
+      ? (removed ? "，已排除住校 " + removed + " 人（名单共 " + all.length + " 人）"
+        : "，含住校 " + board.length + " 人")
+      : "";
+    toast("已复制 " + names.length + " 人姓名" + scopeTxt + boardTxt, 5600);
   }
 
   /* ---- 答题卡总览页（侧栏「答题卡」） ------------------------------- */
@@ -11131,6 +11257,9 @@ const SYNC = (() => {
       <div class="sc-tools stick">
         <input class="sc-q" id="papQ" placeholder="搜姓名…" autocomplete="off" value="${esc(pq)}">
         <span class="hint-inline">${pq ? `筛出 ${show.length} 人` : "边打边联想，选中就筛到他"}</span>
+        <span style="flex:1"></span>
+        <button class="btn" id="papCopy"${show.length ? "" : " disabled"}
+          title="复制当前状态筛选 + 搜索后的 ${show.length} 名学生（每行一个姓名）">复制姓名（${show.length} 人）</button>
       </div>
       ${paperPasteHtml()}
       <div class="sc-tabs stick">${tabs.map(([k, t]) =>
@@ -11169,6 +11298,10 @@ const SYNC = (() => {
       : `<div class="pap-empty">${pq ? `这个筛选下没有叫「${esc(pq)}」的人。` : "这个筛选下没有人。"}</div>`}
       <p class="hint" style="margin:8px 2px 0">点任意一行进这个学生的详情；传图、识别、核对都在那条考试记录下面。</p>
     </div>`;
+
+    // 「复制姓名」：只复制当前状态筛选 + 姓名搜索后的名单，一人一行。
+    const pc = $("papCopy");
+    if (pc) pc.onclick = () => copyStudentNames(show.map((r) => r.s), { scope: "当前筛选" });
   }
 
   function bindPaperPage() {
@@ -13483,7 +13616,7 @@ const SYNC = (() => {
     if (bulk) { bulk.disabled = m === 0; bulk.textContent = m ? `批量设置状态（${m} 人）` : "批量设置状态"; }
     const cp = $("ckCopy");
     if (cp) {
-      cp.textContent = m ? `复制已选 ${m} 人姓名` : `复制当前 ${n} 人姓名`;
+      cp.textContent = m ? `复制姓名（已选 ${m} 人）` : `复制姓名（当前 ${n} 人）`;
       cp.disabled = (m || n) === 0;
     }
     const ex = $("ckExport");
@@ -13737,12 +13870,10 @@ const SYNC = (() => {
     const cp = $("ckCopy");
     if (cp) cp.onclick = () => {
       const picked = view.ckSel.length > 0;
-      const scope = picked ? DB.students.filter((s) => view.ckSel.includes(s.id)) : ckFiltered();
-      if (!scope.length) return toast("当前没有可复制的学生");
-      const names = scope.map((s) => s.name).join("\n");
-      navigator.clipboard.writeText(names).then(
-        () => toast(`已复制 ${scope.length} 个姓名（${picked ? "已勾选" : "当前筛选"}）`),
-        () => toast("复制失败，浏览器不允许访问剪贴板"));
+      // 用「当前筛选结果」做底再取勾选：切筛选后掉出勾选的人不会隔着筛选被复制走
+      const filtered = ckFiltered();
+      const scope = picked ? filtered.filter((s) => view.ckSel.includes(s.id)) : filtered;
+      copyStudentNames(scope, { scope: picked ? "已勾选" : "当前筛选" });
     };
     const ex = $("ckExport");
     if (ex) ex.onclick = () => {
@@ -14516,6 +14647,10 @@ const SYNC = (() => {
 
     const cur = view.scoreExam && names.includes(view.scoreExam) ? view.scoreExam : null;
     const curSt = cur ? examStats(cur) : null;
+    // 「复制姓名」的范围：单场有勾选 = 勾选的人（且在当前筛选里），否则 = 当前搜索/筛选后的全部人；
+    // 「全部」视图 = 当前表里真正有成绩的人。分页只影响表格显示，不影响复制（用户要的是筛选结果）。
+    let scoreCopy = [];
+    let scoreCopyPicked = false;
 
     // 考试名标签：全部 + 每场（标签上带平均分，一眼能比）
     const tab = (nm, label) =>
@@ -14535,6 +14670,7 @@ const SYNC = (() => {
     // 「全部」= 跨考试总表：行是学生，列是每场考试的分数
     if (!cur) {
       const scored = DB.students.filter((s) => (s.exams || []).some(hasScore));
+      scoreCopy = scored;
       const sts = names.map((nm) => examStats(nm));
       const statRow = (label, fn, cls) =>
         `<tr class="stat-row"><td class="sticky-l ${cls || ""}">${esc(label)}</td>${
@@ -14575,6 +14711,10 @@ const SYNC = (() => {
       const date = recs[0]?.date || "";
       const st = examStats(cur);
       const V = scoreView(cur);
+      const pickedRows = V.rows.filter((x) => (view.scSel || []).includes(x.sid));
+      scoreCopyPicked = pickedRows.length > 0;
+      scoreCopy = (scoreCopyPicked ? pickedRows : V.rows)
+        .map((x) => DB.students.find((s) => s.id === x.sid)).filter(Boolean);
       const cols = scoreCols(cur);
       const C0 = scv().cols;
       // 「板块得分」和「较上次」两列有数据才出现：
@@ -14711,6 +14851,20 @@ const SYNC = (() => {
           <div class="sc-detail-src">还没有人录分数 · 满分 ${full}</div>
         </div>
         <div class="empty-hint">这场考试还没有人录分数，点右上角「导入成绩」</div>`;
+    }
+
+    // 成绩页操作区统一一颗「复制姓名」：单场按勾选/筛选，全部按有成绩的人。
+    {
+      const cp = document.createElement("button");
+      cp.className = "btn";
+      cp.id = "scCopy";
+      cp.textContent = `复制姓名（${scoreCopy.length} 人）`;
+      cp.disabled = scoreCopy.length === 0;
+      cp.title = scoreCopyPicked
+        ? `复制已勾选的 ${scoreCopy.length} 名学生（每行一个姓名）`
+        : `复制当前搜索/筛选后的 ${scoreCopy.length} 名学生（每行一个姓名，分页不影响）`;
+      cp.onclick = () => copyStudentNames(scoreCopy, { scope: scoreCopyPicked ? "已勾选" : "当前筛选" });
+      listbar.appendChild(cp);
     }
 
     // 冻结列：量出「名次」列的实际宽度写进 --ck2，让「姓名」贴在它右边。
@@ -15016,6 +15170,8 @@ const SYNC = (() => {
           <input class="sc-q" id="clQ" placeholder="搜姓名…" autocomplete="off" value="${esc(view.callQ)}">
           <span class="sc-hit">${q ? `筛出 ${hit} / ${total} 人` : ""}</span>
           <span style="flex:1"></span>
+          <button class="btn" id="clCopy"${hit ? "" : " disabled"}
+            title="复制当前搜索 + 结果筛选后的 ${hit} 名学生（每行一个姓名）">复制姓名（${hit} 人）</button>
         </div>`;
 
     // 批次标签：全部 + 每一轮（带日期和接通数，一眼能比）
@@ -15117,7 +15273,6 @@ const SYNC = (() => {
           <div class="ck-tabs">${statusTabs}</div>
           <div class="ck-copybar">
             <button class="btn" id="clBatch">批量导入名单</button>
-            <button class="btn" id="clCopy">复制这 ${list.length} 人姓名</button>
             <button class="btn" id="clExport">导出当前筛选 CSV</button>
             <button class="btn" id="clExportFull">导出全班名单</button>
           </div>
@@ -15205,6 +15360,15 @@ const SYNC = (() => {
       });
     }
 
+    // 「复制姓名」：单轮 = 当前结果标签 + 搜索；全部 = 当前搜索。两个都只复制屏幕上筛出来的这批人。
+    const cp = $("clCopy");
+    if (cp) cp.onclick = () => {
+      const scope = !cur
+        ? DB.students.filter(hitName)
+        : DB.students.filter((s) => callStatusOf(curId, s.id) === view.callStatus).filter(hitName);
+      copyStudentNames(scope, { scope: "当前筛选" });
+    };
+
     if (!cur) return;
 
     // 「✎ 记一次」：直接开这一轮里这个学生的记录面板
@@ -15234,13 +15398,6 @@ const SYNC = (() => {
       save();
       renderStage();
     });
-    const cp = $("clCopy");
-    if (cp) cp.onclick = () => {
-      const names = DB.students.filter((s) => callStatusOf(curId, s.id) === view.callStatus).map((s) => s.name).join("\n");
-      navigator.clipboard.writeText(names).then(
-        () => toast(`已复制 ${names.split("\n").filter(Boolean).length} 个姓名`),
-        () => toast("复制失败，浏览器不允许访问剪贴板"));
-    };
     const ex = $("clExport");
     if (ex) ex.onclick = () => exportCallCsv(cur, true);
     const exf = $("clExportFull");
