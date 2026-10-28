@@ -901,6 +901,21 @@ section.list.solo table.grid tbody td { font-variant-numeric: tabular-nums; }
 .sc-per, .sc-pager { display: flex; gap: 6px; align-items: center; }
 table.grid td.sc-nohit { color: var(--ink-3); text-align: center; padding: 18px 0; cursor: default; }
 
+/* 成绩旁的「答题卡」外链（2026-10-28 加）：文字统一「答题卡」，
+   点开在**新标签页**看原始答题卡/报告地址；不是本机文件，换了电脑一样能点。
+   没链接的格子写「—」，不给假链接。 */
+a.sc-link {
+  display: inline-block; padding: 2px 9px; border-radius: 999px;
+  border: 1px solid var(--accent-2-line); background: var(--accent-soft);
+  color: var(--accent); font-size: 12px; font-weight: 600;
+  text-decoration: none; white-space: nowrap; line-height: 1.5;
+}
+a.sc-link:hover { background: var(--accent-2-soft); border-color: var(--accent); text-decoration: underline; }
+a.sc-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+td.col-link { white-space: nowrap; }
+td.col-link .sc-none { color: var(--ink-3); }
+.exlink { display: flex; align-items: center; gap: 8px; margin: 6px 0 0; }
+
 /* 「收起顶栏」：把整条工具栏的高度也让给名单（按钮只放在成绩页/电联页）。
    收起后名单按钮还在 listbar 里，随时点得回来，不会把人困住。 */
 body.head-compact header.top { display: none; }
@@ -956,7 +971,15 @@ aside.detail.open { display: block; }
 /* 面板滚动时姓名和关闭按钮跟着走：不然滚到下面想关掉还得先拉回顶上 */
 .det-head { position: sticky; top: -17px; z-index: 3; background: var(--panel);
   display: flex; align-items: center; gap: 9px; margin: 0 -17px 4px; padding: 17px 17px 7px;
-  box-shadow: 0 1px 0 var(--line); }
+  box-shadow: 0 1px 0 var(--line);
+  /* 2026-10-28 修：标签一多，姓名框 + 标签 + 等级把这一行挤爆，
+     「关闭」按钮被压到 0 宽看不见。现在允许换行，除姓名外一律不缩，
+     关闭按钮钉在行尾（挤不下就换到第二行，永远点得到）。 */
+  flex-wrap: wrap; row-gap: 6px; }
+.det-head > * { flex: 0 0 auto; }
+.det-head > .nameinput { flex: 1 1 120px; min-width: 84px; }
+.det-head > #dClose { margin-left: auto; }
+.det-head .ntag, .det-head .lvauto, .det-head .lvsel, .det-head .btn { white-space: nowrap; }
 .det-head .nm { font-size: 19px; font-weight: 700; }
 /* 详情副标题：12.5px + ink-3 在窄抽屉里几乎糊掉，抬到 13.5px / ink-2 */
 .det-sub { color: var(--ink-2); font-size: var(--fs-cell); margin-bottom: 13px; }
@@ -2429,6 +2452,46 @@ section.list { background: var(--bg); }
       <span class="result" id="scoreResult"></span>
       <button class="btn" data-close="mScore">取消</button>
       <button class="btn primary" id="scoreSave">写入</button>
+    </footer>
+  </div>
+</div>
+
+<!-- 导入答题卡链接 -->
+<div class="mask" id="mPapLink">
+  <div class="modal wide">
+    <header>导入答题卡链接</header>
+    <div class="body">
+      <p class="hint" style="margin-top:0">
+        选一个表格（<b>.xlsx / .csv</b>），程序自己找<b>姓名列</b>和<b>链接列</b>，
+        把链接挂到这个孩子<b>已经有的那场考试</b>上。
+      </p>
+      <p class="hint" style="margin:-6px 0 10px">
+        · 分数一个字都不动，只写链接　·　认不出 / 重名 / 没有这场考试的行<b>不猜</b>，列在下面等你核对
+        <br>· 已经存了<b>不同</b>链接的不会覆盖，标成「冲突」　·　老 .xls 请先在 WPS / Excel 里另存为 .xlsx
+      </p>
+      <div class="rowset">
+        <button class="btn" id="plPickFile">📄 选 Excel / CSV 文件</button>
+        <span class="hint" style="margin:0" id="plHint">支持 .xlsx / .csv</span>
+        <input type="file" id="plFile" accept=".xlsx,.xlsm,.csv,.txt" hidden>
+      </div>
+      <p class="hint" id="plFileHint" style="margin:8px 0 0"></p>
+      <div class="sect" style="margin-top:12px">
+        <h4>挂到哪场考试</h4>
+        <div class="rowset">
+          <label class="hint" style="margin:0">考试名称
+            <input type="text" id="plExamName" list="plExamList" placeholder="万人测" style="width:170px;margin-left:6px;padding:5px 8px;border:1px solid var(--line);border-radius:7px">
+          </label>
+        </div>
+        <datalist id="plExamList"></datalist>
+        <p class="hint" style="margin:8px 0 0">只挂到<b>已经存在</b>的那场考试；这个孩子没有这场就跳过，不会凭空建考试。</p>
+      </div>
+      <div id="plPreview"></div>
+      <p class="hint" id="plSummary" style="margin:10px 0 0"></p>
+    </div>
+    <footer>
+      <span class="result" id="plResult"></span>
+      <button class="btn" data-close="mPapLink">取消</button>
+      <button class="btn primary" id="plSave">写入链接</button>
     </footer>
   </div>
 </div>
@@ -6746,7 +6809,7 @@ const SYNC = (() => {
           <button class="btnmini" data-bbtask="1">派给这 ${studs.length} 人</button></span>
         ${tplDatalist("tplTasks", tplStore().tasks, (x) => x)}
         <span class="bb-sep"></span>
-        <button class="btnmini" data-bbcopy="1">复制名单</button>
+        <button class="btnmini" data-bbcopy="1">复制姓名（${studs.length} 人）</button>
         <button class="btnmini" data-bbexport="1">导出这 ${studs.length} 人</button>
       </div>
     </div>`;
@@ -6824,18 +6887,9 @@ const SYNC = (() => {
       save();
       done(`已给 ${n} 人派了任务「${txt}」—— 改错了点「撤销」`, n);
     };
-    // ④ 复制名单
+    // ④ 复制姓名（统一规则：勾选优先，每行一个，住校可排除）
     const cp = bar.querySelector("[data-bbcopy]");
-    if (cp) cp.onclick = async () => {
-      const txt = studs().map((s) => s.name).join("、");
-      try {
-        await navigator.clipboard.writeText(txt);
-        toast(`已复制 ${studs().length} 个姓名到剪贴板`, 4000);
-      } catch {
-        // 有些环境不给用剪贴板 —— 退化成让老师自己选中
-        window.prompt("复制下面这段名单：", txt);
-      }
-    };
+    if (cp) cp.onclick = () => copyStudentNames(studs(), { scope: "已勾选" });
     // ⑤ 导出这 N 人
     const ex = bar.querySelector("[data-bbexport]");
     if (ex) ex.onclick = () => {
@@ -7560,6 +7614,7 @@ const SYNC = (() => {
             <div class="tools">
               <button class="btn ghost" id="btnChat">导入聊天</button>
               <button class="btn ghost" id="btnScore">导入成绩</button>
+              <button class="btn ghost" id="btnPapLink">导入答题卡</button>
               <button class="btn ghost" id="btnCheckin">导入打卡计划</button>
               <span class="tools-sep"></span>
               <button class="btn ghost" id="btnImport">换名单</button>
@@ -7593,6 +7648,12 @@ const SYNC = (() => {
     $("btnChat").onclick = () => { $("chatResult").textContent = ""; $("mChat").classList.add("open"); $("chatText").focus(); };
     $("btnQuick").onclick = openQuick;
     $("btnScore").onclick = openScore;
+    $("btnPapLink").onclick = openPapLink;
+    $("plPickFile").onclick = () => $("plFile").click();
+    $("plFile").onchange = () => { papLinkFromFile($("plFile").files[0]); $("plFile").value = ""; };
+    $("plExamName").oninput = renderPapLinkPreview;
+    $("plExamName").onchange = renderPapLinkPreview;
+    $("plSave").onclick = papLinkSave;
     $("btnCheckin").onclick = openCheckin;
     $("btnImport").onclick = () => $("fileXlsx2").click();
     $("btnAdd").onclick = addStudent;
@@ -8030,8 +8091,7 @@ const SYNC = (() => {
       list = list.slice().sort((a, b) => severity(b) - severity(a) || a.name.localeCompare(b.name, "zh"));
       const ds = dailyStats();
       const doneToday = dailyStudents().filter((s) => DB.daily.done.includes(s.id));
-      topBar = `<span style="flex:1"></span>
-        <span style="color:var(--ink-3);font-size:12px">已完成 ${ds.done}/${ds.total}</span>
+      topBar = `<span style="color:var(--ink-3);font-size:12px">已完成 ${ds.done}/${ds.total}</span>
         <button class="btn" id="dailyFill">再补 5 个</button>
         <button class="btn ghost" id="dailyReset">重新排</button>`;
       if (doneToday.length) {
@@ -8041,17 +8101,27 @@ const SYNC = (() => {
     } else if (view.mode === "follow") {
       // 待跟进 = 作战队列，必须按紧迫度排，而且默认只给今天要做的几个
       list = list.slice().sort((a, b) => severity(b) - severity(a) || a.name.localeCompare(b.name, "zh"));
-      topBar = `<span style="flex:1"></span><span style="color:var(--ink-3);font-size:12px">先做</span>
+      topBar = `<span style="color:var(--ink-3);font-size:12px">先做</span>
         <div class="seg">${[5, 10, 0].map((n) =>
           `<button data-top="${n}" class="${view.followTop === n ? "on" : ""}">${n === 0 ? "全部" : n + " 个"}</button>`).join("")}</div>`;
       if (view.followTop > 0) list = list.slice(0, view.followTop);
     }
 
+    // 复制范围：有勾选 = 勾选的人；没勾选 = 当前筛选/搜索后实际显示的这批人。
+    // 待跟进还会按「先做 5 个」截断，所以必须用截断后的 list，不能再用 visible()。
+    const copyPicked = (view.selIds || []).length > 0;
+    const copyList = copyPicked ? list.filter((s) => selSet.has(s.id)) : list;
+    const copyN = copyList.length;
+    const copyBtn = `<button class="btn" id="listCopy"${copyN ? "" : " disabled"}
+      title="${copyPicked ? `复制已勾选的 ${copyN} 名学生` : `复制当前筛选/列表里的 ${copyN} 名学生`}（每行一个姓名）">复制姓名（${copyN} 人）</button>`;
     $("listbar").innerHTML = `<b>${esc(label)}</b> · ${list.length}${list.length < total ? "/" + total : ""} 人` +
-      (view.query ? ` · 搜索「${esc(view.query)}」` : "") + topBar + tailBar;
+      (view.query ? ` · 搜索「${esc(view.query)}」` : "") +
+      `<span style="flex:1"></span>` + topBar + copyBtn + tailBar;
     $("listbar").querySelectorAll("[data-top]").forEach((b) => b.onclick = () => {
       view.followTop = +b.dataset.top; renderStage();
     });
+    const listCp = $("listCopy");
+    if (listCp) listCp.onclick = () => copyStudentNames(copyList, { scope: copyPicked ? "已勾选" : "当前筛选" });
     const dfill = $("dailyFill");
     if (dfill) dfill.onclick = () => {
       const n = fillDaily(5);
@@ -8307,6 +8377,7 @@ const SYNC = (() => {
           <span>/</span>
           <input type="number" class="exfull" data-ex="full" value="${typeof e.full === "number" ? e.full : ""}" placeholder="满分">
         </div>
+        ${examLink(e) ? `<div class="exlink"><a class="sc-link" href="${esc(examLink(e))}" target="_blank" rel="noopener noreferrer" title="在新标签页打开原始答题卡">答题卡</a><span class="hint-inline">原始链接（外部网站，需联网）</span></div>` : ""}
         ${attStripHtml(e)}
         ${paperPointerHtml(s, e)}
         ${aiBlockHtml(s, e)}
@@ -9756,15 +9827,15 @@ const SYNC = (() => {
     }
   }
 
-  /** 自动复制失败时的兜底：给一个能手动全选的框 */
-  function copyFallback(text, why) {
+  /** 自动复制失败时的兜底：给一个能手动全选的框（title / hint 可换，默认是整份方案） */
+  function copyFallback(text, why, title, hint) {
     closeCopyFallback();
     const ov = document.createElement("div");
     ov.id = "copyOv";
     ov.className = "pap-ov";
     ov.innerHTML = `<div class="pap-dlg" style="max-width:660px">
-      <div class="pap-head"><b>手动复制</b><span style="flex:1"></span><span class="x" id="copyX">✕</span></div>
-      <p class="hint" style="margin:8px 0">自动复制没成功${why ? "（" + esc(why) + "）" : ""}。下面是整份方案，点一下框、Ctrl+A 全选、Ctrl+C 复制。</p>
+      <div class="pap-head"><b>${esc(title || "手动复制")}</b><span style="flex:1"></span><span class="x" id="copyX">✕</span></div>
+      <p class="hint" style="margin:8px 0">自动复制没成功${why ? "（" + esc(why) + "）" : ""}。${esc(hint || "下面是整份方案，点一下框、Ctrl+A 全选、Ctrl+C 复制。")}</p>
       <textarea class="pap-edit" id="copyText" rows="16" style="width:100%"></textarea>
       <div class="papareabar"><button class="btn" id="copyAgain">再试一次自动复制</button>
         <button class="btn ghost" id="copyClose">关闭</button></div></div>`;
@@ -9787,6 +9858,132 @@ const SYNC = (() => {
   function closeCopyFallback() {
     const el = $("copyOv");
     if (el) el.remove();
+  }
+
+  /* ==================================================================
+     统一「复制姓名」（2026-10-28）
+     ------------------------------------------------------------------
+     用户要求（所有学员列表共用这一套，别再各页面各写一份）：
+       ① 有勾选 → 只复制勾选；没勾选 → 复制当前搜索 + 筛选后的名单。
+          不许忽略筛选条件，也不许意外复制全班。
+       ② 每行一个姓名、用 \n 分隔，不带序号 / 项目符号 / 空行，
+          直接粘进 Excel 就是单列。
+       ③ 名单里有人带「住校」标签时，先弹两个明确选项：
+          「复制全部学生」/「复制时去掉住校」；不含住校就直接复制。
+          只排除本次范围里带标签的人，**绝不改学生档案上的标签**。
+       ④ 复制前看得到人数；排除后显示排除人数 + 实际复制人数；
+          剪贴板失败给手动兜底，不假报成功。
+       ⑤ 重名不等于重复：按学生 id 去重，不按姓名去重。
+     「住校」只读 s.parentTags（parentTagsOf），跟姓名后面那枚 ntag
+     徽标是同一个数据源，不另建一套。
+     ================================================================== */
+  const COPY_BOARD_TAG = "住校";
+
+  /** 整理待复制名单：只按学生 id 去重，重名的人各占一行。 */
+  function copyNameList(list) {
+    const seen = new Set();
+    const out = [];
+    for (const s of list || []) {
+      if (!s || !s.id || seen.has(s.id)) continue;
+      seen.add(s.id);
+      out.push(s);
+    }
+    return out;
+  }
+
+  /** 本次范围里带「住校」标签的学生（只读，不写回学生档案）。 */
+  function copyBoardOf(list) {
+    return copyNameList(list).filter((s) => parentTagsOf(s).includes(COPY_BOARD_TAG));
+  }
+
+  /**
+   * 有住校学生时的两个选项。返回 Promise<"all" | "noboard" | null>。
+   * 用自定义弹窗而不是 confirm()：两个选项都要写明人数，confirm 的
+   * 「确定/取消」说不清哪个是「去掉住校」。
+   */
+  function askCopyBoard(allN, boardN) {
+    return new Promise((resolve) => {
+      const old = document.getElementById("copyNameOv");
+      if (old) old.remove();
+      const ov = document.createElement("div");
+      ov.className = "mask open";
+      ov.id = "copyNameOv";
+      ov.innerHTML = `<div class="modal" style="width:min(480px,100%)" role="dialog" aria-modal="true" aria-labelledby="copyNameT">
+        <header id="copyNameT">这批名单里有住校学生</header>
+        <div class="body">
+          <p class="hint" style="margin-top:0">本次将复制 <b>${allN}</b> 人，其中带「住校」标签的 <b>${boardN}</b> 人。</p>
+          <p class="hint">选「去掉住校」只排除本次名单里的这 ${boardN} 人，<b>不会修改</b>学生档案上的标签。</p>
+        </div>
+        <footer>
+          <button class="btn ghost" id="copyNameCancel">取消</button>
+          <button class="btn" id="copyNoBoard">复制时去掉住校（${allN - boardN} 人）</button>
+          <button class="btn primary" id="copyAllNames">复制全部学生（${allN} 人）</button>
+        </footer></div>`;
+      document.body.appendChild(ov);
+      const close = (v) => { if (ov.isConnected) ov.remove(); resolve(v); };
+      ov.querySelector("#copyNameCancel").onclick = () => close(null);
+      ov.querySelector("#copyNoBoard").onclick = () => close("noboard");
+      ov.querySelector("#copyAllNames").onclick = () => close("all");
+      ov.addEventListener("click", (e) => { if (e.target === ov) close(null); });
+      const first = ov.querySelector("#copyAllNames");
+      if (first) first.focus();
+    });
+  }
+
+  /** 自动复制；失败 / 超时给手动全选框，绝不假报成功。 */
+  async function copyPlainText(text, title, hint) {
+    const t = String(text || "");
+    if (!t) { toast("没有可复制的内容"); return false; }
+    let timer = null;
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error("这个浏览器不支持自动复制");
+      await Promise.race([
+        navigator.clipboard.writeText(t),
+        new Promise((_, reject) => {
+          timer = setTimeout(() => reject(new Error("剪贴板没有响应（页面可能没聚焦）")), 1800);
+        }),
+      ]);
+      return true;
+    } catch (err) {
+      copyFallback(t, (err && err.message) || "浏览器没给剪贴板权限", title, hint);
+      return false;
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+
+  /**
+   * 所有学员列表共用的「复制姓名」。
+   * @param {Array} list  当前实际显示的名单（勾选优先由调用方决定）
+   * @param {{scope?:string}} meta  scope = 「已勾选」/「当前筛选」等，只用于提示
+   */
+  async function copyStudentNames(list, meta) {
+    const all = copyNameList(list);
+    if (!all.length) return toast("当前没有可复制的学生");
+    const board = copyBoardOf(all);
+    let target = all;
+    let removed = 0;
+    if (board.length) {
+      const choice = await askCopyBoard(all.length, board.length);
+      if (!choice) return;
+      if (choice === "noboard") {
+        target = all.filter((s) => !parentTagsOf(s).includes(COPY_BOARD_TAG));
+        removed = all.length - target.length;
+      }
+    }
+    const names = target.map((s) => String(s.name || "").trim()).filter(Boolean);
+    if (!names.length) return toast("当前名单里没有可复制的姓名");
+    const scopeTxt = meta && meta.scope ? "（" + meta.scope + "）" : "";
+    const hint = "下面是本次 " + names.length + " 人"
+      + (removed ? "（已排除住校 " + removed + " 人，名单共 " + all.length + " 人）" : "")
+      + "，每行一个姓名。点一下框、Ctrl+A 全选、Ctrl+C 复制，再粘到 Excel 就行。";
+    const ok = await copyPlainText(names.join("\n"), "手动复制姓名", hint);
+    if (!ok) return;
+    const boardTxt = board.length
+      ? (removed ? "，已排除住校 " + removed + " 人（名单共 " + all.length + " 人）"
+        : "，含住校 " + board.length + " 人")
+      : "";
+    toast("已复制 " + names.length + " 人姓名" + scopeTxt + boardTxt, 5600);
   }
 
   /* ---- 答题卡总览页（侧栏「答题卡」） ------------------------------- */
@@ -11060,6 +11257,9 @@ const SYNC = (() => {
       <div class="sc-tools stick">
         <input class="sc-q" id="papQ" placeholder="搜姓名…" autocomplete="off" value="${esc(pq)}">
         <span class="hint-inline">${pq ? `筛出 ${show.length} 人` : "边打边联想，选中就筛到他"}</span>
+        <span style="flex:1"></span>
+        <button class="btn" id="papCopy"${show.length ? "" : " disabled"}
+          title="复制当前状态筛选 + 搜索后的 ${show.length} 名学生（每行一个姓名）">复制姓名（${show.length} 人）</button>
       </div>
       ${paperPasteHtml()}
       <div class="sc-tabs stick">${tabs.map(([k, t]) =>
@@ -11098,6 +11298,10 @@ const SYNC = (() => {
       : `<div class="pap-empty">${pq ? `这个筛选下没有叫「${esc(pq)}」的人。` : "这个筛选下没有人。"}</div>`}
       <p class="hint" style="margin:8px 2px 0">点任意一行进这个学生的详情；传图、识别、核对都在那条考试记录下面。</p>
     </div>`;
+
+    // 「复制姓名」：只复制当前状态筛选 + 姓名搜索后的名单，一人一行。
+    const pc = $("papCopy");
+    if (pc) pc.onclick = () => copyStudentNames(show.map((r) => r.s), { scope: "当前筛选" });
   }
 
   function bindPaperPage() {
@@ -12841,6 +13045,192 @@ const SYNC = (() => {
     setTimeout(() => $("mScore").classList.remove("open"), 900);
   }
 
+  /* ==================== 导入答题卡链接（2026-10-28 加） ====================
+   * 学校发的「万人测报告&答题卡」表：一行一个学生 + 一条 cpnpad 报告链接。
+   * 老师要的是「选文件 → 自动按姓名挂到对应孩子的那场考试上」，而不是一个个点。
+   *
+   * 三条死规矩（跟成绩导入同源）：
+   *   1. 只写 link 字段，**分数一个字都不动**；
+   *   2. 认不出 / 重名 / 没有那场考试的行一律**不猜**，列在预览里等老师核对；
+   *   3. 已经存了**不同**链接的**不覆盖**，标成「冲突」。
+   */
+  let PL = [];                       // 预览行：{ name, link }
+  const LINK_COL_HINT = /链接|答题卡|报告|url|link|地址|report/i;
+
+  /**
+   * 猜表头：返回 { headRow, nameCol, linkCol }。
+   * 表头不一定在第一行（学校表格常有标题行）；没有表头就按数据推：
+   * 链接列 = 前 50 行里 http 地址最多的那列，姓名列 = 中文姓名最多的那列。
+   */
+  function guessLinkCols(rows) {
+    const isHttp = (v) => /^https?:\/\//i.test(String(v == null ? "" : v).trim());
+    for (let i = 0; i < Math.min(10, rows.length); i++) {
+      const r = rows[i] || [];
+      let nc = -1, lc = -1;
+      r.forEach((cell, j) => {
+        const t = String(cell == null ? "" : cell).trim();
+        if (!t) return;
+        if (isHttp(t)) { if (lc < 0) lc = j; return; }
+        if (/[\d]/.test(t) && !/[\u4e00-\u9fa5]/.test(t)) return;
+        if (nc < 0 && NAME_COL_HINT.test(t)) nc = j;
+        if (lc < 0 && LINK_COL_HINT.test(t)) lc = j;
+      });
+      if (nc >= 0 && lc >= 0) return { headRow: i, nameCol: nc, linkCol: lc };
+    }
+    const body = rows.slice(0, 50);
+    const w = Math.max(...rows.map((r) => (r || []).length), 0);
+    let bestLink = -1, bestLinkN = 0;
+    for (let j = 0; j < w; j++) {
+      let n = 0;
+      for (const r of body) if (isHttp((r || [])[j])) n++;
+      if (n > bestLinkN) { bestLinkN = n; bestLink = j; }
+    }
+    if (bestLink < 0) return { headRow: 0, nameCol: -1, linkCol: -1 };
+    let bestName = -1, bestNameN = 0;
+    for (let j = 0; j < w; j++) {
+      if (j === bestLink) continue;
+      let n = 0;
+      for (const r of body) {
+        const t = String((r || [])[j] == null ? "" : (r || [])[j]).trim();
+        if (t && /^[\u4e00-\u9fa5·]{2,8}$/.test(t)) n++;
+      }
+      if (n > bestNameN) { bestNameN = n; bestName = j; }
+    }
+    return { headRow: -1, nameCol: bestName, linkCol: bestLink };
+  }
+
+  /** 表格 → [{ name, link }]（跳过表头行） */
+  function papLinkRows(rows, cols) {
+    const out = [];
+    for (let i = 0; i < rows.length; i++) {
+      if (i === cols.headRow) continue;
+      const r = rows[i] || [];
+      const nm = String(cols.nameCol >= 0 ? (r[cols.nameCol] == null ? "" : r[cols.nameCol]) : "").trim();
+      const lk = String(cols.linkCol >= 0 ? (r[cols.linkCol] == null ? "" : r[cols.linkCol]) : "").trim();
+      if (!nm && !lk) continue;
+      out.push({ name: nm, link: lk });
+    }
+    return out;
+  }
+
+  function openPapLink() {
+    PL = [];
+    $("plPreview").innerHTML = "";
+    $("plSummary").innerHTML = "";
+    $("plResult").textContent = "";
+    $("plFileHint").innerHTML = "";
+    // 默认挂到「最近一次有分数的考试」—— 老师导这种表十有八九就是刚考完那场
+    const all = [];
+    for (const s of DB.students) for (const e of s.exams || []) {
+      if ((e.name || "").trim() && hasScore(e)) all.push(e);
+    }
+    all.sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
+    $("plExamName").value = all.length ? String(all[all.length - 1].name || "").trim() : "";
+    $("plExamList").innerHTML = examNameList().map((n) => `<option value="${esc(n)}"></option>`).join("");
+    $("mPapLink").classList.add("open");
+  }
+
+  async function papLinkFromFile(file) {
+    if (!file) return;
+    const name = String(file.name || "").toLowerCase();
+    try {
+      if (/\.xls$/.test(name)) {
+        return toast("老 .xls 读不了：请先用 WPS / Excel 另存为 .xlsx 再导", 6500);
+      }
+      let rows = null;
+      if (/\.(xlsx|xlsm)$/.test(name)) {
+        const wb = await globalThis.XlsxLite.readXlsx(await file.arrayBuffer());
+        if (!wb.sheets.length) return toast("这个文件里没有工作表");
+        rows = wb.sheets[0].rows;
+      } else if (/\.(csv|txt)$/.test(name)) {
+        rows = parseCsvRows(await file.text());
+      } else {
+        return toast("只支持 .xlsx / .csv（老的 .xls 请另存为 .xlsx）", 6000);
+      }
+      if (!rows || !rows.length) return toast("这个文件里没读到内容");
+      const cols = guessLinkCols(rows);
+      if (cols.linkCol < 0) return toast("没找到链接列：表头要有「链接 / 答题卡 / 报告」，或整列都是 http 地址", 7000);
+      if (cols.nameCol < 0) return toast("没找到姓名列：表头要有「姓名 / 学员姓名」", 7000);
+      PL = papLinkRows(rows, cols);
+      if (!PL.length) return toast("没读到有效行");
+      $("plFileHint").innerHTML = `已读「${esc(file.name)}」：`
+        + `姓名在第 ${cols.nameCol + 1} 列、链接在第 ${cols.linkCol + 1} 列 —— 核对下面的状态再点「写入链接」`;
+      renderPapLinkPreview();
+    } catch (err) {
+      console.error(err);
+      toast("读文件失败：" + err.message, 7000);
+    }
+  }
+
+  /** 一行到底是哪种情况（写入和预览共用同一套判断，绝不让预览和实际写入不一致） */
+  function papLinkMatch(row, examName) {
+    const nm = String(row.name || "").trim();
+    const lk = String(row.link || "").trim();
+    if (!nm) return { st: "empty", label: "没有姓名" };
+    if (!/^https?:\/\//i.test(lk)) return { st: "badlink", label: "链接不是 http(s)" };
+    const hits = DB.students.filter((s) => String(s.name || "").trim() === nm);
+    if (!hits.length) return { st: "noperson", label: "看板里没有这个人" };
+    if (hits.length > 1) return { st: "dup", label: `重名 ${hits.length} 个，无法确定` };
+    const s = hits[0];
+    const list = (s.exams || []).filter((e) => (e.name || "").trim() === examName);
+    if (!list.length) return { st: "noexam", label: `没有「${examName}」这场` };
+    if (list.length > 1) return { st: "multiexam", label: `这场有 ${list.length} 条记录` };
+    const e = list[0];
+    const old = String(e.link || "").trim();
+    if (old === lk) return { st: "same", label: "已是最新" };
+    if (old) return { st: "conflict", label: "已有不同链接", old };
+    return { st: "ok", label: "可写入", stu: s, exam: e };
+  }
+
+  function renderPapLinkPreview() {
+    const box = $("plPreview");
+    if (!box) return;
+    if (!PL.length) { box.innerHTML = ""; if ($("plSummary")) $("plSummary").innerHTML = ""; return; }
+    const examName = String($("plExamName").value || "").trim();
+    const rows = PL.map((r) => Object.assign({}, r, papLinkMatch(r, examName)));
+    const n = (st) => rows.filter((x) => x.st === st).length;
+    const pending = n("noperson") + n("dup") + n("noexam") + n("multiexam") + n("badlink") + n("empty");
+    const color = (st) => st === "ok" ? "var(--green)" : st === "same" ? "var(--ink-3)"
+      : st === "conflict" ? "var(--red)" : "var(--amber)";
+    const short = (u) => String(u || "").replace(/^https?:\/\//i, "").slice(0, 66) + (String(u || "").length > 74 ? "…" : "");
+    $("plSummary").innerHTML = `共 <b>${rows.length}</b> 行：可写入 <b style="color:var(--green)">${n("ok")}</b>`
+      + ` · 已是最新 <b>${n("same")}</b>`
+      + ` · 冲突 <b style="color:var(--red)">${n("conflict")}</b>`
+      + ` · 待核对 <b style="color:var(--amber)">${pending}</b>`
+      + (!examName ? ` <b style="color:var(--amber)">（还没填考试名）</b>` : "");
+    box.innerHTML = `<div class="preview" style="margin-top:12px;max-height:300px;overflow:auto">
+      <table><thead><tr><th style="width:120px">学生</th><th style="width:150px">状态</th><th>链接</th></tr></thead>
+      <tbody>${rows.map((x) => `<tr${x.st === "ok" ? "" : ' style="background:var(--amber-soft)"'}>
+        <td><b>${esc(x.name || "—")}</b></td>
+        <td style="color:${color(x.st)}">${esc(x.label)}${x.old ? `<br><span class="hint" style="margin:0">原：${esc(short(x.old))}</span>` : ""}</td>
+        <td><span class="hint" style="margin:0" title="${esc(x.link)}">${esc(short(x.link) || "—")}</span></td>
+      </tr>`).join("")}</tbody></table></div>`;
+  }
+
+  function papLinkSave() {
+    const examName = String($("plExamName").value || "").trim();
+    if (!examName) { toast("先填「挂到哪场考试」的名字，比如「万人测」"); $("plExamName").focus(); return; }
+    if (!PL.length) return toast("先选一个表格文件");
+    let n = 0, same = 0, skip = 0;
+    for (const r of PL) {
+      const m = papLinkMatch(r, examName);
+      if (m.st === "same") { same++; continue; }
+      if (m.st !== "ok") { skip++; continue; }
+      m.exam.link = String(r.link).trim();
+      n++;
+    }
+    if (!n) {
+      toast(`一条都没写：${skip} 行待核对 / 冲突${same ? `、${same} 行本来就有` : ""}`, 5000);
+      $("plResult").innerHTML = `写入 <b>0</b> 条`;
+      return;
+    }
+    save(); renderStats(); renderSide(); renderStage();
+    $("plResult").innerHTML = `写入 <b>${n}</b> 条` + (same ? `，${same} 条本来就有` : "") + (skip ? `，跳过 ${skip} 行` : "");
+    toast(`已写入 ${n} 条答题卡链接${same ? `，${same} 条本来就有` : ""}${skip ? `，跳过 ${skip} 行` : ""}`, 3000);
+    PL = [];
+    setTimeout(() => $("mPapLink").classList.remove("open"), 900);
+  }
+
   /* ======================================================== 语文打卡 */
 
   /**
@@ -13226,7 +13616,7 @@ const SYNC = (() => {
     if (bulk) { bulk.disabled = m === 0; bulk.textContent = m ? `批量设置状态（${m} 人）` : "批量设置状态"; }
     const cp = $("ckCopy");
     if (cp) {
-      cp.textContent = m ? `复制已选 ${m} 人姓名` : `复制当前 ${n} 人姓名`;
+      cp.textContent = m ? `复制姓名（已选 ${m} 人）` : `复制姓名（当前 ${n} 人）`;
       cp.disabled = (m || n) === 0;
     }
     const ex = $("ckExport");
@@ -13480,12 +13870,10 @@ const SYNC = (() => {
     const cp = $("ckCopy");
     if (cp) cp.onclick = () => {
       const picked = view.ckSel.length > 0;
-      const scope = picked ? DB.students.filter((s) => view.ckSel.includes(s.id)) : ckFiltered();
-      if (!scope.length) return toast("当前没有可复制的学生");
-      const names = scope.map((s) => s.name).join("\n");
-      navigator.clipboard.writeText(names).then(
-        () => toast(`已复制 ${scope.length} 个姓名（${picked ? "已勾选" : "当前筛选"}）`),
-        () => toast("复制失败，浏览器不允许访问剪贴板"));
+      // 用「当前筛选结果」做底再取勾选：切筛选后掉出勾选的人不会隔着筛选被复制走
+      const filtered = ckFiltered();
+      const scope = picked ? filtered.filter((s) => view.ckSel.includes(s.id)) : filtered;
+      copyStudentNames(scope, { scope: picked ? "已勾选" : "当前筛选" });
     };
     const ex = $("ckExport");
     if (ex) ex.onclick = () => {
@@ -13704,6 +14092,23 @@ const SYNC = (() => {
   }
 
   /**
+   * 这场考试的外链（原始答题卡 / 学习报告地址，如 cpnpad.xdf.cn）。
+   *
+   * 只认 http(s)：本机路径、file://、空值一律当「没有链接」，宁可不显示也不给一个
+   * 点了没反应的假链接。链接是老师自己导进来的原始地址，这里不改写、不补参数。
+   */
+  function examLink(e) {
+    const u = e && typeof e.link === "string" ? e.link.trim() : "";
+    return /^https?:\/\//i.test(u) ? u : "";
+  }
+
+  /** 某个学生在某场考试里的答题卡外链（没有就返回空串） */
+  function examLinkOf(sid, examName) {
+    const e = examOf(sid, examName);
+    return e ? examLink(e) : "";
+  }
+
+  /**
    * 某生在考场上被识别出来的「板块得分」（答题卡识别结果 e.paper.ocr.sections）。
    *
    * 这是**答卷上真读出来的**分，不是拿总分估的 —— 老师只给总分、没传答题卡的，
@@ -13780,6 +14185,7 @@ const SYNC = (() => {
     { k: "diff", label: "与平均分", sort: true },
     { k: "sec", label: "板块得分" },
     { k: "prev", label: "较上次", sort: true },
+    { k: "link", label: "答题卡" },
   ];
 
   function scv() {
@@ -13904,7 +14310,15 @@ const SYNC = (() => {
     </div>`;
   }
 
-  function batchBarHtml() {
+  /**
+   * 成绩页专属的批量条（只改沟通 / 薄弱，不动成绩）。
+   *
+   * ⚠️ 名字必须跟学员列表那个 `batchBarHtml()` 分开（2026-10-28 踩过）：
+   * 两个函数原来都叫 batchBarHtml，同作用域里后定义的会把前一个覆盖掉 ——
+   * 学员列表勾了人，批量条却读成绩页的 view.scSel，永远显示「已选 0 人」，
+   * 按钮也全变成了「设为已沟通 / 加薄弱板块」。函数名别再撞。
+   */
+  function scBatchBarHtml() {
     const n = (view.scSel || []).length;
     return `<div class="sc-batch" id="scBatch">
       <b>已选 ${n} 人</b>
@@ -13999,6 +14413,8 @@ const SYNC = (() => {
     const C = scv().cols;
     const showSec = examRecords(name).some((r) => studentSections(r.sid, name));
     const showPrev = examRecords(name).some((r) => prevExamOf(r.sid, name));
+    // 整场都没有答题卡外链 → 「答题卡」列根本不出现（跟板块得分一个规矩：没有就不摆空列）
+    const showLink = examRecords(name).some((r) => examLinkOf(r.sid, name));
     return [
       { k: "rank", label: "名次", cls: "sticky-l col-num", always: true },
       { k: "pick", label: "", cls: "col-pick", always: true },
@@ -14007,9 +14423,10 @@ const SYNC = (() => {
       { k: "comm", label: "沟通", cls: "col-num" },
       { k: "weak", label: "薄弱板块", cls: "col-sect" },
       ...SC_OPT_COLS.filter((o) => C[o.k]
-        && (o.k !== "sec" || showSec) && (o.k !== "prev" || showPrev)).map((o) => ({
+        && (o.k !== "sec" || showSec) && (o.k !== "prev" || showPrev)
+        && (o.k !== "link" || showLink)).map((o) => ({
         k: o.k, label: o.label, sort: o.sort,
-        cls: o.k === "sec" ? "col-sect" : "col-num",
+        cls: o.k === "sec" ? "col-sect" : o.k === "link" ? "col-link" : "col-num",
       })),
     ];
   }
@@ -14034,6 +14451,7 @@ const SYNC = (() => {
         band: bandOf(name, r.sid),
         comm: commOf(name, r.sid),
         weak: weakOf(name, r.sid),
+        link: examLinkOf(r.sid, name),
       };
     });
     const total = rows.length;
@@ -14086,6 +14504,7 @@ const SYNC = (() => {
       if (k === "diff") return x.diff === null ? "" : Number(fmtScore(x.diff));
       if (k === "sec") return secsText(x.secs);
       if (k === "prev") return x.d2 === null ? "" : Number(fmtScore(x.d2));
+      if (k === "link") return x.link || "";
       if (k === "band") return x.band || "未录入";
       if (k === "comm") return (x.comm.st ? "已沟通" : "未沟通") + (x.comm.date ? " " + x.comm.date : "");
       if (k === "weak") return x.weak.join("、");
@@ -14228,6 +14647,10 @@ const SYNC = (() => {
 
     const cur = view.scoreExam && names.includes(view.scoreExam) ? view.scoreExam : null;
     const curSt = cur ? examStats(cur) : null;
+    // 「复制姓名」的范围：单场有勾选 = 勾选的人（且在当前筛选里），否则 = 当前搜索/筛选后的全部人；
+    // 「全部」视图 = 当前表里真正有成绩的人。分页只影响表格显示，不影响复制（用户要的是筛选结果）。
+    let scoreCopy = [];
+    let scoreCopyPicked = false;
 
     // 考试名标签：全部 + 每场（标签上带平均分，一眼能比）
     const tab = (nm, label) =>
@@ -14247,6 +14670,7 @@ const SYNC = (() => {
     // 「全部」= 跨考试总表：行是学生，列是每场考试的分数
     if (!cur) {
       const scored = DB.students.filter((s) => (s.exams || []).some(hasScore));
+      scoreCopy = scored;
       const sts = names.map((nm) => examStats(nm));
       const statRow = (label, fn, cls) =>
         `<tr class="stat-row"><td class="sticky-l ${cls || ""}">${esc(label)}</td>${
@@ -14287,6 +14711,10 @@ const SYNC = (() => {
       const date = recs[0]?.date || "";
       const st = examStats(cur);
       const V = scoreView(cur);
+      const pickedRows = V.rows.filter((x) => (view.scSel || []).includes(x.sid));
+      scoreCopyPicked = pickedRows.length > 0;
+      scoreCopy = (scoreCopyPicked ? pickedRows : V.rows)
+        .map((x) => DB.students.find((s) => s.id === x.sid)).filter(Boolean);
       const cols = scoreCols(cur);
       const C0 = scv().cols;
       // 「板块得分」和「较上次」两列有数据才出现：
@@ -14294,6 +14722,7 @@ const SYNC = (() => {
       // 宁可不显示这一列，也不拿总分去估、不拿考试名先后去猜哪场是上一次。
       const hasSec = recs.some((r) => studentSections(r.sid, cur));
       const hasPrev = recs.some((r) => prevExamOf(r.sid, cur));
+      const hasLink = recs.some((r) => examLinkOf(r.sid, cur));
       const cell = (x, k) => {
         if (k === "rank") return `<td class="sticky-l" data-col="rank">${x.rank}</td>`;
         if (k === "pick") return `<td class="col-pick"><input type="checkbox" data-pick="${x.sid}"${
@@ -14304,6 +14733,9 @@ const SYNC = (() => {
         if (k === "name") return `<td class="sticky-l sticky-2" data-col="name"><b>${esc(x.name)}</b>${
           ntBadges(DB.students.find((s) => s.id === x.sid))}</td>`;
         if (k === "score") return `<td data-col="score"><b>${x.score}</b>${typeof x.full === "number" ? "/" + x.full : ""}</td>`;
+        if (k === "link") return `<td class="col-link" data-col="link">${x.link
+          ? `<a class="sc-link" href="${esc(x.link)}" target="_blank" rel="noopener noreferrer" title="在新标签页打开原始答题卡">答题卡</a>`
+          : `<span class="sc-none">—</span>`}</td>`;
         if (k === "rate") return `<td data-col="rate">${x.rate === null ? "—" : x.rate + "%"}</td>`;
         if (k === "diff") return `<td class="diff ${x.diff === null ? "" : (x.diff >= 0 ? "up" : "down")}" data-col="diff">${
           x.diff === null ? "—" : (x.diff >= 0 ? "+" : "−") + fmtScore(Math.abs(x.diff))}</td>`;
@@ -14362,7 +14794,7 @@ const SYNC = (() => {
         </div>
         ${view.scTrackOpen ? trackFormHtml(cur) : ""}
         ${scHintHtml()}
-        ${(view.scSel || []).length ? batchBarHtml() : ""}
+        ${(view.scSel || []).length ? scBatchBarHtml() : ""}
         <div class="sc-tools stick">
           <input class="sc-q" id="scQ" placeholder="搜姓名…" autocomplete="off" value="${esc(V.q)}">
           <span class="sc-hit">${V.q ? `筛出 ${V.hit} / ${V.total} 人` : ""}</span>
@@ -14388,8 +14820,10 @@ const SYNC = (() => {
             <button class="btn ghost" id="scColBtn">列 ▾</button>
             <span class="sc-colpick${view.scColOpen ? " on" : ""}" id="scColPick">
               ${SC_OPT_COLS.map((o) => {
-                const has = o.k === "sec" ? hasSec : o.k === "prev" ? hasPrev : true;
-                const why = o.k === "sec" ? "这场考试还没有人传过答题卡，暂时没有板块分" : "还没有可比的上一场考试";
+                const has = o.k === "sec" ? hasSec : o.k === "prev" ? hasPrev : o.k === "link" ? hasLink : true;
+                const why = o.k === "sec" ? "这场考试还没有人传过答题卡，暂时没有板块分"
+                  : o.k === "link" ? "这场考试还没有人填过答题卡链接，暂时没有链接列"
+                  : "还没有可比的上一场考试";
                 return `<label class="${has ? "" : "off"}"${has ? "" : ` title="${why}"`}><input type="checkbox" data-sccol="${o.k}"${
                   C0[o.k] ? " checked" : ""}${has ? "" : " disabled"}>${esc(o.label)}</label>`;
               }).join("")}
@@ -14419,6 +14853,20 @@ const SYNC = (() => {
         <div class="empty-hint">这场考试还没有人录分数，点右上角「导入成绩」</div>`;
     }
 
+    // 成绩页操作区统一一颗「复制姓名」：单场按勾选/筛选，全部按有成绩的人。
+    {
+      const cp = document.createElement("button");
+      cp.className = "btn";
+      cp.id = "scCopy";
+      cp.textContent = `复制姓名（${scoreCopy.length} 人）`;
+      cp.disabled = scoreCopy.length === 0;
+      cp.title = scoreCopyPicked
+        ? `复制已勾选的 ${scoreCopy.length} 名学生（每行一个姓名）`
+        : `复制当前搜索/筛选后的 ${scoreCopy.length} 名学生（每行一个姓名，分页不影响）`;
+      cp.onclick = () => copyStudentNames(scoreCopy, { scope: scoreCopyPicked ? "已勾选" : "当前筛选" });
+      listbar.appendChild(cp);
+    }
+
     // 冻结列：量出「名次」列的实际宽度写进 --ck2，让「姓名」贴在它右边。
     // 这两列以前都写 left:0（都叫 sticky-l），窗口一窄横向滚动时姓名会整个盖住名次 ——
     // 「表头 / 冻结列互相重叠」的另一种形态。现在名次 = sticky-l，姓名 = sticky-l sticky-2。
@@ -14437,7 +14885,7 @@ const SYNC = (() => {
     });
     // 表格行点击 → 打开学生详情
     stage.querySelectorAll("tbody tr[data-id]").forEach((tr) => tr.onclick = (e) => {
-      if (e.target.closest("input, button, .sc-comm, .sc-weak, .col-pick, .sc-weakpop")) return;
+      if (e.target.closest("input, button, a, .sc-comm, .sc-weak, .col-pick, .sc-weakpop")) return;
       view.selected = tr.dataset.id;
       renderDetail();
     });
@@ -14722,6 +15170,8 @@ const SYNC = (() => {
           <input class="sc-q" id="clQ" placeholder="搜姓名…" autocomplete="off" value="${esc(view.callQ)}">
           <span class="sc-hit">${q ? `筛出 ${hit} / ${total} 人` : ""}</span>
           <span style="flex:1"></span>
+          <button class="btn" id="clCopy"${hit ? "" : " disabled"}
+            title="复制当前搜索 + 结果筛选后的 ${hit} 名学生（每行一个姓名）">复制姓名（${hit} 人）</button>
         </div>`;
 
     // 批次标签：全部 + 每一轮（带日期和接通数，一眼能比）
@@ -14823,7 +15273,6 @@ const SYNC = (() => {
           <div class="ck-tabs">${statusTabs}</div>
           <div class="ck-copybar">
             <button class="btn" id="clBatch">批量导入名单</button>
-            <button class="btn" id="clCopy">复制这 ${list.length} 人姓名</button>
             <button class="btn" id="clExport">导出当前筛选 CSV</button>
             <button class="btn" id="clExportFull">导出全班名单</button>
           </div>
@@ -14911,6 +15360,15 @@ const SYNC = (() => {
       });
     }
 
+    // 「复制姓名」：单轮 = 当前结果标签 + 搜索；全部 = 当前搜索。两个都只复制屏幕上筛出来的这批人。
+    const cp = $("clCopy");
+    if (cp) cp.onclick = () => {
+      const scope = !cur
+        ? DB.students.filter(hitName)
+        : DB.students.filter((s) => callStatusOf(curId, s.id) === view.callStatus).filter(hitName);
+      copyStudentNames(scope, { scope: "当前筛选" });
+    };
+
     if (!cur) return;
 
     // 「✎ 记一次」：直接开这一轮里这个学生的记录面板
@@ -14940,13 +15398,6 @@ const SYNC = (() => {
       save();
       renderStage();
     });
-    const cp = $("clCopy");
-    if (cp) cp.onclick = () => {
-      const names = DB.students.filter((s) => callStatusOf(curId, s.id) === view.callStatus).map((s) => s.name).join("\n");
-      navigator.clipboard.writeText(names).then(
-        () => toast(`已复制 ${names.split("\n").filter(Boolean).length} 个姓名`),
-        () => toast("复制失败，浏览器不允许访问剪贴板"));
-    };
     const ex = $("clExport");
     if (ex) ex.onclick = () => exportCallCsv(cur, true);
     const exf = $("clExportFull");
