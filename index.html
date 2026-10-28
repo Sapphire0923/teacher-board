@@ -971,7 +971,15 @@ aside.detail.open { display: block; }
 /* 面板滚动时姓名和关闭按钮跟着走：不然滚到下面想关掉还得先拉回顶上 */
 .det-head { position: sticky; top: -17px; z-index: 3; background: var(--panel);
   display: flex; align-items: center; gap: 9px; margin: 0 -17px 4px; padding: 17px 17px 7px;
-  box-shadow: 0 1px 0 var(--line); }
+  box-shadow: 0 1px 0 var(--line);
+  /* 2026-10-28 修：标签一多，姓名框 + 标签 + 等级把这一行挤爆，
+     「关闭」按钮被压到 0 宽看不见。现在允许换行，除姓名外一律不缩，
+     关闭按钮钉在行尾（挤不下就换到第二行，永远点得到）。 */
+  flex-wrap: wrap; row-gap: 6px; }
+.det-head > * { flex: 0 0 auto; }
+.det-head > .nameinput { flex: 1 1 120px; min-width: 84px; }
+.det-head > #dClose { margin-left: auto; }
+.det-head .ntag, .det-head .lvauto, .det-head .lvsel, .det-head .btn { white-space: nowrap; }
 .det-head .nm { font-size: 19px; font-weight: 700; }
 /* 详情副标题：12.5px + ink-3 在窄抽屉里几乎糊掉，抬到 13.5px / ink-2 */
 .det-sub { color: var(--ink-2); font-size: var(--fs-cell); margin-bottom: 13px; }
@@ -14171,7 +14179,15 @@ const SYNC = (() => {
     </div>`;
   }
 
-  function batchBarHtml() {
+  /**
+   * 成绩页专属的批量条（只改沟通 / 薄弱，不动成绩）。
+   *
+   * ⚠️ 名字必须跟学员列表那个 `batchBarHtml()` 分开（2026-10-28 踩过）：
+   * 两个函数原来都叫 batchBarHtml，同作用域里后定义的会把前一个覆盖掉 ——
+   * 学员列表勾了人，批量条却读成绩页的 view.scSel，永远显示「已选 0 人」，
+   * 按钮也全变成了「设为已沟通 / 加薄弱板块」。函数名别再撞。
+   */
+  function scBatchBarHtml() {
     const n = (view.scSel || []).length;
     return `<div class="sc-batch" id="scBatch">
       <b>已选 ${n} 人</b>
@@ -14638,7 +14654,7 @@ const SYNC = (() => {
         </div>
         ${view.scTrackOpen ? trackFormHtml(cur) : ""}
         ${scHintHtml()}
-        ${(view.scSel || []).length ? batchBarHtml() : ""}
+        ${(view.scSel || []).length ? scBatchBarHtml() : ""}
         <div class="sc-tools stick">
           <input class="sc-q" id="scQ" placeholder="搜姓名…" autocomplete="off" value="${esc(V.q)}">
           <span class="sc-hit">${V.q ? `筛出 ${V.hit} / ${V.total} 人` : ""}</span>
