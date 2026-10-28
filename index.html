@@ -2448,6 +2448,46 @@ section.list { background: var(--bg); }
   </div>
 </div>
 
+<!-- 导入答题卡链接 -->
+<div class="mask" id="mPapLink">
+  <div class="modal wide">
+    <header>导入答题卡链接</header>
+    <div class="body">
+      <p class="hint" style="margin-top:0">
+        选一个表格（<b>.xlsx / .csv</b>），程序自己找<b>姓名列</b>和<b>链接列</b>，
+        把链接挂到这个孩子<b>已经有的那场考试</b>上。
+      </p>
+      <p class="hint" style="margin:-6px 0 10px">
+        · 分数一个字都不动，只写链接　·　认不出 / 重名 / 没有这场考试的行<b>不猜</b>，列在下面等你核对
+        <br>· 已经存了<b>不同</b>链接的不会覆盖，标成「冲突」　·　老 .xls 请先在 WPS / Excel 里另存为 .xlsx
+      </p>
+      <div class="rowset">
+        <button class="btn" id="plPickFile">📄 选 Excel / CSV 文件</button>
+        <span class="hint" style="margin:0" id="plHint">支持 .xlsx / .csv</span>
+        <input type="file" id="plFile" accept=".xlsx,.xlsm,.csv,.txt" hidden>
+      </div>
+      <p class="hint" id="plFileHint" style="margin:8px 0 0"></p>
+      <div class="sect" style="margin-top:12px">
+        <h4>挂到哪场考试</h4>
+        <div class="rowset">
+          <label class="hint" style="margin:0">考试名称
+            <input type="text" id="plExamName" list="plExamList" placeholder="万人测" style="width:170px;margin-left:6px;padding:5px 8px;border:1px solid var(--line);border-radius:7px">
+          </label>
+        </div>
+        <datalist id="plExamList"></datalist>
+        <p class="hint" style="margin:8px 0 0">只挂到<b>已经存在</b>的那场考试；这个孩子没有这场就跳过，不会凭空建考试。</p>
+      </div>
+      <div id="plPreview"></div>
+      <p class="hint" id="plSummary" style="margin:10px 0 0"></p>
+    </div>
+    <footer>
+      <span class="result" id="plResult"></span>
+      <button class="btn" data-close="mPapLink">取消</button>
+      <button class="btn primary" id="plSave">写入链接</button>
+    </footer>
+  </div>
+</div>
+
 <!-- 导入语文打卡计划 -->
 <div class="mask" id="mCheckin">
   <div class="modal">
@@ -7575,6 +7615,7 @@ const SYNC = (() => {
             <div class="tools">
               <button class="btn ghost" id="btnChat">导入聊天</button>
               <button class="btn ghost" id="btnScore">导入成绩</button>
+              <button class="btn ghost" id="btnPapLink">导入答题卡</button>
               <button class="btn ghost" id="btnCheckin">导入打卡计划</button>
               <span class="tools-sep"></span>
               <button class="btn ghost" id="btnImport">换名单</button>
@@ -7608,6 +7649,12 @@ const SYNC = (() => {
     $("btnChat").onclick = () => { $("chatResult").textContent = ""; $("mChat").classList.add("open"); $("chatText").focus(); };
     $("btnQuick").onclick = openQuick;
     $("btnScore").onclick = openScore;
+    $("btnPapLink").onclick = openPapLink;
+    $("plPickFile").onclick = () => $("plFile").click();
+    $("plFile").onchange = () => { papLinkFromFile($("plFile").files[0]); $("plFile").value = ""; };
+    $("plExamName").oninput = renderPapLinkPreview;
+    $("plExamName").onchange = renderPapLinkPreview;
+    $("plSave").onclick = papLinkSave;
     $("btnCheckin").onclick = openCheckin;
     $("btnImport").onclick = () => $("fileXlsx2").click();
     $("btnAdd").onclick = addStudent;
@@ -12855,6 +12902,192 @@ const SYNC = (() => {
     toast(`已写入 ${done} 条成绩${nMerge ? `，合并 ${nMerge} 条重复` : ""}${skipped ? `，跳过 ${skipped} 行` : ""}`, 2800);
     SC = [];
     setTimeout(() => $("mScore").classList.remove("open"), 900);
+  }
+
+  /* ==================== 导入答题卡链接（2026-10-28 加） ====================
+   * 学校发的「万人测报告&答题卡」表：一行一个学生 + 一条 cpnpad 报告链接。
+   * 老师要的是「选文件 → 自动按姓名挂到对应孩子的那场考试上」，而不是一个个点。
+   *
+   * 三条死规矩（跟成绩导入同源）：
+   *   1. 只写 link 字段，**分数一个字都不动**；
+   *   2. 认不出 / 重名 / 没有那场考试的行一律**不猜**，列在预览里等老师核对；
+   *   3. 已经存了**不同**链接的**不覆盖**，标成「冲突」。
+   */
+  let PL = [];                       // 预览行：{ name, link }
+  const LINK_COL_HINT = /链接|答题卡|报告|url|link|地址|report/i;
+
+  /**
+   * 猜表头：返回 { headRow, nameCol, linkCol }。
+   * 表头不一定在第一行（学校表格常有标题行）；没有表头就按数据推：
+   * 链接列 = 前 50 行里 http 地址最多的那列，姓名列 = 中文姓名最多的那列。
+   */
+  function guessLinkCols(rows) {
+    const isHttp = (v) => /^https?:\/\//i.test(String(v == null ? "" : v).trim());
+    for (let i = 0; i < Math.min(10, rows.length); i++) {
+      const r = rows[i] || [];
+      let nc = -1, lc = -1;
+      r.forEach((cell, j) => {
+        const t = String(cell == null ? "" : cell).trim();
+        if (!t) return;
+        if (isHttp(t)) { if (lc < 0) lc = j; return; }
+        if (/[\d]/.test(t) && !/[\u4e00-\u9fa5]/.test(t)) return;
+        if (nc < 0 && NAME_COL_HINT.test(t)) nc = j;
+        if (lc < 0 && LINK_COL_HINT.test(t)) lc = j;
+      });
+      if (nc >= 0 && lc >= 0) return { headRow: i, nameCol: nc, linkCol: lc };
+    }
+    const body = rows.slice(0, 50);
+    const w = Math.max(...rows.map((r) => (r || []).length), 0);
+    let bestLink = -1, bestLinkN = 0;
+    for (let j = 0; j < w; j++) {
+      let n = 0;
+      for (const r of body) if (isHttp((r || [])[j])) n++;
+      if (n > bestLinkN) { bestLinkN = n; bestLink = j; }
+    }
+    if (bestLink < 0) return { headRow: 0, nameCol: -1, linkCol: -1 };
+    let bestName = -1, bestNameN = 0;
+    for (let j = 0; j < w; j++) {
+      if (j === bestLink) continue;
+      let n = 0;
+      for (const r of body) {
+        const t = String((r || [])[j] == null ? "" : (r || [])[j]).trim();
+        if (t && /^[\u4e00-\u9fa5·]{2,8}$/.test(t)) n++;
+      }
+      if (n > bestNameN) { bestNameN = n; bestName = j; }
+    }
+    return { headRow: -1, nameCol: bestName, linkCol: bestLink };
+  }
+
+  /** 表格 → [{ name, link }]（跳过表头行） */
+  function papLinkRows(rows, cols) {
+    const out = [];
+    for (let i = 0; i < rows.length; i++) {
+      if (i === cols.headRow) continue;
+      const r = rows[i] || [];
+      const nm = String(cols.nameCol >= 0 ? (r[cols.nameCol] == null ? "" : r[cols.nameCol]) : "").trim();
+      const lk = String(cols.linkCol >= 0 ? (r[cols.linkCol] == null ? "" : r[cols.linkCol]) : "").trim();
+      if (!nm && !lk) continue;
+      out.push({ name: nm, link: lk });
+    }
+    return out;
+  }
+
+  function openPapLink() {
+    PL = [];
+    $("plPreview").innerHTML = "";
+    $("plSummary").innerHTML = "";
+    $("plResult").textContent = "";
+    $("plFileHint").innerHTML = "";
+    // 默认挂到「最近一次有分数的考试」—— 老师导这种表十有八九就是刚考完那场
+    const all = [];
+    for (const s of DB.students) for (const e of s.exams || []) {
+      if ((e.name || "").trim() && hasScore(e)) all.push(e);
+    }
+    all.sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
+    $("plExamName").value = all.length ? String(all[all.length - 1].name || "").trim() : "";
+    $("plExamList").innerHTML = examNameList().map((n) => `<option value="${esc(n)}"></option>`).join("");
+    $("mPapLink").classList.add("open");
+  }
+
+  async function papLinkFromFile(file) {
+    if (!file) return;
+    const name = String(file.name || "").toLowerCase();
+    try {
+      if (/\.xls$/.test(name)) {
+        return toast("老 .xls 读不了：请先用 WPS / Excel 另存为 .xlsx 再导", 6500);
+      }
+      let rows = null;
+      if (/\.(xlsx|xlsm)$/.test(name)) {
+        const wb = await globalThis.XlsxLite.readXlsx(await file.arrayBuffer());
+        if (!wb.sheets.length) return toast("这个文件里没有工作表");
+        rows = wb.sheets[0].rows;
+      } else if (/\.(csv|txt)$/.test(name)) {
+        rows = parseCsvRows(await file.text());
+      } else {
+        return toast("只支持 .xlsx / .csv（老的 .xls 请另存为 .xlsx）", 6000);
+      }
+      if (!rows || !rows.length) return toast("这个文件里没读到内容");
+      const cols = guessLinkCols(rows);
+      if (cols.linkCol < 0) return toast("没找到链接列：表头要有「链接 / 答题卡 / 报告」，或整列都是 http 地址", 7000);
+      if (cols.nameCol < 0) return toast("没找到姓名列：表头要有「姓名 / 学员姓名」", 7000);
+      PL = papLinkRows(rows, cols);
+      if (!PL.length) return toast("没读到有效行");
+      $("plFileHint").innerHTML = `已读「${esc(file.name)}」：`
+        + `姓名在第 ${cols.nameCol + 1} 列、链接在第 ${cols.linkCol + 1} 列 —— 核对下面的状态再点「写入链接」`;
+      renderPapLinkPreview();
+    } catch (err) {
+      console.error(err);
+      toast("读文件失败：" + err.message, 7000);
+    }
+  }
+
+  /** 一行到底是哪种情况（写入和预览共用同一套判断，绝不让预览和实际写入不一致） */
+  function papLinkMatch(row, examName) {
+    const nm = String(row.name || "").trim();
+    const lk = String(row.link || "").trim();
+    if (!nm) return { st: "empty", label: "没有姓名" };
+    if (!/^https?:\/\//i.test(lk)) return { st: "badlink", label: "链接不是 http(s)" };
+    const hits = DB.students.filter((s) => String(s.name || "").trim() === nm);
+    if (!hits.length) return { st: "noperson", label: "看板里没有这个人" };
+    if (hits.length > 1) return { st: "dup", label: `重名 ${hits.length} 个，无法确定` };
+    const s = hits[0];
+    const list = (s.exams || []).filter((e) => (e.name || "").trim() === examName);
+    if (!list.length) return { st: "noexam", label: `没有「${examName}」这场` };
+    if (list.length > 1) return { st: "multiexam", label: `这场有 ${list.length} 条记录` };
+    const e = list[0];
+    const old = String(e.link || "").trim();
+    if (old === lk) return { st: "same", label: "已是最新" };
+    if (old) return { st: "conflict", label: "已有不同链接", old };
+    return { st: "ok", label: "可写入", stu: s, exam: e };
+  }
+
+  function renderPapLinkPreview() {
+    const box = $("plPreview");
+    if (!box) return;
+    if (!PL.length) { box.innerHTML = ""; if ($("plSummary")) $("plSummary").innerHTML = ""; return; }
+    const examName = String($("plExamName").value || "").trim();
+    const rows = PL.map((r) => Object.assign({}, r, papLinkMatch(r, examName)));
+    const n = (st) => rows.filter((x) => x.st === st).length;
+    const pending = n("noperson") + n("dup") + n("noexam") + n("multiexam") + n("badlink") + n("empty");
+    const color = (st) => st === "ok" ? "var(--green)" : st === "same" ? "var(--ink-3)"
+      : st === "conflict" ? "var(--red)" : "var(--amber)";
+    const short = (u) => String(u || "").replace(/^https?:\/\//i, "").slice(0, 66) + (String(u || "").length > 74 ? "…" : "");
+    $("plSummary").innerHTML = `共 <b>${rows.length}</b> 行：可写入 <b style="color:var(--green)">${n("ok")}</b>`
+      + ` · 已是最新 <b>${n("same")}</b>`
+      + ` · 冲突 <b style="color:var(--red)">${n("conflict")}</b>`
+      + ` · 待核对 <b style="color:var(--amber)">${pending}</b>`
+      + (!examName ? ` <b style="color:var(--amber)">（还没填考试名）</b>` : "");
+    box.innerHTML = `<div class="preview" style="margin-top:12px;max-height:300px;overflow:auto">
+      <table><thead><tr><th style="width:120px">学生</th><th style="width:150px">状态</th><th>链接</th></tr></thead>
+      <tbody>${rows.map((x) => `<tr${x.st === "ok" ? "" : ' style="background:var(--amber-soft)"'}>
+        <td><b>${esc(x.name || "—")}</b></td>
+        <td style="color:${color(x.st)}">${esc(x.label)}${x.old ? `<br><span class="hint" style="margin:0">原：${esc(short(x.old))}</span>` : ""}</td>
+        <td><span class="hint" style="margin:0" title="${esc(x.link)}">${esc(short(x.link) || "—")}</span></td>
+      </tr>`).join("")}</tbody></table></div>`;
+  }
+
+  function papLinkSave() {
+    const examName = String($("plExamName").value || "").trim();
+    if (!examName) { toast("先填「挂到哪场考试」的名字，比如「万人测」"); $("plExamName").focus(); return; }
+    if (!PL.length) return toast("先选一个表格文件");
+    let n = 0, same = 0, skip = 0;
+    for (const r of PL) {
+      const m = papLinkMatch(r, examName);
+      if (m.st === "same") { same++; continue; }
+      if (m.st !== "ok") { skip++; continue; }
+      m.exam.link = String(r.link).trim();
+      n++;
+    }
+    if (!n) {
+      toast(`一条都没写：${skip} 行待核对 / 冲突${same ? `、${same} 行本来就有` : ""}`, 5000);
+      $("plResult").innerHTML = `写入 <b>0</b> 条`;
+      return;
+    }
+    save(); renderStats(); renderSide(); renderStage();
+    $("plResult").innerHTML = `写入 <b>${n}</b> 条` + (same ? `，${same} 条本来就有` : "") + (skip ? `，跳过 ${skip} 行` : "");
+    toast(`已写入 ${n} 条答题卡链接${same ? `，${same} 条本来就有` : ""}${skip ? `，跳过 ${skip} 行` : ""}`, 3000);
+    PL = [];
+    setTimeout(() => $("mPapLink").classList.remove("open"), 900);
   }
 
   /* ======================================================== 语文打卡 */
