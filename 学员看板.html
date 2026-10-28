@@ -2366,6 +2366,152 @@ section.list { background: var(--bg); }
 
 .col-pick { width: 34px; text-align: center; }
 .col-pick input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+
+/* ==========================================================================
+   学生个人档案（2026-10-28）
+   --------------------------------------------------------------------------
+   独立页，沿用 .pap-page 的宽度和暖白面板；档案页只读，编辑仍走右侧抽屉。
+   颜色全部走 :root 变量，移动端只做「堆叠 + 横向滚动」，不缩字号。
+   ========================================================================== */
+.profile-page { max-width: 1080px; width: 100%; min-width: 0; box-sizing: border-box; }
+.pf-link {
+  background: none; border: 0; padding: 0; font: inherit; color: inherit;
+  cursor: pointer; text-align: left;
+}
+.pf-link:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+button.nm.pf-link { font-size: 17px; font-weight: 750; letter-spacing: .2px; }
+button.ck-st-name.pf-link { color: inherit; }
+.pf-hero {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  flex-wrap: wrap; background: var(--panel-solid); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 18px 20px; margin-bottom: 12px;
+}
+.pf-hero-main { min-width: 0; }
+.pf-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pf-title h2 { margin: 0; font-size: 25px; line-height: 1.2; letter-spacing: .3px; }
+.pf-sub { margin-top: 7px; color: var(--ink-2); font-size: var(--fs-cell); line-height: 1.6; }
+.pf-chips { margin-top: 10px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pf-hero-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pf-warn {
+  padding: 10px 14px; margin-bottom: 12px; border-radius: var(--radius-s);
+  background: var(--amber-soft); color: var(--amber); border: 1px solid var(--amber-line);
+  font-size: var(--fs-cell); line-height: 1.7;
+}
+.pf-follow {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 10px 14px; margin-bottom: 12px; border-radius: var(--radius-s);
+  background: var(--accent-soft); border: 1px solid var(--line);
+  font-size: var(--fs-cell); color: var(--ink-2);
+}
+.pf-follow b { color: var(--ink); }
+.pf-tabs {
+  display: flex; align-items: center; gap: 6px; overflow-x: auto;
+  width: 100%; min-width: 0; box-sizing: border-box;
+  padding: 6px; margin-bottom: 12px; border: 1px solid var(--line);
+  border-radius: var(--radius); background: var(--panel-solid);
+}
+.pf-body, .pf-card, .pf-record, .pf-tablewrap, .pf-hero, .pf-follow { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.pf-tablewrap { width: 100%; }
+.pf-tab {
+  flex: none; border: 1px solid transparent; background: var(--panel-2);
+  color: var(--ink-2); border-radius: var(--radius-s); padding: 8px 12px;
+  font: inherit; font-size: var(--fs-cell); cursor: pointer; white-space: nowrap;
+}
+.pf-tab:hover { background: var(--panel-3); color: var(--ink); }
+.pf-tab.on { background: var(--accent-soft); color: var(--accent-2); border-color: var(--line-strong); font-weight: 650; }
+.pf-tab .n { margin-left: 6px; font-size: var(--fs-mini); color: var(--ink-3); font-weight: 400; }
+.pf-card {
+  background: var(--panel-solid); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px;
+}
+.pf-hint { font-size: var(--fs-cell); color: var(--ink-2); line-height: 1.75; }
+.pf-trend { color: var(--ink); line-height: 1.8; }
+.pf-tablewrap { overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-solid); }
+.pf-table { width: 100%; border-collapse: collapse; font-size: var(--fs-cell); }
+.pf-table th {
+  text-align: left; font-weight: 650; color: var(--ink-2); background: var(--panel-2);
+  padding: 8px 10px; white-space: nowrap; border-bottom: 1px solid var(--line);
+}
+.pf-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.pf-table tr:last-child td { border-bottom: 0; }
+.pf-table .num { text-align: right; white-space: nowrap; }
+.pf-nowrap { white-space: nowrap; }
+.pf-none { color: var(--ink-3); }
+.pf-up { color: var(--green); }
+.pf-down { color: var(--red); }
+.pf-tags { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.pf-acts { display: flex; gap: 5px; flex-wrap: wrap; }
+.pf-ext { text-decoration: none; }
+.pf-list { display: flex; flex-direction: column; gap: 8px; }
+.pf-record {
+  background: var(--panel-solid); border: 1px solid var(--line);
+  border-radius: var(--radius-s); padding: 10px 12px;
+}
+.pf-rec-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pf-date { color: var(--ink-3); font-size: var(--fs-mini); white-space: nowrap; }
+.pf-text { margin-top: 6px; white-space: pre-wrap; line-height: 1.7; font-size: var(--fs-cell); color: var(--ink); }
+.pf-meta { margin-top: 6px; color: var(--ink-2); font-size: var(--fs-mini); line-height: 1.65; }
+.pf-rec-actions { margin-top: 7px; display: flex; gap: 6px; flex-wrap: wrap; }
+.pf-ev-type {
+  display: inline-flex; align-items: center; gap: 4px; flex: none;
+  font-size: var(--fs-mini); padding: 2px 7px; border-radius: 999px;
+  background: var(--panel-3); color: var(--ink-2);
+}
+.pf-ev-type.t-score { background: var(--accent-soft); color: var(--accent-2); }
+.pf-ev-type.t-daily { background: var(--amber-soft); color: var(--amber); }
+.pf-ev-type.t-chat { background: var(--panel-3); color: var(--ink-2); }
+.pf-ev-type.t-call { background: var(--green-soft); color: var(--green); }
+.pf-ev-type.t-checkin { background: var(--accent-soft); color: var(--accent); }
+.pf-ev-type.t-follow { background: var(--amber-soft); color: var(--amber); }
+.pf-filters { display: flex; gap: 6px; flex-wrap: wrap; margin: 2px 0 12px; }
+.pf-chip {
+  border: 1px solid var(--line); background: var(--panel-solid); color: var(--ink-2);
+  border-radius: 999px; padding: 5px 11px; font: inherit; font-size: var(--fs-mini); cursor: pointer;
+}
+.pf-chip:hover { background: var(--panel-3); color: var(--ink); }
+.pf-chip.on { background: var(--accent-soft); color: var(--accent-2); border-color: var(--line-strong); font-weight: 650; }
+.pf-timeline { position: relative; padding: 2px 0; }
+.pf-timeline::before {
+  content: ""; position: absolute; left: 132px; top: 0; bottom: 0;
+  width: 1px; background: var(--line);
+}
+.pf-ev { display: grid; grid-template-columns: 124px 1fr; gap: 16px; padding: 7px 0; position: relative; }
+.pf-ev-date { color: var(--ink-3); font-size: var(--fs-mini); text-align: right; padding-top: 11px; white-space: nowrap; }
+.pf-ev-main {
+  position: relative; background: var(--panel-solid); border: 1px solid var(--line);
+  border-radius: var(--radius-s); padding: 10px 12px;
+}
+.pf-ev-main::before {
+  content: ""; position: absolute; left: -13px; top: 15px; width: 7px; height: 7px;
+  border-radius: 50%; background: var(--accent); border: 2px solid var(--panel);
+}
+.pf-ev-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pf-ev-top b { font-size: var(--fs-cell); }
+.pf-ev-sum { margin: 6px 0 8px; color: var(--ink-2); font-size: var(--fs-cell); line-height: 1.7; white-space: pre-wrap; }
+.pf-subhead {
+  margin: 16px 0 6px 140px; padding-top: 10px; border-top: 1px dashed var(--line);
+  color: var(--ink-3); font-size: var(--fs-mini);
+}
+.pf-more { display: flex; justify-content: center; margin-top: 14px; }
+
+@media (max-width: 820px) {
+  /* 顶栏在窄屏不要横向撑破：搜索独占一行，模式切换/工具条各自横向滚 */
+  .top-main { flex-wrap: wrap; padding: 8px 12px 6px; }
+  .top-main input.search { flex: 1 1 100%; min-width: 0; }
+  .top-sub { padding: 0 12px 8px; }
+  .seg { max-width: 100%; overflow-x: auto; }
+  .tools { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; }
+  .pf-hero { padding: 14px 15px; }
+  .pf-title h2 { font-size: 22px; }
+  .pf-hero-actions { width: 100%; }
+  .pf-hero-actions .btn { flex: 1; }
+  .pf-table { min-width: 760px; }
+  .pf-timeline::before { display: none; }
+  .pf-ev { grid-template-columns: 1fr; gap: 4px; }
+  .pf-ev-date { text-align: left; padding-top: 0; }
+  .pf-ev-main::before { display: none; }
+  .pf-subhead { margin-left: 0; }
+}
 </style>
 </head>
 <body>
@@ -6633,6 +6779,9 @@ const SYNC = (() => {
     // 方案里正在被手工编辑的那一块：{eid, part:"ana"|"talk"} / 计划第几条 planEdit
     paperEdit: null,
     planEdit: null,
+    // 学生个人档案（2026-10-28）：独立页；profileSid 是学生主键
+    profileSid: null, profileTab: "score", profileFrom: null,
+    profileTimelineType: "all", profileTimelineLimit: 30, profileCheckinAll: false,
   };
   // 详情面板的滚动位置（面板很长，重绘时要放回原位）
   let _detScroll = 0;
@@ -7325,10 +7474,15 @@ const SYNC = (() => {
     // step 2 预览
     const built = buildStudents();
     const existing = DB.students.length;
+    const dupNames = {};
+    for (const st of built.students) dupNames[st.name] = (dupNames[st.name] || 0) + 1;
+    const dups = Object.entries(dupNames).filter(([, n]) => n > 1);
     $("impBody").innerHTML = `
       <p class="hint" style="margin-top:0">
         识别到 <b>${built.students.length}</b> 名学生${built.skipped ? `，跳过 ${built.skipped} 行空行/无关行` : ""}。
       </p>
+      ${dups.length ? `<div class="pf-warn">⚠ 这次名单里有 <b>${dups.length}</b> 组重名：${dups.map(([n, c]) => esc(n) + "×" + c).join("、")}。<br>
+        合并按姓名一一配对，重名时可能对错人；建议先在表里加区分（比如备注/学号）再导入。系统不会因此自动改名或改归属。</div>` : ""}
       ${existing ? `
       <div class="sect" style="margin-top:12px">
         <h4>你已经有 ${existing} 名学生的数据了，这次怎么处理？</h4>
@@ -7638,6 +7792,7 @@ const SYNC = (() => {
     nameSearchBox($("search"), { noHit: false });
     $("seg").querySelectorAll("button").forEach((b) => b.onclick = () => {
       view.mode = b.dataset.mode;
+      view.profileSid = null; view.profileFrom = null;
       if (view.mode === "follow") view.filter = { kind: "follow" };
       if (view.mode !== "checkin") view.checkinTask = null;
       if (view.mode !== "call") view.callBatch = null;
@@ -7776,9 +7931,10 @@ const SYNC = (() => {
       if (el.dataset.queue) { enterQueue(); return; }
       // 侧栏这些筛选全是「学员列表」的东西。停在打卡/成绩/电联/答题卡页时，光改 filter 是没用的
       // （那几页根本不看 filter），点下去像没反应——所以先把 mode 放回列表页再筛。
-      if (view.mode === "checkin" || view.mode === "score" || view.mode === "call" || view.mode === "paper" || view.mode === "queue" || view.mode === "workbench") {
+      if (view.mode === "checkin" || view.mode === "score" || view.mode === "call" || view.mode === "paper" || view.mode === "queue" || view.mode === "workbench" || view.mode === "profile") {
         view.mode = view.listMode;
         view.checkinTask = null; view.callBatch = null; view.scoreExam = null;
+        view.profileSid = null; view.profileFrom = null;
         syncSeg();
       }
       view.filter = { kind: el.dataset.kind, v: el.dataset.v || null };
@@ -7935,7 +8091,7 @@ const SYNC = (() => {
       <header class="cd-hd">
         <input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${on ? "checked" : ""}
           title="勾上可以批量操作（打卡、加标签、派任务…）">
-        <span class="nm">${esc(s.name)}</span>
+        <button class="nm pf-link" type="button" data-profile="${esc(s.id)}" title="打开 ${esc(s.name)} 的学生档案">${esc(s.name)}</button>
         <span class="cd-nt">${ntBadges(s)}</span>
         <span class="cd-lv">${levelBadge(s)}</span>
       </header>
@@ -8056,6 +8212,12 @@ const SYNC = (() => {
     if (view.mode === "paper") { closeDetailIfNotSelected(); renderPaperPage(); syncStick(); return; }
     if (view.mode === "queue") { closeDetailIfNotSelected(); renderQueuePage(); return; }
     if (view.mode === "workbench") { closeDetailIfNotSelected(); renderWorkbench(); return; }
+    // 学生个人档案：独立页，数据只读；编辑仍走右侧详情抽屉
+    if (view.mode === "profile") {
+      renderProfile();
+      if (view.selected) renderDetail(); else closeDetailIfNotSelected();
+      return;
+    }
 
     // 今日队列为空就自动排 5 个（必须在 visible() 之前，否则筛出来是空的）
     if (view.filter.kind === "today") {
@@ -8177,7 +8339,7 @@ const SYNC = (() => {
           k === "name" ? `<input type="checkbox" class="cbsel cball" data-cball="1" ${allOn ? "checked" : ""} title="全选/取消这 ${list.length} 人"> ` : ""
         }${esc(l)}${view.sort.key === k ? (view.sort.dir > 0 ? " ↑" : " ↓") : ""}</th>`).join("")
       }</tr></thead><tbody>${list.map((s) => `<tr data-id="${s.id}"${selSet.has(s.id) ? ' class="rowsel"' : ""}>
-        <td class="sticky-l"><input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${selSet.has(s.id) ? "checked" : ""} title="勾上可以批量操作"> <b>${esc(s.name)}</b>${ntBadges(s)}</td>
+        <td class="sticky-l"><input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${selSet.has(s.id) ? "checked" : ""} title="勾上可以批量操作"> <button class="pf-link" type="button" data-profile="${esc(s.id)}" title="打开 ${esc(s.name)} 的学生档案"><b>${esc(s.name)}</b></button>${ntBadges(s)}</td>
         ${hasLevels() ? `<td class="sticky-l sticky-2">${esc(levelOf(s))}${DB.config.levelAuto && !s.levelManual ? `<i class="lva" title="按评分自动算出">ⓐ</i>` : ""}</td>` : ""}
         ${DB.config.dims.map((d) => scoreCell(s, d)).join("")}
         ${hasDims() ? `<td class="num">${scoreTotal(s)}</td>` : ""}
@@ -8237,7 +8399,7 @@ const SYNC = (() => {
         return `<div class="card${on ? " checked" : ""}" data-id="${s.id}" style="border-left-color:${levelOf(s) ? levelColor(levelOf(s)) : "var(--line)"}">
           <div class="row1">
             <input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${on ? "checked" : ""} title="勾上可以批量操作">
-            <span class="nm">${esc(s.name)}</span>${ntBadges(s)}${levelBadge(s)}
+            <button class="nm pf-link" type="button" data-profile="${esc(s.id)}" title="打开 ${esc(s.name)} 的学生档案">${esc(s.name)}</button>${ntBadges(s)}${levelBadge(s)}
             <span style="flex:1"></span>
             <span class="chip ${s.followUp?.done ? "ok" : "no"}">${s.followUp?.done ? "已跟进" : "待跟进"}</span></div>
           ${scoreBox(s)}
@@ -8256,6 +8418,16 @@ const SYNC = (() => {
       renderSide(); renderStage();
       const ds = dailyStats();
       toast(ds.left.length ? `已记录，还剩 ${ds.left.length} 个` : "今天的 5 个做完了 👍");
+    });
+
+    // 点姓名 = 进学生档案；点卡片/行其它位置仍然是原来的详情抽屉。
+    // 必须 stopPropagation，否则会连带触发 [data-id] 的“打开详情”。
+    stage.querySelectorAll("[data-profile]").forEach((el) => {
+      el.onclick = (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        enterProfile(el.dataset.profile);
+      };
     });
 
     // 批量勾选（2026-10-16 加）：点勾选框只切换选中，**绝不能顺带打开详情** ——
@@ -10983,14 +11155,17 @@ const SYNC = (() => {
         }
       }
     }
-    // ② 聊天记录：导入时没认出是谁
-    for (const u of (DB.unmatched || [])) {
+    // ② 聊天记录：导入时没认出是谁 / 同名需要人工指定
+    (DB.unmatched || []).forEach((u, uidx) => {
       out.push({
-        type: "chat", name: u.name || u.who || "（没写名字）",
-        label: "聊天没归类", why: String(u.text || "").replace(/\s+/g, " ").slice(0, 42) || "导入时没认出来是谁",
+        type: "chat", uidx,
+        name: u.name || u.who || "（没写名字）",
+        label: u.reason === "同名" ? "聊天同名待确认" : "聊天没归类",
+        why: (u.reason === "同名" ? `同名 ${(u.candidates || []).length} 人，请指定；` : "") +
+          (String(u.text || "").replace(/\s+/g, " ").slice(0, 42) || "导入时没认出来是谁"),
         at: u.importedAt || 0,
       });
-    }
+    });
     // ③ 成绩：同一场考试攒了两条以上（多半是重复导入）
     for (const s of DB.students) {
       const byName = new Map();
@@ -11031,7 +11206,7 @@ const SYNC = (() => {
           <b class="qd-name">${esc(it.name || "")}</b>
           <span class="qd-why">${esc(it.why || "")}</span>
           ${it.type === "conflict" ? `<button class="btn ghost" data-qmerge="${i}">合并</button>` : ""}
-          <button class="btn ghost" data-qgo="${i}">去处理</button>
+          <button class="btn ghost" data-qgo="${i}">${it.type === "chat" ? "指定学生" : "去处理"}</button>
         </div>`).join("")}</div>`
         : `<div class="pap-empty">太好了，没有待处理的事。<br>
              <span class="hint-inline">答题卡核对完、聊天归好类、成绩没有重复 —— 这里就会是空的。<br>
@@ -11047,6 +11222,11 @@ const SYNC = (() => {
         view.paperStudent = it.sid;
         view.selected = null;
         syncSeg(); render();
+        return;
+      }
+      // 聊天（包括同名待确认）：先让老师指定学生，绝不自动归给所有人
+      if (it.type === "chat" && it.uidx != null) {
+        openAssignChat(it.uidx);
         return;
       }
       if (it.sid) {
@@ -11087,6 +11267,67 @@ const SYNC = (() => {
       save(); renderStats(); renderSide(); renderStage();
       toast(`合并了 ${people} 人的 ${groups} 组重复成绩，清掉 ${removed} 条记录`, 3200);
     };
+  }
+
+  /**
+   * 把一条未归类 / 同名待确认的聊天归给指定学生。
+   * 只移动这一条；同名的其他人一个字都不动。
+   */
+  function openAssignChat(uidx) {
+    const u = (DB.unmatched || [])[uidx];
+    if (!u) return toast("这条未归类记录已经不在了");
+    const old = $("mAssignChat");
+    if (old) old.remove();
+    const ov = document.createElement("div");
+    ov.className = "mask open";
+    ov.id = "mAssignChat";
+    ov.innerHTML = `<div class="modal" style="width:min(620px,100%)" role="dialog" aria-modal="true">
+      <header>把这条聊天归给谁<span class="spacer"></span><button class="btn" id="asgX">关闭</button></header>
+      <div class="body">
+        <div class="pf-card" style="margin-bottom:10px">
+          <div class="pf-rec-head"><b>${esc(u.speaker || "未写发言人")}</b><span class="pf-date">${esc(u.time || "时间未记录")}</span></div>
+          <div class="pf-text">${esc(u.text || "")}</div>
+          ${u.reason === "同名" ? `<div class="pf-warn" style="margin:8px 0 0">这条消息遇到了同名，系统没有自动归类。</div>` : ""}
+        </div>
+        <input class="sc-q" id="asgQ" placeholder="搜姓名…" autocomplete="off" style="width:100%;margin-bottom:10px">
+        <div id="asgList" class="pf-list"></div>
+        <p class="hint">只移动这一条；同名的其他人不会被动到。认不准就关掉，先别归。</p>
+      </div></div>`;
+    document.body.appendChild(ov);
+    const close = () => ov.remove();
+    ov.querySelector("#asgX").onclick = close;
+    ov.addEventListener("click", (e) => { if (e.target === ov) close(); });
+    const qEl = ov.querySelector("#asgQ");
+    const paint = () => {
+      const q = String(qEl.value || "").trim().toLowerCase();
+      const cand = new Set(u.candidates || []);
+      const list = DB.students
+        .filter((s) => !q || String(s.name || "").toLowerCase().includes(q))
+        .sort((a, b) => (cand.has(b.id) ? 1 : 0) - (cand.has(a.id) ? 1 : 0))
+        .slice(0, 80);
+      ov.querySelector("#asgList").innerHTML = list.length ? list.map((s) =>
+        `<button class="btn" type="button" data-asg="${esc(s.id)}" style="justify-content:space-between;text-align:left;width:100%">
+          <span><b>${esc(s.name)}</b>${cand.has(s.id) ? ` <span class="chip ex">同名候选</span>` : ""}</span>
+          <span class="hint-inline">${esc(stuTag(s) || "无更多区分信息")}</span>
+        </button>`).join("")
+        : `<div class="empty-hint" style="padding:20px 0">没有这个名字</div>`;
+      ov.querySelectorAll("[data-asg]").forEach((b) => b.onclick = () => {
+        const s = DB.students.find((x) => x.id === b.dataset.asg);
+        if (!s) return;
+        if (!confirm(`把这条聊天归给「${s.name}」？\n\n${String(u.text || "").slice(0, 120)}`)) return;
+        s.chats ||= [];
+        s.chats.push({ speaker: u.speaker || "", time: u.time || "", text: u.text || "", importedAt: u.importedAt || Date.now() });
+        if (u.time && u.time > (s.lastContact || "")) s.lastContact = u.time;
+        DB.unmatched.splice(uidx, 1);
+        save();
+        close();
+        renderStats(); renderSide(); renderStage();
+        toast(`已归给「${s.name}」—— 没有动其他同名学生`, 4200);
+      });
+    };
+    qEl.oninput = paint;
+    paint();
+    qEl.focus();
   }
 
   function renderPaperPage() {
@@ -11212,7 +11453,8 @@ const SYNC = (() => {
         <span class="hint-inline">${esc(b.name)} · ${esc(b.date || "没写日期")}${typeof b.full === "number" ? " · 满分 " + b.full : ""}</span>
         <span class="chip ${st === "analyzed" || st === "confirmed" ? "ok" : st === "none" ? "ex" : "warn"}">${esc(stT)}</span>
         ${sc ? `<span class="chip">${esc(sc)}</span>` : ""}
-        <span class="sc-actions"><button class="btn ghost" id="papSBack">← 返回名单</button></span>
+        <span class="sc-actions"><button class="btn ghost" id="papProfile" title="打开这个学生的完整档案">📁 档案</button>
+          <button class="btn ghost" id="papSBack">← 返回名单</button></span>
       </div>
       ${jump}
       <section class="papsec" id="secCard"><h3>① 答题卡与识别结果</h3>${secCard}</section>
@@ -11329,6 +11571,8 @@ const SYNC = (() => {
     // 完整分析页 → 返回名单。批次和筛选签原样留着，切学生不用退回去重挑
     const sback = $("papSBack");
     if (sback) sback.onclick = () => { view.paperStudent = null; renderStage(); };
+    const pprof = $("papProfile");
+    if (pprof) pprof.onclick = () => { if (view.paperStudent) enterProfile(view.paperStudent); };
     stage.querySelectorAll("[data-jump]").forEach((el) => el.onclick = () => {
       const t = $(el.dataset.jump);
       if (t) t.scrollIntoView({ block: "start", behavior: "smooth" });
@@ -11735,6 +11979,7 @@ const SYNC = (() => {
         <input class="nameinput" id="dName" value="${esc(s.name)}" title="改名字">
         ${ntBadges(s)}
         ${lvCtl}
+        <button class="btn ghost" id="dProfile" title="打开这个学生的完整档案（成绩、日常、沟通、打卡、时间线）">📁 档案</button>
         <button class="btn ghost" id="dClose">关闭</button>
       </div>
       <div class="det-sub">${hasDims() ? "合计 " + scoreTotal(s) + " 分 · " : ""}${chats.length} 条聊天记录
@@ -11748,7 +11993,7 @@ const SYNC = (() => {
       ${DB.config.flags.length ? `<div class="box"><h4>跟进状态</h4>
         ${DB.config.flags.map((f) => flagRow(s, f)).join("")}</div>` : ""}
 
-      <div class="box"><h4>优点</h4>
+      <div class="box" data-detbox="daily"><h4>优点</h4>
         <textarea class="mini" id="dPros" placeholder="他哪里做得好？">${esc(s.pros || "")}</textarea></div>
 
       <div class="box"><h4>问题 / 待改进</h4>
@@ -11762,7 +12007,7 @@ const SYNC = (() => {
         ${ptagPickerHtml(s)}
       </div>
 
-      <div class="box"><h4>跟进</h4>
+      <div class="box" data-detbox="follow"><h4>跟进</h4>
         <div class="follow">
           <button class="btn ${s.followUp?.done ? "" : "primary"}" id="dFollow">${s.followUp?.done ? "取消已跟进" : "标记已联系家长"}</button>
           <span class="when">${s.followUp?.done && s.followUp.at ? "上次：" + esc(s.followUp.at) : "还没标记"}</span>
@@ -11789,7 +12034,7 @@ const SYNC = (() => {
 
       ${planBoxHtml(s)}
 
-      <div class="box"><h4>聊天记录（${chats.length}）</h4>
+      <div class="box" data-detbox="chats"><h4>聊天记录（${chats.length}）</h4>
         ${chats.length ? `<div class="chats">${chats.map((c, i) => `<div class="msg">
           <div class="meta"><span class="sp">${esc(c.speaker || "—")}</span><span>${esc(c.time || "无时间")}</span>
             <span style="flex:1"></span><span class="x" data-dchat="${i}" title="删掉这条" style="cursor:pointer">✕</span></div>
@@ -11835,6 +12080,7 @@ const SYNC = (() => {
     }
 
     $("dClose").onclick = () => { view.selected = null; renderStage(); };
+    $("dProfile").onclick = () => enterProfile(s.id);
 
     const commit = (msg) => { save(); renderStats(); renderSide(); renderStage(); if (msg) toast(msg); };
     /**
@@ -12141,6 +12387,608 @@ const SYNC = (() => {
     };
   }
 
+  /* ==================================================================
+     学生个人档案（2026-10-28）
+     ------------------------------------------------------------------
+     设计铁律：
+       ① 只读现有数据，不新增数据库字段，不做迁移；
+       ② 所有查询用学生 id，不按姓名 join；
+       ③ 日常表现没有逐条时间 —— 只解析现有文本，不知道就写“未记录”，不编；
+       ④ 打卡没记录 ≠ 未完成；电联旧记录 ≠ 有逐次通话时间；
+       ⑤ 编辑/删除仍走现有详情抽屉、电联弹窗、打卡页，档案页不另造写库逻辑。
+     ================================================================== */
+
+  const PF_DATE_RE = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T\s](\d{1,2}):(\d{2}))?/;
+  const PF_MD_RE = /^(\d{1,2})\/(\d{1,2})(?:\s+(\d{1,2}):(\d{2}))?$/;
+  const PF_TYPE = {
+    score: { label: "成绩", icon: "📝" },
+    daily: { label: "日常", icon: "📌" },
+    chat: { label: "聊天", icon: "💬" },
+    call: { label: "电联", icon: "☎" },
+    checkin: { label: "打卡", icon: "✓" },
+    follow: { label: "待跟进", icon: "↗" },
+  };
+
+  const pfPad = (n) => String(n).padStart(2, "0");
+  const pfCut = (t, n) => {
+    const s = String(t || "").replace(/\s+/g, " ").trim();
+    return s.length > n ? s.slice(0, n) + "…" : s;
+  };
+
+  /** 解析现有时间字段；只认能确定的格式，不认识就返回空 key，不猜。 */
+  function pfDate(v) {
+    const t = String(v || "").trim();
+    if (!t) return { key: "", label: "", hasYear: false, monthDay: "", precision: "none" };
+    let m = PF_DATE_RE.exec(t);
+    if (m) {
+      const key = `${m[1]}-${pfPad(m[2])}-${pfPad(m[3])}` + (m[4] ? ` ${pfPad(m[4])}:${m[5]}` : "");
+      return { key, label: t, hasYear: true, monthDay: `${pfPad(m[2])}-${pfPad(m[3])}`, precision: m[4] ? "minute" : "day" };
+    }
+    m = PF_MD_RE.exec(t);
+    if (m) {
+      return { key: "", label: t, hasYear: false, monthDay: `${pfPad(m[1])}-${pfPad(m[2])}`, precision: m[3] ? "minute" : "day" };
+    }
+    return { key: "", label: t, hasYear: false, monthDay: "", precision: "unknown" };
+  }
+
+  /**
+   * 日常表现：从现有的 pros / cons / note 自由文本里拆条目。
+   * 快速录入的格式是「M/D 内容」，多条用「；」或换行分隔；
+   * 普通导入的整段文字不硬拆。年份缺失就标“年份未记录”。
+   */
+  function pfDailyOf(s) {
+    const defs = [["pros", "优点"], ["cons", "问题"], ["note", "备注"]];
+    const out = [];
+    for (const [field, label] of defs) {
+      const raw = String(s[field] || "").trim();
+      if (!raw) continue;
+      for (const line of raw.split(/\r?\n/).map((x) => x.trim()).filter(Boolean)) {
+        let parts = [line];
+        // 只有「整段都是 M/D 开头」的快速录入才拆；普通句子里的分号不拆，避免切碎原文
+        if (line.includes("；") && /(^|；)\s*\d{1,2}\/\d{1,2}\s+/.test(line)) {
+          parts = line.split("；").map((x) => x.trim()).filter(Boolean);
+        }
+        for (const p of parts) {
+          const m = /^(\d{1,2})\/(\d{1,2})\s+(.+)$/.exec(p);
+          out.push({
+            field, label,
+            text: (m ? m[3] : p).trim(),
+            dateLabel: m ? `${m[1]}/${m[2]}（年份未记录）` : "日期未记录",
+            monthDay: m ? `${pfPad(m[1])}-${pfPad(m[2])}` : "",
+            hasDate: !!m,
+          });
+        }
+      }
+    }
+    out.sort((a, b) => {
+      if (a.hasDate !== b.hasDate) return a.hasDate ? -1 : 1;
+      if (a.hasDate && b.hasDate) return b.monthDay.localeCompare(a.monthDay);
+      return 0;
+    });
+    return out;
+  }
+
+  /** 聊天 + 电联统一成同一张展示列表；底层数据不动。 */
+  function pfCommOf(s) {
+    const out = [];
+    for (const c of (s.chats || [])) {
+      const d = pfDate(c.time);
+      out.push({
+        type: "chat", at: d.key, label: c.time || "时间未记录", hasYear: d.hasYear,
+        monthDay: d.monthDay, title: "聊天" + (c.speaker ? " · " + c.speaker : ""),
+        text: c.text || "", raw: c,
+      });
+    }
+    for (const b of (DB.calls?.batches || [])) {
+      const bid = callBatchId(b);
+      const logs = callLogList(bid, s.id);
+      if (logs.length) {
+        for (const L of logs) {
+          const d = pfDate(L.at);
+          out.push({
+            type: "call", at: d.key, label: d.label || "时间未记录", hasYear: d.hasYear,
+            monthDay: d.monthDay, title: "电联 · " + (L.status || "未记结果") + " · " + b.name,
+            text: L.note || "", next: L.next || "", nextAt: L.nextAt || "",
+            rec: L.rec, tr: L.tr, ai: L.ai, raw: L, bid, batch: b, legacy: false,
+          });
+        }
+      } else {
+        const st = DB.calls?.status?.[bid]?.[s.id];
+        if (st) {
+          const d = pfDate(b.date);
+          out.push({
+            type: "call", at: d.key, label: (b.date || "日期未记录") + "（轮次日期，无逐次时间）",
+            hasYear: d.hasYear, monthDay: d.monthDay,
+            title: "电联 · " + st + " · " + b.name + "（换版前记录）",
+            text: "", raw: null, bid, batch: b, legacy: true,
+          });
+        }
+      }
+    }
+    out.sort((a, b) => {
+      const ak = a.at || "", bk = b.at || "";
+      if (ak !== bk) return bk.localeCompare(ak);
+      return (b.monthDay || "").localeCompare(a.monthDay || "");
+    });
+    return out;
+  }
+
+  /** 打卡任务 + 该学生明确记录；没记录 = has:false，绝不写成“未完成”。 */
+  function pfCheckinOf(s) {
+    const tasks = [...(DB.checkin?.tasks || [])].sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
+    return tasks.map((t) => {
+      const tid = checkinTaskId(t);
+      const m = (DB.checkin?.status || {})[tid] || {};
+      const has = Object.prototype.hasOwnProperty.call(m, s.id);
+      return {
+        task: t, tid, has,
+        status: has ? m[s.id] : "",
+        date: t.date || "",
+        dateLabel: t.date || "日期未记录",
+      };
+    });
+  }
+
+  /** 成绩行 + 可比较的“较上次”（只比较有日期、有分数的考试）。 */
+  function pfScoresOf(s) {
+    const rows = examsSorted(s).map((e) => {
+      const score = hasScore(e) ? e.score : null;
+      const full = typeof e.full === "number" && e.full > 0 ? e.full : null;
+      const rate = score !== null && full ? Math.round((score / full) * 1000) / 10 : null;
+      return {
+        e, at: e.date || "", dateLabel: e.date || "日期未记录",
+        score, full, rate,
+        band: e.name ? bandOf(e.name, s.id) : null,
+        comm: e.name ? commOf(e.name, s.id) : { st: 0, marked: false, date: "", note: "" },
+        weak: e.name ? weakOf(e.name, s.id) : [],
+        link: examLink(e),
+      };
+    });
+    let prev = null;
+    for (const r of rows) {
+      r.delta = null; r.rateDelta = null; r.cmpNote = "";
+      if (r.score === null || !r.at) continue;
+      if (prev) {
+        if (prev.full && r.full && prev.full === r.full) r.delta = r.score - prev.score;
+        else if (prev.rate !== null && r.rate !== null) r.rateDelta = Math.round((r.rate - prev.rate) * 10) / 10;
+        else r.cmpNote = "满分/得分率缺失，未比原始分";
+      }
+      prev = r;
+    }
+    return rows;
+  }
+
+  function pfScoreTrend(s, rows) {
+    const scored = rows.filter((r) => r.score !== null);
+    const dated = scored.filter((r) => r.at);
+    const noDate = scored.length - dated.length;
+    const noScore = rows.length - scored.length;
+    const extra = [];
+    if (noDate) extra.push(`另有 ${noDate} 次有分数但缺日期，未参与趋势`);
+    if (noScore) extra.push(`另有 ${noScore} 次考试没有分数记录（未录入/缺考），未按 0 分计算`);
+    if (!dated.length) return `<b>成绩趋势</b>：还没有可比较的成绩。${extra.length ? " " + extra.join("；") + "。" : ""}`;
+    if (dated.length === 1) {
+      return `<b>成绩趋势</b>：只有一次有日期的成绩，<b>不能判断趋势</b>。${extra.length ? " " + extra.join("；") + "。" : ""}`;
+    }
+    const last = dated[dated.length - 1], prev = dated[dated.length - 2];
+    let main = "";
+    if (last.full && prev.full && last.full === prev.full) {
+      const d = last.score - prev.score;
+      main = `最近两次同满分（${last.full} 分）：${prev.score} → ${last.score}（${d >= 0 ? "+" : ""}${d} 分）`;
+    } else if (last.rate !== null && prev.rate !== null) {
+      main = `最近两次满分不同，只比得分率：${prev.rate}% → ${last.rate}%（不硬比原始分）`;
+    } else {
+      main = "最近两次有成绩，但满分/得分率不完整，未做对比";
+    }
+    return `<b>成绩趋势</b>：${main}。一次升降只说明这一次，不直接判定“退步”。${extra.length ? " " + extra.join("；") + "。" : ""}`;
+  }
+
+  function pfTimelineOf(s) {
+    const out = [];
+    for (const r of pfScoresOf(s)) {
+      const sc = r.score === null ? "未录入分数" : `${r.score}${r.full ? "/" + r.full : ""}${r.rate !== null ? " · " + r.rate + "%" : ""}`;
+      out.push({
+        type: "score", at: r.at, label: r.dateLabel, monthDay: "",
+        title: r.e.name || "未命名考试", summary: sc, ref: r,
+      });
+    }
+    for (const d of pfDailyOf(s)) {
+      out.push({
+        type: "daily", at: "", label: d.dateLabel, monthDay: d.monthDay,
+        title: d.label, summary: pfCut(d.text, 180), ref: d,
+      });
+    }
+    for (const c of pfCommOf(s)) {
+      out.push({
+        type: c.type, at: c.at, label: c.label, monthDay: c.monthDay,
+        title: c.type === "chat"
+          ? "来自 " + ((c.raw && c.raw.speaker) || "未写发言人")
+          : (c.legacy ? (c.batch?.name || "电联") + " · 换版前记录"
+            : ((c.raw && c.raw.status) || "电联") + " · " + (c.batch?.name || "")),
+        summary: pfCut(c.text || (c.type === "call" ? (c.legacy ? "换版前记录，无逐次备注" : "没写备注") : "（空消息）"), 180),
+        ref: c,
+      });
+    }
+    for (const c of pfCheckinOf(s)) {
+      if (!c.has) continue;          // 没记录不是事件，绝不补进时间线
+      out.push({
+        type: "checkin", at: c.date, label: c.dateLabel, monthDay: "",
+        title: c.task.topic || c.task.qno || "打卡任务",
+        summary: "状态：" + c.status, ref: c,
+      });
+    }
+    if (s.followUp && (s.followUp.at || s.followUp.text || s.followUp.done)) {
+      out.push({
+        type: "follow", at: s.followUp.at || "", label: s.followUp.at || "时间未记录", monthDay: "",
+        title: "待跟进",
+        summary: (s.followUp.done ? "已跟进" : "待跟进") + (s.followUp.text ? "：" + s.followUp.text : ""),
+        ref: s.followUp,
+      });
+    }
+    const dated = out.filter((x) => x.at && /^\d{4}-/.test(x.at));
+    const partial = out.filter((x) => !x.at || !/^\d{4}-/.test(x.at));
+    dated.sort((a, b) => b.at.localeCompare(a.at));
+    partial.sort((a, b) => (b.monthDay || "").localeCompare(a.monthDay || ""));
+    return { dated, partial, all: [...dated, ...partial] };
+  }
+
+  function enterProfile(sid) {
+    const s = DB.students.find((x) => x.id === sid);
+    if (!s) return toast("这个学生找不到了");
+    if (view.mode !== "profile") {
+      view.profileFrom = {
+        mode: view.mode,
+        filter: JSON.parse(JSON.stringify(view.filter || { kind: "all" })),
+        query: view.query || "",
+        listMode: view.listMode || "cards",
+        scrollY: window.scrollY || 0,
+      };
+    }
+    view.profileSid = sid;
+    view.profileTab = "score";
+    view.profileTimelineType = "all";
+    view.profileTimelineLimit = 30;
+    view.profileCheckinAll = false;
+    view.mode = "profile";
+    view.selected = null;
+    closeDetailIfNotSelected();
+    syncSeg();
+    renderStage();
+    window.scrollTo(0, 0);
+  }
+
+  function exitProfile() {
+    const f = view.profileFrom;
+    view.profileSid = null;
+    view.profileFrom = null;
+    view.profileTab = "score";
+    view.profileTimelineType = "all";
+    view.profileTimelineLimit = 30;
+    view.profileCheckinAll = false;
+    view.mode = f?.mode || view.listMode || "cards";
+    view.filter = f?.filter || { kind: "all" };
+    view.query = f?.query || "";
+    view.selected = null;
+    closeDetailIfNotSelected();
+    syncSeg();
+    renderSide();
+    renderStage();
+    if (f?.scrollY) requestAnimationFrame(() => window.scrollTo(0, f.scrollY));
+  }
+
+  /** 编辑/删除统一跳现有详情抽屉，不另写一套。 */
+  function openProfileEdit(where) {
+    const s = DB.students.find((x) => x.id === view.profileSid);
+    if (!s) return;
+    view.selected = s.id;
+    view.scrollDetTo = where === "daily" ? "daily" : where === "follow" ? "follow" : "";
+    renderDetail();
+  }
+
+  function openProfileExam(s, eid) {
+    const e = findExam(eid);
+    if (!e) return openProfileEdit();
+    view.selected = s.id;
+    view.scrollExam = eid;
+    renderDetail();
+  }
+
+  function openProfilePaper(s, eid) {
+    const e = findExam(eid);
+    if (!e) return toast("这场考试的记录找不到了");
+    view.mode = "paper";
+    view.paperBatch = batchKeyOf(e);
+    view.paperStudent = s.id;
+    view.paperFilter = "all";
+    view.selected = null;
+    syncSeg();
+    render();
+  }
+
+  function openProfileInfo(title, body) {
+    const old = $("pfInfoOv");
+    if (old) old.remove();
+    const ov = document.createElement("div");
+    ov.className = "mask open";
+    ov.id = "pfInfoOv";
+    ov.innerHTML = `<div class="modal" style="width:min(560px,100%)" role="dialog" aria-modal="true">
+      <header>${esc(title)}<span class="spacer"></span><button class="btn" id="pfInfoX">关闭</button></header>
+      <div class="body">${body}</div></div>`;
+    document.body.appendChild(ov);
+    const close = () => ov.remove();
+    ov.querySelector("#pfInfoX").onclick = close;
+    ov.addEventListener("click", (e) => { if (e.target === ov) close(); });
+  }
+
+  function openProfileEvent(ev) {
+    if (!ev) return;
+    const s = DB.students.find((x) => x.id === view.profileSid);
+    if (!s) return;
+    if (ev.type === "score") {
+      if (ev.ref && ev.ref.e && ev.ref.e.paper) return openProfilePaper(s, ev.ref.e.id);
+      return openProfileExam(s, ev.ref && ev.ref.e ? ev.ref.e.id : "");
+    }
+    if (ev.type === "daily") return openProfileEdit("daily");
+    if (ev.type === "follow") return openProfileEdit("follow");
+    if (ev.type === "chat") {
+      view.selected = s.id;
+      view.scrollDetTo = "chats";
+      renderDetail();
+      return;
+    }
+    if (ev.type === "call") {
+      if (ev.ref && ev.ref.legacy) {
+        return openProfileInfo("换版前的电联记录", `<p class="hint" style="margin-top:0">这一轮只存了结果，没有逐次通话时间、备注或录音。当前结果：<b>${esc(ev.ref.title || "")}</b>。<br>轮次：${esc(ev.ref.batch?.name || "")} · ${esc(ev.ref.batch?.date || "日期未记录")}。</p>`);
+      }
+      if (ev.ref && ev.ref.bid) return openCallHist(s.id, ev.ref.bid);
+      return;
+    }
+    if (ev.type === "checkin") {
+      const t = ev.ref.task || {};
+      const status = ev.ref.has ? ev.ref.status : "未记录";
+      return openProfileInfo("语文打卡 · " + (t.topic || t.qno || "任务"),
+        `<p class="hint" style="margin-top:0">${esc(t.date || "日期未记录")}${t.qno ? " · " + esc(t.qno) : ""}${t.type ? " · " + esc(t.type) : ""}</p>
+         <p class="hint">内容：${esc(t.content || "—")}</p>
+         ${t.recite ? `<p class="hint">背诵：${esc(t.recite)}</p>` : ""}
+         <p class="hint">这个学生的记录：<b>${esc(status)}</b>${ev.ref.has ? "" : "（没有明确记录，不等于未完成）"}</p>`);
+    }
+  }
+
+  /* ---- 档案页渲染 ---- */
+
+  function renderProfile() {
+    const stage = $("stage"), lb = $("listbar");
+    if (!stage || !lb) return;
+    const s = DB.students.find((x) => x.id === view.profileSid);
+    if (!s) {
+      lb.innerHTML = `<b>学生档案</b><span style="flex:1"></span><button class="btn ghost" id="pfBack">← 返回学员列表</button>`;
+      stage.innerHTML = `<div class="pap-page profile-page"><div class="empty-hint">这个学生找不到了（可能已被删除）。<br><br><button class="btn primary" id="pfBack2">返回学员列表</button></div></div>`;
+      const back = () => exitProfile();
+      $("pfBack").onclick = back;
+      $("pfBack2").onclick = back;
+      return;
+    }
+
+    const dup = dupNameCount()[s.name] || 0;
+    const scores = pfScoresOf(s);
+    const daily = pfDailyOf(s);
+    const comm = pfCommOf(s);
+    const ck = pfCheckinOf(s);
+    const tl = pfTimelineOf(s);
+    const tab = ["score", "daily", "comm", "checkin", "timeline"].includes(view.profileTab) ? view.profileTab : "score";
+    view.profileTab = tab;
+    const pending = pendingFlags(s);
+    const total = hasDims() ? scoreTotal(s) : null;
+    const recordedCk = ck.filter((x) => x.has).length;
+    const type = view.profileTimelineType || "all";
+    const filteredTl = tl.all.filter((ev) => type === "all" || ev.type === type);
+    const limit = Math.max(10, Number(view.profileTimelineLimit) || 30);
+    const shownTl = filteredTl.slice(0, limit);
+
+    const content = tab === "score" ? pfScoreHtml(s, scores)
+      : tab === "daily" ? pfDailyHtml(s, daily)
+      : tab === "comm" ? pfCommHtml(s, comm)
+      : tab === "checkin" ? pfCheckinHtml(s, ck)
+      : pfTimelineHtml(tl, shownTl, filteredTl.length, type);
+
+    const tabs = [
+      ["score", "学习成绩", String(scores.length)],
+      ["daily", "日常表现", String(daily.length)],
+      ["comm", "家校沟通", String(comm.length)],
+      ["checkin", "语文打卡", recordedCk + "/" + ck.length],
+      ["timeline", "时间线", String(tl.all.length)],
+    ].map(([k, label, n]) => `<button class="pf-tab${tab === k ? " on" : ""}" type="button" role="tab" aria-selected="${tab === k}" data-pftab="${k}">${label}<span class="n">${n}</span></button>`).join("");
+
+    const ptagHtml = parentTagsOf(s).map((t) => {
+      const c = parentTagColor(t);
+      return `<span class="chip ptag" style="background:${hexSoft(c)};color:${c};border-color:${hexSoft(c)}">${esc(t)}</span>`;
+    }).join(" ") || `<span class="pf-none">暂无家长标签</span>`;
+
+    const followHtml = `<div class="pf-follow">
+      <b>待跟进</b>
+      ${pending.length ? pending.map((f) => `<span class="chip no">${esc(f.label)}</span>`).join(" ") : `<span class="chip ok">跟进项都完成了</span>`}
+      ${s.followUp?.text ? `<span class="chip">📌 ${esc(s.followUp.text)}</span>` : ""}
+      ${s.followUp?.done ? `<span class="chip ok">已联系家长</span>` : ""}
+      <span style="flex:1"></span>
+      <button class="btnmini" type="button" id="pfFollow">去详情处理</button>
+    </div>`;
+
+    const hero = `<div class="pf-hero">
+      <div class="pf-hero-main">
+        <div class="pf-title"><h2>${esc(s.name)}</h2>${ntBadges(s)} ${levelBadge(s) || ""}</div>
+        <div class="pf-sub">${DB.config.className ? "班级：" + esc(DB.config.className) : "班级：未设置"}${total !== null ? ` · 评分合计 ${total} 分` : ""}${(s.chats || []).length ? ` · 聊天 ${(s.chats || []).length} 条` : ""}</div>
+        <div class="pf-chips">${ptagHtml}</div>
+      </div>
+      <div class="pf-hero-actions">
+        <button class="btn" type="button" id="pfEdit">✎ 编辑资料</button>
+        <button class="btn ghost" type="button" id="pfBackTop">← 返回学员列表</button>
+      </div>
+    </div>`;
+
+    const dupWarn = dup > 1 ? `<div class="pf-warn">名单中有 <b>${dup}</b> 个「${esc(s.name)}」。本页按<b>学生 ID</b> 关联；如发现聊天/电联归属不对，请到侧栏「待处理」核对，系统不会自动改归属。</div>` : "";
+
+    lb.innerHTML = `<b>学生档案</b> · ${esc(s.name)}`;
+    stage.innerHTML = `<div class="pap-page profile-page">${hero}${dupWarn}${followHtml}
+      <div class="pf-tabs" role="tablist">${tabs}</div>
+      <div class="pf-body" id="pfBody">${content}</div></div>`;
+
+    $("pfBackTop").onclick = exitProfile;
+    $("pfEdit").onclick = () => openProfileEdit();
+    $("pfFollow").onclick = () => openProfileEdit("follow");
+    stage.querySelectorAll("[data-pftab]").forEach((b) => b.onclick = () => {
+      view.profileTab = b.dataset.pftab;
+      renderStage();
+      window.scrollTo(0, 0);
+    });
+    stage.querySelectorAll("[data-pfexam]").forEach((b) => b.onclick = () => openProfileExam(s, b.dataset.pfexam));
+    stage.querySelectorAll("[data-pfpaper]").forEach((b) => b.onclick = () => openProfilePaper(s, b.dataset.pfpaper));
+    stage.querySelectorAll("[data-pfedit]").forEach((b) => b.onclick = () => openProfileEdit(b.dataset.pfedit));
+    stage.querySelectorAll("[data-pfchat]").forEach((b) => b.onclick = () => {
+      view.selected = s.id;
+      view.scrollDetTo = "chats";
+      renderDetail();
+    });
+    stage.querySelectorAll("[data-pfcall]").forEach((b) => b.onclick = () => {
+      if (b.dataset.pfcall) openCallHist(s.id, b.dataset.pfcall);
+    });
+    stage.querySelectorAll("[data-pftype]").forEach((b) => b.onclick = () => {
+      view.profileTimelineType = b.dataset.pftype;
+      view.profileTimelineLimit = 30;
+      renderStage();
+    });
+    stage.querySelectorAll("[data-pfmore]").forEach((b) => b.onclick = () => {
+      view.profileTimelineLimit = Math.max(10, Number(view.profileTimelineLimit) || 30) + 30;
+      renderStage();
+    });
+    stage.querySelectorAll("[data-pfckall]").forEach((b) => b.onclick = () => {
+      view.profileCheckinAll = !view.profileCheckinAll;
+      renderStage();
+    });
+    stage.querySelectorAll("[data-pfev]").forEach((b) => b.onclick = () => openProfileEvent(shownTl[+b.dataset.pfev]));
+  }
+
+  function pfScoreHtml(s, rows) {
+    const trend = pfScoreTrend(s, rows);
+    if (!rows.length) {
+      return `<div class="empty-hint">还没有成绩记录。<br><span style="font-size:12px">在「编辑资料」里的「考试成绩」添加，或用顶部「导入成绩」。</span></div>`;
+    }
+    const list = rows.slice().reverse();
+    const body = list.map((r) => {
+      const score = r.score === null ? `<span class="pf-none">未录入</span>` : `<b>${esc(String(r.score))}</b>`;
+      const full = r.full === null ? `<span class="pf-none">未记录</span>` : esc(String(r.full));
+      const rate = r.rate === null ? `<span class="pf-none">—</span>` : `${r.rate}%`;
+      let cmp = `<span class="pf-none">—</span>`;
+      if (r.delta !== null) cmp = `<b class="${r.delta >= 0 ? "pf-up" : "pf-down"}">${r.delta >= 0 ? "+" : ""}${r.delta} 分</b>`;
+      else if (r.rateDelta !== null) cmp = `<b class="${r.rateDelta >= 0 ? "pf-up" : "pf-down"}">${r.rateDelta >= 0 ? "+" : ""}${r.rateDelta}%</b><span class="pf-none">（得分率）</span>`;
+      else if (r.cmpNote) cmp = `<span class="pf-none" title="${esc(r.cmpNote)}">—</span>`;
+      const band = r.band ? bandBadge(r.band) : `<span class="pf-none">—</span>`;
+      const comm = r.comm && r.comm.marked ? (r.comm.st ? `<span class="chip ok">已沟通</span>` : `<span class="chip">未沟通</span>`) : `<span class="pf-none">未标记</span>`;
+      const weak = r.weak && r.weak.length ? r.weak.map((t) => `<span class="chip no">${esc(t)}</span>`).join(" ") : `<span class="pf-none">—</span>`;
+      const acts = `<button class="btnmini" type="button" data-pfexam="${esc(r.e.id || "")}">详情</button>` +
+        (r.e.paper ? `<button class="btnmini" type="button" data-pfpaper="${esc(r.e.id || "")}">完整分析</button>` : "") +
+        (r.link ? `<a class="btnmini pf-ext" href="${esc(r.link)}" target="_blank" rel="noopener noreferrer" title="外部答题卡链接，可能打不开">外部链接</a>` : "");
+      return `<tr>
+        <td class="pf-nowrap">${esc(r.dateLabel)}</td>
+        <td><b>${esc(r.e.name || "未命名考试")}</b></td>
+        <td class="num">${score}</td>
+        <td class="num">${full}</td>
+        <td class="num">${rate}</td>
+        <td class="num">${cmp}</td>
+        <td><div class="pf-tags">${band}${comm}${weak}</div></td>
+        <td><div class="pf-acts">${acts}</div></td>
+      </tr>`;
+    }).join("");
+    return `<div class="pf-card pf-trend">${trend}</div>
+      <div class="pf-tablewrap"><table class="pf-table"><thead><tr>
+        <th>日期</th><th>考试</th><th>分数</th><th>满分</th><th>得分率</th><th>较上次</th><th>档次 / 沟通 / 薄弱</th><th>详情</th>
+      </tr></thead><tbody>${body}</tbody></table></div>
+      <p class="hint">「较上次」只和上一场<b>有日期、有分数</b>的考试比；满分不同只比得分率。没有分数不按 0 分算。</p>`;
+  }
+
+  function pfDailyHtml(s, rows) {
+    if (!rows.length) return `<div class="empty-hint">还没有日常表现记录。<br><span style="font-size:12px">在「编辑资料」里写优点 / 问题 / 备注，或点顶部「快速录入」。</span></div>`;
+    const body = rows.map((r) => `<div class="pf-record">
+      <div class="pf-rec-head"><span class="pf-ev-type t-daily">📌 ${esc(r.label)}</span><span class="pf-date">${esc(r.dateLabel)}</span></div>
+      <div class="pf-text">${esc(r.text)}</div>
+      <div class="pf-rec-actions"><button class="btnmini" type="button" data-pfedit="${esc(r.field)}">编辑原文</button></div>
+    </div>`).join("");
+    return `<div class="pf-card pf-hint">这些是现有详情里的<b>优点 / 问题 / 备注</b>。系统早期没有逐条记录表；带「M/D」的是快速录入时留下的日期，<b>年份未记录</b>。逐条删除会切坏自由文本，这里只提供编辑入口。</div>
+      <div class="pf-list">${body}</div>`;
+  }
+
+  function pfCommHtml(s, rows) {
+    const unmatched = (DB.unmatched || []).length;
+    const head = `<div class="pf-card pf-hint">聊天记录和电联记录各存各的，这里只是按时间放在一起看，<b>不改原始数据</b>。${unmatched ? `另有 ${unmatched} 条未归类聊天在侧栏「待处理」，不会硬塞进任何人的档案。` : ""}</div>`;
+    if (!rows.length) return head + `<div class="empty-hint">还没有聊天或电联记录。</div>`;
+    const body = rows.map((r) => {
+      const meta = [];
+      if (r.type === "call") {
+        if (r.next || r.nextAt) meta.push(`下一步：${esc(r.next || "—")}${r.nextAt ? "（" + esc(r.nextAt) + "）" : ""}`);
+        if (r.rec) meta.push(`🎙 录音${r.rec.sec ? " " + esc(recFmt(r.rec.sec)) : ""}`);
+        if (r.tr) meta.push("📝 有转写");
+        if (r.ai && r.ai.text) meta.push("🤖 有 AI 纪要");
+        if (r.legacy) meta.push("换版前记录：没有逐次时间/备注");
+      }
+      const action = r.type === "chat"
+        ? `<button class="btnmini" type="button" data-pfchat="1">查看聊天原文</button>`
+        : (r.legacy ? "" : `<button class="btnmini" type="button" data-pfcall="${esc(r.bid)}">打开电联记录</button>`);
+      return `<div class="pf-record">
+        <div class="pf-rec-head"><span class="pf-ev-type t-${r.type}">${PF_TYPE[r.type].icon} ${PF_TYPE[r.type].label}</span><span class="pf-date">${esc(r.label)}</span><b>${esc(r.title)}</b></div>
+        ${r.text ? `<div class="pf-text">${esc(r.text)}</div>` : ""}
+        ${meta.length ? `<div class="pf-meta">${meta.join(" · ")}</div>` : ""}
+        <div class="pf-rec-actions">${action}</div>
+      </div>`;
+    }).join("");
+    return head + `<div class="pf-list">${body}</div>`;
+  }
+
+  function pfCheckinHtml(s, rows) {
+    if (!rows.length) return `<div class="empty-hint">还没有导入语文打卡计划。<br><span style="font-size:12px">去侧栏「语文打卡」导入计划后，这里会按任务显示记录。</span></div>`;
+    const recorded = rows.filter((x) => x.has).length;
+    const list = (view.profileCheckinAll ? rows : rows.filter((x) => x.has)).slice().sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+    const head = `<div class="pf-card pf-hint"><b>共 ${rows.length} 次任务</b>：明确记录 ${recorded} 次，没有记录 ${rows.length - recorded} 次。<br>
+      <b>没有记录 ≠ 未完成</b>；这里只统计老师明确点过的状态。${view.profileCheckinAll ? "" : " 当前只显示有记录的任务。"}
+      <button class="btnmini" type="button" data-pfckall="1" style="margin-left:10px">${view.profileCheckinAll ? "只看有记录" : "显示全部计划任务"}</button></div>`;
+    if (!list.length) return head + `<div class="empty-hint">这个学生还没有明确的打卡记录。<br><span style="font-size:12px">没有记录不代表未完成；点上面「显示全部计划任务」可以看计划。</span></div>`;
+    const body = list.map((x) => {
+      const t = x.task;
+      const badge = x.has ? `<span class="chip">${esc(x.status || "—")}</span>` : `<span class="pf-none" title="没有明确记录，不等于未完成">未记录</span>`;
+      return `<div class="pf-record">
+        <div class="pf-rec-head"><span class="pf-date">${esc(x.dateLabel)}</span><b>${esc(t.topic || t.qno || "未命名任务")}</b>${badge}</div>
+        ${t.qno || t.type ? `<div class="pf-meta">${esc(t.qno || "")}${t.type ? " · " + esc(t.type) : ""}${t.minutes ? " · " + esc(t.minutes) + " 分钟" : ""}</div>` : ""}
+        ${t.content ? `<div class="pf-text">${esc(t.content)}</div>` : ""}
+        ${t.recite ? `<div class="pf-meta">📖 背诵：${esc(t.recite)}</div>` : ""}
+      </div>`;
+    }).join("");
+    return head + `<div class="pf-list">${body}</div>`;
+  }
+
+  function pfTimelineHtml(tl, shown, total, type) {
+    const types = [["all", "全部"], ...Object.entries(PF_TYPE).map(([k, v]) => [k, v.label])];
+    const chips = types.map(([k, label]) => `<button class="pf-chip${type === k ? " on" : ""}" type="button" data-pftype="${k}">${label}</button>`).join("");
+    const head = `<div class="pf-card pf-hint">按日期倒序把成绩、日常、聊天、电联、打卡放在一起看。日期不完整的记录单独放最后，<b>不编造时间</b>。</div>
+      <div class="pf-filters">${chips}</div>`;
+    if (!shown.length) return head + `<div class="empty-hint">这个筛选下还没有记录。</div>`;
+    const dated = shown.filter((ev) => ev.at && /^\d{4}-/.test(ev.at));
+    const partial = shown.filter((ev) => !ev.at || !/^\d{4}-/.test(ev.at));
+    const row = (ev, i) => {
+      const t = PF_TYPE[ev.type] || { label: ev.type, icon: "·" };
+      return `<div class="pf-ev">
+        <div class="pf-ev-date">${esc(ev.label || "时间未记录")}</div>
+        <div class="pf-ev-main">
+          <div class="pf-ev-top"><span class="pf-ev-type t-${ev.type}">${t.icon} ${t.label}</span><b>${esc(ev.title)}</b></div>
+          <div class="pf-ev-sum">${esc(ev.summary || "")}</div>
+          <button class="btnmini" type="button" data-pfev="${i}">查看</button>
+        </div>
+      </div>`;
+    };
+    // 用 shown 的下标绑定事件；dated/partial 只是分组显示
+    const datedHtml = dated.map((ev) => row(ev, shown.indexOf(ev))).join("");
+    const partialHtml = partial.map((ev) => row(ev, shown.indexOf(ev))).join("");
+    return head + `<div class="pf-timeline">${datedHtml}${partial.length ? `<div class="pf-subhead">日期不完整（不编造时间）</div>${partialHtml}` : ""}</div>
+      ${total > shown.length ? `<div class="pf-more"><button class="btn" type="button" data-pfmore="1">加载更多（还有 ${total - shown.length} 条）</button></div>` : ""}`;
+  }
+
   /** 手动加一个学员（插班生 / 名单里漏了的人） */
   function addStudent() {
     const input = prompt("新学员的姓名：");
@@ -12227,10 +13075,19 @@ const SYNC = (() => {
     const text = $("chatText").value;
     if (!text.trim()) return toast("先粘贴聊天记录");
     const msgs = parseChatText(text);
-    let matched = 0, unmatched = 0;
+    let matched = 0, unmatched = 0, ambiguous = 0;
     const touched = new Map();
     for (const m of msgs) {
       const who = matchStudents(m);
+      // 同名多人：绝不自动复制给所有同名学生，先放进「待处理」等老师指定。
+      if (who.length > 1) {
+        ambiguous++;
+        DB.unmatched.push({
+          ...m, importedAt: Date.now(), reason: "同名",
+          name: who[0].name, candidates: who.map((s) => s.id),
+        });
+        continue;
+      }
       if (!who.length) { unmatched++; DB.unmatched.push({ ...m, importedAt: Date.now() }); continue; }
       matched++;
       for (const s of who) {
@@ -12241,13 +13098,16 @@ const SYNC = (() => {
       }
     }
     save();
-    $("chatResult").innerHTML = `解析 <b>${msgs.length}</b> 条 · 归类 <b>${matched}</b> 条 · 未匹配 ${unmatched} 条`;
-    $("chatHint").innerHTML = touched.size
-      ? "归类到：" + [...touched.entries()].map(([id, n]) => {
-          const s = DB.students.find((x) => x.id === id);
-          return `${esc(s?.name || "?")}(${n})`;
-        }).join("、")
-      : "一条都没匹配上。检查一下聊天里是不是带了学生全名——程序是靠姓名匹配的。";
+    $("chatResult").innerHTML = `解析 <b>${msgs.length}</b> 条 · 归类 <b>${matched}</b> 条` +
+      (ambiguous ? ` · <b style="color:var(--amber)">同名待确认 ${ambiguous} 条</b>` : "") +
+      ` · 未匹配 ${unmatched} 条`;
+    $("chatHint").innerHTML = (ambiguous ? `有 ${ambiguous} 条同名消息没有自动归类，去侧栏「待处理」指定学生。 ` : "") +
+      (touched.size
+        ? "归类到：" + [...touched.entries()].map(([id, n]) => {
+            const s = DB.students.find((x) => x.id === id);
+            return `${esc(s?.name || "?")}(${n})`;
+          }).join("、")
+        : "一条都没匹配上。检查一下聊天里是不是带了学生全名——程序是靠姓名匹配的。");
     $("chatText").value = "";
     renderStats(); renderSide(); renderStage();
   }
@@ -13554,7 +14414,7 @@ const SYNC = (() => {
     const picked = view.ckSel.includes(s.id);
     return `<div class="ck-student${picked ? " on" : ""}" data-sid="${esc(s.id)}">
       <label class="ck-pick" title="勾选 ${esc(s.name)}"><input type="checkbox" data-ckpick="${esc(s.id)}"${picked ? " checked" : ""} aria-label="勾选 ${esc(s.name)}"></label>
-      <span class="ck-st-name">${esc(s.name)}</span>${ntBadges(s)}
+      <button class="ck-st-name pf-link" type="button" data-profile="${esc(s.id)}" title="打开 ${esc(s.name)} 的学生档案">${esc(s.name)}</button>${ntBadges(s)}
       <span class="ck-st-lvl" title="等级">${esc(levelOf(s) || "—")}</span>
       ${ckBadgeHtml(cur)}
       <span class="ck-st-meta">${s.cons ? "⚠ " + esc(s.cons) : (s.note ? esc(s.note) : "")}</span>
