@@ -2364,6 +2364,74 @@ section.list { background: var(--bg); }
 .sc-weakpop-tip { margin-top: 10px; font-size: var(--fs-mini); color: var(--ink-3); line-height: 1.5; }
 .sc-weakpop-a { display: flex; gap: 8px; margin-top: 12px; }
 
+/* 自动识别出来的标签：跟老师手动标的区分开（虚线框 + 小圆点，不靠颜色单独扛）
+   —— 2026-10-29 智能分析上线后加的。 */
+.sc-wtag.auto { border: 1px dashed var(--accent-2-line); background: var(--accent-soft); }
+.sc-wtag.auto::before { content: "·"; margin-right: 2px; color: var(--accent); font-weight: 800; }
+.chip.no.auto { border-style: dashed; }
+.chip.no.auto::before { content: "·"; margin-right: 2px; font-weight: 800; }
+.sc-weakpop-b label.auto { color: var(--accent); }
+.sc-weakpop-b .rate { margin-left: auto; font-size: var(--fs-mini); color: var(--ink-3); }
+.sc-weakpop-b label { display: grid; grid-template-columns: auto 1fr auto; }
+.sc-weakpop-ana {
+  margin-top: 10px; padding: 8px 10px; border-radius: var(--radius-s);
+  background: var(--panel-2); border: 1px solid var(--line);
+  font-size: var(--fs-mini); color: var(--ink-2); line-height: 1.7;
+  max-height: 148px; overflow: auto;
+}
+.sc-weakpop-ana b { color: var(--ink); }
+.sc-weakpop-ana .w { color: var(--red); font-weight: 700; }
+.sc-weakpop-ana .m { color: var(--amber); font-weight: 700; }
+
+/* ==========================================================================
+   考试成绩智能分析（2026-10-29）
+   --------------------------------------------------------------------------
+   弹窗内部：文件/粘贴入口 → 考试与参数 → 摘要 → 板块映射 → 学生得分率 → 异常。
+   颜色一律走 :root；数据表用 --panel-solid，不开背景图时也稳。
+   ========================================================================== */
+.an-in { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.an-in input[type="number"], .an-in input[type="text"], .an-in input[type="date"] {
+  padding: 5px 8px; border: 1px solid var(--line); border-radius: var(--radius-s);
+  background: var(--panel-solid); color: var(--ink); font: inherit; font-size: var(--fs-cell);
+}
+.an-in label { font-size: var(--fs-cell); color: var(--ink-2); }
+.an-paste { margin-top: 10px; }
+.an-paste summary { cursor: pointer; font-size: var(--fs-cell); color: var(--ink-2); }
+.an-paste textarea { width: 100%; min-height: 84px; margin-top: 8px; box-sizing: border-box;
+  padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius-s);
+  background: var(--panel-solid); color: var(--ink); font: inherit; font-size: var(--fs-cell); }
+.an-box { margin-top: 12px; padding: 12px 14px; border: 1px solid var(--line);
+  border-radius: var(--radius); background: var(--panel-solid); }
+.an-box h4 { margin: 0 0 8px; font-size: var(--fs-head); color: var(--ink); }
+.an-sum { display: flex; gap: 10px; flex-wrap: wrap; }
+.an-sum .c { flex: 1 1 132px; padding: 8px 10px; border-radius: var(--radius-s);
+  background: var(--panel-2); border: 1px solid var(--line); }
+.an-sum .c .k { display: block; font-size: var(--fs-mini); color: var(--ink-3); }
+.an-sum .c b { font-size: 19px; color: var(--ink); }
+.an-sum .c .s { font-size: var(--fs-mini); color: var(--ink-3); margin-left: 4px; }
+.an-sum .c.bad b { color: var(--red); }
+.an-tab { max-height: 300px; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius-s); }
+.an-tab table { width: 100%; border-collapse: collapse; font-size: var(--fs-cell); }
+.an-tab th, .an-tab td { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+.an-tab th { position: sticky; top: 0; background: var(--th-bg); color: var(--th-ink); font-weight: 650; z-index: 1; }
+.an-tab td.num, .an-tab th.num { text-align: right; }
+.an-tab tr.warn td { background: var(--amber-soft); }
+.an-tab tr.bad td { background: var(--red-soft); }
+.an-tab select { max-width: 150px; padding: 2px 4px; border: 1px solid var(--line);
+  border-radius: 6px; background: var(--panel-solid); color: var(--ink); font: inherit; font-size: var(--fs-mini); }
+.an-rate { font-variant-numeric: tabular-nums; }
+.an-rate.w { color: var(--red); font-weight: 750; }
+.an-rate.m { color: var(--amber); font-weight: 700; }
+.an-rate.off { color: var(--ink-3); }
+.an-note { margin: 8px 0 0; font-size: var(--fs-mini); color: var(--ink-3); line-height: 1.6; }
+.an-list { margin: 6px 0 0; padding-left: 18px; font-size: var(--fs-cell); color: var(--ink-2); line-height: 1.75; }
+.an-list li b { color: var(--ink); }
+.an-empty { padding: 10px; font-size: var(--fs-cell); color: var(--ink-3); }
+.an-warnbox { margin-top: 10px; padding: 9px 12px; border-radius: var(--radius-s);
+  background: var(--amber-soft); border: 1px solid var(--amber-line); color: var(--ink);
+  font-size: var(--fs-cell); line-height: 1.7; }
+.an-warnbox b { color: var(--amber); }
+
 .col-pick { width: 34px; text-align: center; }
 .col-pick input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
 
@@ -2599,6 +2667,28 @@ button.ck-st-name.pf-link { color: inherit; }
       <button class="btn" data-close="mScore">取消</button>
       <button class="btn primary" id="scoreSave">写入</button>
     </footer>
+  </div>
+</div>
+
+<!-- 考试成绩智能分析（2026-10-29）：导入带每题得分明细的表 → 识别板块/满分 → 预览 → 写入薄弱板块 -->
+<div class="mask" id="mAnalyze">
+  <div class="modal wide">
+    <header>考试成绩智能分析</header>
+    <div class="body" id="anBody"></div>
+    <footer>
+      <span class="result" id="anResult"></span>
+      <button class="btn" data-close="mAnalyze">取消</button>
+      <button class="btn primary" id="anSave">确认写入看板</button>
+    </footer>
+  </div>
+</div>
+
+<!-- 板块分析依据：点成绩页的自动薄弱标签、或学生档案里的「板块分析」都开这里 -->
+<div class="mask" id="mSecDetail">
+  <div class="modal">
+    <header id="secDetailTitle">板块分析依据</header>
+    <div class="body" id="secDetailBody"></div>
+    <footer><button class="btn" data-close="mSecDetail">关闭</button></footer>
   </div>
 </div>
 
@@ -4068,6 +4158,8 @@ const SYNC = (() => {
         d.daily ||= { date: "", ids: [], done: [] };
         d.checkin ||= { importedAt: "", tasks: [], status: {} };
         d.calls ||= { batches: [], status: {} };
+        // 考试成绩智能分析（2026-10-29）：板块映射 + 判定参数。老库没有就补空。
+        d.analyze = Object.assign({ map: {}, params: {} }, d.analyze || {});
         migrateAttRoles(d);
         return d;
       }
@@ -4077,6 +4169,7 @@ const SYNC = (() => {
       daily: { date: "", ids: [], done: [] },
       checkin: { importedAt: "", tasks: [], status: {} },
       calls: { batches: [], status: {} },
+      analyze: { map: {}, params: {} },
     };
   }
 
@@ -12842,6 +12935,10 @@ const SYNC = (() => {
     });
     stage.querySelectorAll("[data-pfexam]").forEach((b) => b.onclick = () => openProfileExam(s, b.dataset.pfexam));
     stage.querySelectorAll("[data-pfpaper]").forEach((b) => b.onclick = () => openProfilePaper(s, b.dataset.pfpaper));
+    stage.querySelectorAll("[data-pfana]").forEach((b) => b.onclick = () => {
+      const e = (s.exams || []).find((x) => x.id === b.dataset.pfana);
+      if (e) openSecDetail(String(e.name || "").trim(), b.dataset.pfanasid || s.id);
+    });
     stage.querySelectorAll("[data-pfedit]").forEach((b) => b.onclick = () => openProfileEdit(b.dataset.pfedit));
     stage.querySelectorAll("[data-pfchat]").forEach((b) => b.onclick = () => {
       view.selected = s.id;
@@ -12883,9 +12980,16 @@ const SYNC = (() => {
       else if (r.cmpNote) cmp = `<span class="pf-none" title="${esc(r.cmpNote)}">—</span>`;
       const band = r.band ? bandBadge(r.band) : `<span class="pf-none">—</span>`;
       const comm = r.comm && r.comm.marked ? (r.comm.st ? `<span class="chip ok">已沟通</span>` : `<span class="chip">未沟通</span>`) : `<span class="pf-none">未标记</span>`;
-      const weak = r.weak && r.weak.length ? r.weak.map((t) => `<span class="chip no">${esc(t)}</span>`).join(" ") : `<span class="pf-none">—</span>`;
+      const anaS = r.e && r.e.name ? studentAnalysis(r.e.name, s.id) : null;
+      const metaS = r.e && r.e.name ? weakMetaOf(r.e.name, s.id) : { auto: [], manual: [], removed: [] };
+      const weak = r.weak && r.weak.length
+        ? r.weak.map((t) => (metaS.auto.includes(t)
+            ? `<span class="chip no auto" title="系统按这次考试的板块得分率自动识别">${esc(t)}</span>`
+            : `<span class="chip no">${esc(t)}</span>`)).join(" ")
+        : `<span class="pf-none">—</span>`;
       const acts = `<button class="btnmini" type="button" data-pfexam="${esc(r.e.id || "")}">详情</button>` +
         (r.e.paper ? `<button class="btnmini" type="button" data-pfpaper="${esc(r.e.id || "")}">完整分析</button>` : "") +
+        (anaS ? `<button class="btnmini" type="button" data-pfana="${esc(r.e.id || "")}" data-pfanasid="${esc(s.id)}">板块分析</button>` : "") +
         (r.link ? `<a class="btnmini pf-ext" href="${esc(r.link)}" target="_blank" rel="noopener noreferrer" title="外部答题卡链接，可能打不开">外部链接</a>` : "");
       return `<tr>
         <td class="pf-nowrap">${esc(r.dateLabel)}</td>
@@ -15151,9 +15255,18 @@ const SYNC = (() => {
 
   function weakCell(name, sid) {
     const w = weakOf(name, sid);
-    const tags = w.length ? w.map((t) => `<span class="sc-wtag">${esc(t)}</span>`).join("")
+    const meta = weakMetaOf(name, sid);
+    const ana = studentAnalysis(name, sid);
+    const tags = w.length ? w.map((t) => {
+      const isAuto = meta.auto.includes(t);
+      const sec = isAuto && ana ? (ana.secs || []).find((x) => x.name === t) : null;
+      const tip = isAuto
+        ? "系统识别：" + (sec ? "得分率 " + anPct(sec.rate) + "（" + fmtScore(sec.score) + "/" + fmtScore(sec.full) + "）" : "本次考试自动分析")
+        : "手动标记";
+      return `<span class="sc-wtag${isAuto ? " auto" : ""}" title="${esc(tip)}">${esc(t)}</span>`;
+    }).join("")
       : `<span class="sc-wnone">+ 标记</span>`;
-    return `<button class="sc-weak" data-weak="${sid}" title="点开多选薄弱板块">${tags}</button>`;
+    return `<button class="sc-weak" data-weak="${sid}" title="点开多选薄弱板块；虚线框 = 系统按得分率自动识别">${tags}</button>`;
   }
 
   function trackFormHtml(name) {
@@ -15200,11 +15313,25 @@ const SYNC = (() => {
     const st = DB.students.find((x) => x.id === sid);
     if (!st) return "";
     const cur = weakOf(name, sid);
+    const meta = weakMetaOf(name, sid);
+    const ana = studentAnalysis(name, sid);
+    const secOf = (t) => (ana ? (ana.secs || []).find((x) => x.name === t) : null);
+    const anaHtml = ana && (ana.secs || []).length
+      ? `<div class="sc-weakpop-ana"><b>这场考试的系统分析</b><br>${(ana.secs || []).map((x) => {
+          const cls = x.level === "weak" ? "w" : x.level === "watch" ? "m" : "";
+          const tail = x.level === "weak" ? " · 明显薄弱" : x.level === "watch" ? " · 需关注" : "";
+          return `<span class="an-rate ${cls}">${esc(x.name)} ${fmtScore(x.score)}/${fmtScore(x.full)}（${anPct(x.rate)}${tail}）</span>`;
+        }).join("<br>")}${(ana.skipped || []).length ? `<br><span class="hint">跳过：${esc(ana.skipped.map((x) => x.name + "（" + x.why + "）").join("；"))}</span>` : ""}</div>`
+      : (analysisOfExam(name) ? `<div class="sc-weakpop-ana">这场考试分析过，但这个学生没有可用的板块分。</div>` : "");
     return `<div class="sc-weakpop" id="scWeakPop" data-wsid="${esc(sid)}">
       <div class="sc-weakpop-h"><b>${esc(st.name)}</b> · 薄弱板块<span>${esc(name)}</span></div>
-      <div class="sc-weakpop-b">${WEAK_TAGS.map((t) =>
-        `<label><input type="checkbox" data-wtag="${esc(t)}"${cur.includes(t) ? " checked" : ""}>${esc(t)}</label>`).join("")}</div>
-      <div class="sc-weakpop-tip">按这份卷子的失分板块判断；没有答题卡就先留空，别凭总分猜。</div>
+      <div class="sc-weakpop-b">${WEAK_TAGS.map((t) => {
+        const isAuto = meta.auto.includes(t);
+        const sec = secOf(t);
+        return `<label class="${isAuto ? "auto" : ""}"><input type="checkbox" data-wtag="${esc(t)}"${cur.includes(t) ? " checked" : ""}>${esc(t)}${sec ? `<span class="rate">${anPct(sec.rate)}</span>` : ""}</label>`;
+      }).join("")}</div>
+      ${anaHtml}
+      <div class="sc-weakpop-tip">虚线 = 系统按得分率识别；取消勾选再保存，下次分析不会再自动加回来。</div>
       <div class="sc-weakpop-a">
         <button class="btn primary" id="scWeakSave">保存</button>
         <button class="btn ghost" id="scWeakCancel">取消</button>
@@ -15229,8 +15356,21 @@ const SYNC = (() => {
   function setWeak(name, sid, tags) {
     const t = trackOf(name);
     t.weak ||= {};
-    if (tags && tags.length) t.weak[sid] = tags.slice();
+    const list = (Array.isArray(tags) ? tags : []).filter((x) => WEAK_TAGS.includes(x));
+    if (list.length) t.weak[sid] = list.slice();
     else delete t.weak[sid];
+    // 老师这次保存的勾选 = 手动名单；自动名单里被取消的记进 removed，
+    // 下次分析不会再自动加回来（需求：不静默覆盖老师的手动调整）。
+    t.weakMeta ||= {};
+    const prev = t.weakMeta[sid] || {};
+    const auto = Array.isArray(prev.auto) ? prev.auto : [];
+    const removed = Array.isArray(prev.removed) ? prev.removed.slice() : [];
+    for (const x of auto) if (!list.includes(x) && !removed.includes(x)) removed.push(x);
+    for (const x of list.slice()) {
+      const i = removed.indexOf(x);
+      if (i >= 0) removed.splice(i, 1);
+    }
+    t.weakMeta[sid] = { auto, manual: list.slice(), removed, at: Date.now() };
     save();
   }
 
@@ -15267,6 +15407,805 @@ const SYNC = (() => {
     view.scSel = [];
     renderStage();
     toast(`已清空 ${ids.length} 人的薄弱板块`, 2400);
+  }
+
+  /* ================================================ 考试成绩智能分析（2026-10-29）
+   *
+   * 老师手上是一份「每道题得分」的明细表（如七年级万人测）。目的：
+   *   自动认出每题属于哪个板块、满分多少 → 汇总每个学生各板块得分率 →
+   *   判定薄弱板块 → 写进该次考试的 weak 字段，成绩列表和学生档案马上能看到。
+   *
+   * 三条铁律（用户明确要求）：
+   *   ① 板块满分只能由题目满分加总，绝不拿学生实际得分反推；
+   *   ② 缺失值不等于 0 分 —— 宁可跳过该板块并写明原因；
+   *   ③ 板块映射确认之前不写入；「排序 / 语用 / 基础」不能按名字像就硬合并。
+   *
+   * 数据落在哪（复用现有结构，不另建一套）：
+   *   DB.analyze = { map: { Excel板块: 看板板块 | "__skip" }, params: {...} }
+   *   DB.scoreTrack[考试名].analysis   整场分析留痕（板块满分 / 逐生得分率 / 未匹配 / 未识别题）
+   *   DB.scoreTrack[考试名].weak       最终标签（现有成绩页、筛选、导出都已直接读它）
+   *   DB.scoreTrack[考试名].weakMeta   { auto, manual, removed }：区分自动与手动
+   */
+
+  /** 内置默认映射：同名直接对应；需求里点名的叫法（古诗→诗歌、阅读→阅读理解）预置成默认 */
+  const SEC_DEFAULT_MAP = {
+    "基础": "基础", "默写": "默写", "文言文": "文言文", "古诗": "诗歌", "诗歌": "诗歌",
+    "名著": "名著", "非连": "非连", "阅读": "阅读理解", "阅读理解": "阅读理解", "作文": "作文",
+  };
+
+  function analyzeCfg() {
+    if (!DB || typeof DB !== "object") return { map: {}, params: { below: 60, watch: 75, minQ: 1, minFull: 0 } };
+    DB.analyze ||= {};
+    const a = DB.analyze;
+    if (!a.map || typeof a.map !== "object" || Array.isArray(a.map)) a.map = {};
+    a.params = Object.assign({ below: 60, watch: 75, minQ: 1, minFull: 0 }, a.params || {});
+    return a;
+  }
+
+  /**
+   * Excel 板块 → 看板板块。
+   * 优先级：老师确认过的映射 > 同名 > 内置默认；都没有 = 待确认（不写入）。
+   * 返回 { tag, why }，tag 为空就是「不能写」。
+   */
+  function secTagOf(raw, map) {
+    const k = String(raw == null ? "" : raw).trim();
+    if (!k) return { tag: "", why: "板块名为空" };
+    const m = map || analyzeCfg().map;
+    if (Object.prototype.hasOwnProperty.call(m, k)) {
+      const v = m[k];
+      if (v === "__skip") return { tag: "", why: "已确认不写入看板" };
+      if (WEAK_TAGS.includes(v)) return { tag: v, why: "已确认映射" };
+      return { tag: "", why: "映射值无效（" + String(v) + "）" };
+    }
+    if (WEAK_TAGS.includes(k)) return { tag: k, why: "同名自动匹配" };
+    if (SEC_DEFAULT_MAP[k] && WEAK_TAGS.includes(SEC_DEFAULT_MAP[k])) {
+      return { tag: SEC_DEFAULT_MAP[k], why: "默认映射（可改）" };
+    }
+    return { tag: "", why: "看板没有这个板块，待确认" };
+  }
+
+  /* ---------------- 题目列解析 ---------------- */
+
+  const AN_QNO_RE = /^第?\s*(\d+(?:[.．]\d+)*)\s*题$/;
+  const AN_FULL_RE = /^(\d+(?:[.．]\d+)?)\s*分$/;
+
+  function anTokens(raw) {
+    return String(raw == null ? "" : raw)
+      .replace(/\r/g, "\n")
+      .split(/[\n｜|:：,，;；\/]+/)
+      .map((x) => x.replace(/[\s\u3000]+/g, " ").trim())
+      .filter(Boolean);
+  }
+
+  /** 题号、满分之外的第一个短中文段 = 板块名 */
+  function anSecFromTokens(toks, qIdx, fIdx) {
+    for (let i = 0; i < toks.length; i++) {
+      if (i === qIdx || i === fIdx) continue;
+      const t = toks[i];
+      if (!t || t.length > 14) continue;
+      if (/^\d+(?:\.\d+)?$/.test(t)) continue;
+      if (AN_QNO_RE.test(t)) continue;
+      return t.replace(/^(板块|考察|考点)[:：]?/, "").trim();
+    }
+    return "";
+  }
+
+  /**
+   * 列名 → { qno, section, full, ok, why }。
+   * 认不出「题号」返回 null（说明这列不是题目列）；认得出题号但缺板块/满分 → ok=false，
+   * 交给预览里的「待确认项目」，绝不猜。
+   */
+  function anParseQuestionCol(raw) {
+    const toks = anTokens(raw);
+    if (!toks.length) return null;
+    let qno = "", full = null, qi = -1, fi = -1;
+    toks.forEach((t, i) => {
+      const mq = t.match(AN_QNO_RE);
+      if (mq && qi < 0) { qno = mq[1].replace(/．/g, "."); qi = i; return; }
+      const mf = t.match(AN_FULL_RE);
+      if (mf && fi < 0) { full = Number(mf[1].replace(/．/g, ".")); fi = i; }
+    });
+    // 整串写在一起、没有分隔符时的兜底（「第1题基础3分」）
+    if (!qno || full === null) {
+      const one = toks.join(" ");
+      const m = one.match(/(\d+(?:[.．]\d+)*)\s*题\s*([^0-9\s｜|:：\/]{1,14}?)\s*(\d+(?:[.．]\d+)?)\s*分/);
+      if (m) {
+        if (!qno) qno = m[1].replace(/．/g, ".");
+        const f = Number(m[3].replace(/．/g, "."));
+        if (full === null) full = f;
+        if (!anSecFromTokens(toks, qi, fi)) {
+          const sec = m[2].trim();
+          if (sec && !/^(题|分)$/.test(sec)) {
+            if (!isFinite(full) || full < 0) return { qno, section: sec, full: null, ok: false, why: "没读到满分" };
+            return { qno, section: sec, full, ok: true, why: "" };
+          }
+        }
+      }
+    }
+    if (!qno) return null;
+    const section = anSecFromTokens(toks, qi, fi);
+    if (full === null || !isFinite(full) || full < 0) return { qno, section, full: null, ok: false, why: "没读到满分" };
+    if (!section) return { qno, section: "", full, ok: false, why: "没读到板块" };
+    return { qno, section, full, ok: true, why: "" };
+  }
+
+  const AN_NAME_RE = /姓名|名字|学生姓名|student/i;
+  const AN_NO_RE = /学员号|学号|考号/;
+  const AN_RANK_RE = /排名|名次/;
+  const AN_RATE_RE = /正确率|得分率/;
+  const AN_TOTAL_RE = /^得分$|^总分$|^成绩$|^分数$|总分|^合计$/;
+
+  /**
+   * 找表头：先找有「姓名」的那一行，再试 1～3 行表头（兼容多行表头）。
+   * 取「能解析出的题目列最多」的那种，数据行从表头最后一行往下开始。
+   */
+  function anFindHeader(rows) {
+    if (!Array.isArray(rows) || !rows.length) return null;
+    let h0 = -1;
+    for (let i = 0; i < Math.min(12, rows.length); i++) {
+      const r = rows[i] || [];
+      if (r.some((c) => AN_NAME_RE.test(String(c == null ? "" : c).trim()))) { h0 = i; break; }
+    }
+    if (h0 < 0) return null;
+    let best = null;
+    for (let k = 0; k <= 2; k++) {
+      const end = h0 + k;
+      if (end >= rows.length) break;
+      let width = 0;
+      for (let i = h0; i <= end; i++) width = Math.max(width, (rows[i] || []).length);
+      const cols = { name: -1, no: -1, rank: -1, rate: -1, total: -1 };
+      const questions = [], unknown = [];
+      for (let j = 0; j < width; j++) {
+        let head = "";
+        for (let i = h0; i <= end; i++) head += String((rows[i] || [])[j] == null ? "" : (rows[i] || [])[j]) + "\n";
+        const flat = head.replace(/\s+/g, " ").trim();
+        if (!flat) continue;
+        if (cols.name < 0 && AN_NAME_RE.test(flat)) { cols.name = j; continue; }
+        if (cols.no < 0 && AN_NO_RE.test(flat)) { cols.no = j; continue; }
+        if (cols.rank < 0 && AN_RANK_RE.test(flat)) { cols.rank = j; continue; }
+        if (cols.rate < 0 && AN_RATE_RE.test(flat)) { cols.rate = j; continue; }
+        if (cols.total < 0 && AN_TOTAL_RE.test(flat)) { cols.total = j; continue; }
+        const q = anParseQuestionCol(head);
+        if (q && q.ok) { q.col = j; questions.push(q); }
+        else if (q) unknown.push({ col: j, raw: flat, qno: q.qno || "", why: q.why || "题目信息不完整" });
+        else if (/题/.test(flat) && /分/.test(flat)) unknown.push({ col: j, raw: flat, qno: "", why: "列名像题目，但读不出题号 / 板块 / 满分" });
+      }
+      if (cols.name < 0 || !questions.length) continue;
+      if (!best || questions.length > best.questions.length) {
+        best = { headRow: h0, headEnd: end, cols, questions, unknown };
+      }
+    }
+    return best;
+  }
+
+  const anNum = (v) => {
+    if (v === null || v === undefined) return null;
+    const s = String(v).replace(/[\s,，]/g, "").trim();
+    if (!s) return null;
+    if (!/^-?\d+(?:\.\d+)?$/.test(s)) return null;
+    return Number(s);
+  };
+  const anRound = (v) => Math.round(v * 100) / 100;
+  const anPct = (r) => (r === null || !isFinite(r) ? "—" : Math.round(r * 100) + "%");
+
+  function anLevel(rate, below, watch) {
+    if (rate === null || !isFinite(rate)) return "skip";
+    if (rate < below) return "weak";
+    if (rate < watch) return "watch";
+    return "ok";
+  }
+
+  /**
+   * 学生匹配：优先学员号（学生档案上如果记了 s.no），再按姓名精确匹配。
+   * 重名 / 找不到一律进待确认，**不做模糊自动写入** —— 写错人的代价比漏写大得多。
+   */
+  function anMatchStudent(rawName, no) {
+    const noKey = String(no == null ? "" : no).trim();
+    if (noKey) {
+      const byNo = DB.students.filter((s) => String(s.no == null ? "" : s.no).trim() === noKey);
+      if (byNo.length === 1) return { s: byNo[0], by: "学员号", why: "" };
+      if (byNo.length > 1) return { s: null, by: "", why: "学员号「" + noKey + "」对应看板里多个学生" };
+    }
+    const q = normalizeNamePart(rawName);
+    if (!q) return { s: null, why: "姓名为空" };
+    const cand = DB.students.filter((s) => normalizeNamePart(s.name) === q);
+    if (cand.length === 1) return { s: cand[0], by: "姓名", why: "" };
+    if (cand.length > 1) {
+      return { s: null, why: "看板里有 " + cand.length + " 个同名「" + rawName + "」，需要老师指定", cands: cand.map((s) => s.name) };
+    }
+    let hint = "";
+    try {
+      const bm = bestNameMatch(rawName, { minLen: 2 });
+      if (bm && bm.s) hint = "（疑似「" + bm.s.name + "」，没把握，不自动写）";
+    } catch (e) { /* 姓名模糊匹配是可选兜底，出错就当没有 */ }
+    return { s: null, why: "看板里没有这个学生" + hint };
+  }
+
+  /**
+   * 主分析：表格二维数组 → 板块满分 / 逐生得分率 / 建议薄弱 / 未匹配 / 未识别。
+   * 不写数据库，纯计算；预览和写入都用这一份结果。
+   */
+  function anAnalyze(rows, opts) {
+    const head = anFindHeader(rows);
+    if (!head) return { error: "没找到表头：至少要有一列「姓名」，外加每题一列的得分明细" };
+    const cfg = analyzeCfg();
+    const map = Object.assign({}, cfg.map, (opts && opts.map) || {});
+    const params = Object.assign({}, cfg.params, (opts && opts.params) || {});
+    const below = Math.max(0, Math.min(100, Number(params.below))) / 100;
+    const watchR = Math.max(below, Math.min(100, Number(params.watch))) / 100;
+    const minQ = Math.max(0, Number(params.minQ) || 0);
+    const minFull = Math.max(0, Number(params.minFull) || 0);
+
+    // ① 板块满分：只由题目满分加总
+    const secList = [], secBy = new Map();
+    for (const q of head.questions) {
+      let s = secBy.get(q.section);
+      if (!s) { s = { name: q.section, full: 0, questions: [] }; secBy.set(q.section, s); secList.push(s); }
+      s.full += q.full;
+      s.questions.push(q);
+    }
+    const sections = secList.map((s) => {
+      const mm = secTagOf(s.name, map);
+      return {
+        name: s.name, full: anRound(s.full), qCount: s.questions.length,
+        questions: s.questions,
+        tag: mm.tag, mapWhy: mm.why,
+        cols: s.questions.map((q) => q.col), qnos: s.questions.map((q) => q.qno),
+      };
+    });
+    const totalFull = anRound(sections.reduce((a, s) => a + s.full, 0));
+
+    // ② 逐行算学生
+    const students = [], unmatched = [], warns = [];
+    for (let i = head.headEnd + 1; i < rows.length; i++) {
+      const r = rows[i] || [];
+      const rawName = String(head.cols.name >= 0 && r[head.cols.name] != null ? r[head.cols.name] : "").trim();
+      if (!rawName) continue;
+      if (/^(合计|总计|平均|班级|年级|全校|汇总|注[：:])/.test(rawName)) continue;
+      const no = head.cols.no >= 0 && r[head.cols.no] != null ? String(r[head.cols.no]).trim() : "";
+      const m = anMatchStudent(rawName, no);
+
+      const byTag = new Map(), skipped = [];
+      for (const sec of sections) {
+        if (!sec.tag) { skipped.push({ name: sec.name, why: sec.mapWhy }); continue; }
+        if (sec.qCount < minQ) {
+          skipped.push({ name: sec.tag, why: "本板块只有 " + sec.qCount + " 道题，低于设定的 " + minQ + " 道" });
+          continue;
+        }
+        if (sec.full < minFull) {
+          skipped.push({ name: sec.tag, why: "本板块满分 " + anRound(sec.full) + "，低于设定的 " + minFull + " 分" });
+          continue;
+        }
+        let score = 0;
+        const miss = [];
+        for (const q of sec.questions) {
+          const v = anNum(r[q.col]);
+          if (v === null) { miss.push("第" + q.qno + "题"); continue; }
+          score += v;
+        }
+        if (miss.length) { skipped.push({ name: sec.tag, why: miss.join("、") + " 没有分数，不能当 0 分算" }); continue; }
+        if (!(sec.full > 0)) { skipped.push({ name: sec.tag, why: "板块满分为 0" }); continue; }
+        if (score < 0 || score > sec.full + 0.01) {
+          skipped.push({ name: sec.tag, why: "得分 " + anRound(score) + " 超出满分 " + anRound(sec.full) + "，数据异常" });
+          continue;
+        }
+        const cur = byTag.get(sec.tag) || { name: sec.tag, score: 0, full: 0, excel: [] };
+        cur.score += score;
+        cur.full += sec.full;
+        if (!cur.excel.includes(sec.name)) cur.excel.push(sec.name);
+        byTag.set(sec.tag, cur);
+      }
+      const secs = WEAK_TAGS.filter((t) => byTag.has(t)).map((t) => {
+        const x = byTag.get(t);
+        const rate = x.full ? x.score / x.full : null;
+        return {
+          name: t, excel: x.excel.join("+"), score: anRound(x.score),
+          full: anRound(x.full), rate, level: anLevel(rate, below, watchR),
+        };
+      });
+
+      // 总分：优先表里的「得分」列；没有就用各题之和（都缺分才算没有）
+      const totalCell = head.cols.total >= 0 ? anNum(r[head.cols.total]) : null;
+      let sum = 0, any = false;
+      for (const sec of sections) {
+        for (const q of sec.questions) {
+          const v = anNum(r[q.col]);
+          if (v !== null) { sum += v; any = true; }
+        }
+      }
+      const total = totalCell !== null ? totalCell : (any ? anRound(sum) : null);
+      if (totalCell !== null && any && Math.abs(totalCell - sum) > 0.01) {
+        warns.push({ name: rawName, why: "总得分 " + anRound(totalCell) + " 与各题之和 " + anRound(sum) + " 差 " + anRound(totalCell - sum) + " 分" });
+      }
+
+      const rec = {
+        sid: m.s ? m.s.id : "", name: rawName, no, matchedBy: m.by || "", sure: !!m.s, why: m.why || "",
+        cands: m.cands || [], total, totalFull, secs, skipped,
+        weak: secs.filter((x) => x.level === "weak").map((x) => x.name),
+        watch: secs.filter((x) => x.level === "watch").map((x) => x.name),
+      };
+      if (m.s) students.push(rec); else unmatched.push(rec);
+    }
+
+    return {
+      sections, students, unmatched, warns,
+      questions: head.questions, unknownCols: head.unknown,
+      totalFull, params: { below: Number(params.below), watch: Number(params.watch), minQ, minFull }, map,
+      headInfo: { headRow: head.headRow, headEnd: head.headEnd, nameCol: head.cols.name, noCol: head.cols.no, totalCol: head.cols.total },
+      summary: {
+        matched: students.length,
+        unmatched: unmatched.length,
+        questions: head.questions.length,
+        unknown: head.unknown.length,
+        weakStudents: students.filter((s) => s.weak.length).length,
+      },
+    };
+  }
+
+  /* ---------------- 预览与写入 ---------------- */
+
+  let AN = null;   // 当前预览状态（不落盘；点「确认写入」才写）
+
+  function openAnalyze(preset) {
+    const cfg = analyzeCfg();
+    AN = {
+      rows: null, fileName: "", sheetName: "", source: "",
+      examName: String(preset || "").trim(), date: todayStr(),
+      params: Object.assign({}, cfg.params), map: Object.assign({}, cfg.map),
+      parsed: null, msg: "",
+    };
+    const r = $("anResult");
+    if (r) r.textContent = "";
+    const sv = $("anSave");
+    if (sv) sv.onclick = anApply;
+    renderAnBody();
+    $("mAnalyze").classList.add("open");
+  }
+
+  /** 从工作表 / 文件名推一个考试名；跟已有考试名对得上就用已有的（避免同一场变成两个名字） */
+  function anGuessExamName(fileName, sheet) {
+    const clean = (s) => String(s || "")
+      .replace(/\.(xlsx|xlsm|xls|csv|txt)$/i, "")
+      .replace(/成绩明细|分数明细|明细|成绩单|成绩|得分明细|得分/g, "")
+      .trim();
+    const cands = [];
+    if (sheet) cands.push(clean(sheet));
+    // 「粘贴内容」是内部占位，不是考试名 —— 2026-10-29 截图时发现默认填成这个，很误导
+    if (fileName && fileName !== "粘贴内容") cands.push(clean(fileName));
+    for (const c of cands) {
+      if (!c) continue;
+      const key = examKeyOf({ name: c });
+      const hit = examNameList().find((n) => examKeyOf({ name: n }) === key);
+      return hit || c;
+    }
+    return "";
+  }
+
+  function anIngest(rows, fileName, sheet) {
+    if (!AN) openAnalyze("");
+    AN.rows = rows;
+    AN.fileName = fileName || "";
+    AN.sheetName = sheet || "";
+    AN.source = fileName ? fileName + (sheet ? "·" + sheet : "") : "粘贴内容";
+    const parsed = anAnalyze(rows, { map: AN.map, params: AN.params });
+    if (parsed.error) {
+      AN.parsed = null;
+      AN.msg = parsed.error;
+      renderAnBody();
+      toast(parsed.error, 4200);
+      return;
+    }
+    AN.parsed = parsed;
+    AN.msg = "";
+    if (!AN.examName) AN.examName = anGuessExamName(fileName, sheet);
+    if (!AN.date) AN.date = todayStr();
+    renderAnBody();
+  }
+
+  function anPickSheet(sheets) {
+    let best = null;
+    for (const sh of sheets || []) {
+      const head = anFindHeader(sh.rows || []);
+      if (!head) continue;
+      if (!best || head.questions.length > best.n) best = { sh, n: head.questions.length };
+    }
+    return best ? best.sh : null;
+  }
+
+  async function anReadFile(file) {
+    if (!file) return;
+    try {
+      let rows = null, sheet = "";
+      const nm = String(file.name || "").toLowerCase();
+      if (/\.(xlsx|xlsm|xls)$/.test(nm)) {
+        const buf = await file.arrayBuffer();
+        const wb = await globalThis.XlsxLite.readXlsx(buf);
+        if (!wb.sheets.length) return toast("这个文件里没有工作表");
+        const pick = anPickSheet(wb.sheets);
+        if (!pick) return toast("这个文件里没有一张带「每题得分」的表", 4200);
+        rows = pick.rows;
+        sheet = pick.name || "";
+      } else {
+        const txt = await file.text();
+        rows = parseCsvRows(txt);
+      }
+      if (!rows || !rows.length) return toast("没读出内容");
+      anIngest(rows, file.name || "", sheet);
+    } catch (e) {
+      console.error(e);
+      toast("读文件失败：" + e.message, 5000);
+    }
+  }
+
+  function renderAnBody() {
+    const box = $("anBody");
+    if (!box) return;
+    box.innerHTML = anBodyHtml();
+    bindAnBody();
+  }
+
+  function anBodyHtml() {
+    if (!AN) return "";
+    const p = AN.parsed;
+    const examOpts = examNameList().map((n) => `<option value="${esc(n)}"></option>`).join("");
+    let html = `<div class="an-in">
+        <button class="btn" id="anPickFile">📄 选 Excel / CSV</button>
+        <input type="file" id="anFile" accept=".xlsx,.xlsm,.xls,.csv,.txt" hidden>
+        <span class="hint" style="margin:0">${AN.source ? esc(AN.source) : "选一张带「每题得分」的成绩明细表"}</span>
+      </div>
+      <details class="an-paste"${AN.source ? "" : " open"}>
+        <summary>没有文件？把表头和学生行粘进来也行（制表符 / 逗号都认）</summary>
+        <textarea id="anText" placeholder="姓名&#9;第1题｜基础｜3分&#9;第2题｜默写｜8分&#10;张三&#9;3&#9;6"></textarea>
+        <div class="an-in" style="margin-top:6px"><button class="btn" id="anParseText">解析粘贴内容</button></div>
+      </details>
+
+      <div class="an-box">
+        <h4>① 这次考试写到哪</h4>
+        <div class="an-in">
+          <label>考试名称 <input type="text" id="anExam" list="anExamList" value="${esc(AN.examName)}" placeholder="七年级万人测" style="width:190px"></label>
+          <label>日期 <input type="date" id="anDate" value="${esc(AN.date)}"></label>
+          <datalist id="anExamList">${examOpts}</datalist>
+        </div>
+        <p class="an-note">按考试名判重：同名考试只留一条成绩记录，重复导出不会多出一场；这次分析只改这场，不动别的考试。</p>
+      </div>
+
+      <div class="an-box">
+        <h4>② 判定参数（可改，改完点「按新参数重算」）</h4>
+        <div class="an-in">
+          <label>得分率低于 <input type="number" id="anBelow" min="0" max="100" step="1" value="${AN.params.below}">% 记薄弱</label>
+          <label><input type="number" id="anWatch" min="0" max="100" step="1" value="${AN.params.watch}">% 以下记「需要关注」</label>
+          <label>板块最少 <input type="number" id="anMinQ" min="0" max="50" step="1" value="${AN.params.minQ}"> 道题</label>
+          <label>板块满分至少 <input type="number" id="anMinFull" min="0" max="200" step="1" value="${AN.params.minFull}"> 分</label>
+          <button class="btnmini" id="anRecompute">按新参数重算</button>
+        </div>
+        <p class="an-note">默认：低于 60% 明显薄弱；60%～74% 需要关注；75% 及以上不标记。低得分率只说明这份卷子上这块失分多，不代表对学生能力的永久判断。</p>
+      </div>`;
+    if (!p) {
+      html += `<div class="an-box"><h4>③ 分析预览</h4><div class="an-empty">${esc(AN.msg || "选好表后，这里会显示各板块满分、每个学生的得分率和建议标记。")}</div></div>`;
+      return html;
+    }
+    return html + anPreviewHtml();
+  }
+
+  function anPreviewHtml() {
+    const p = AN.parsed;
+    const s = p.summary;
+    const est = esc(AN.examName || "（未填考试名）");
+
+    // 学生表的列：映射后的看板板块，按试卷顺序去重（两个 Excel 板块映射到同一个 tag 只显示一列）
+    const tags = [];
+    for (const sec of p.sections) if (sec.tag && !tags.includes(sec.tag)) tags.push(sec.tag);
+    tags.sort((a, b) => WEAK_TAGS.indexOf(a) - WEAK_TAGS.indexOf(b));
+
+    const mapRows = p.sections.map((sec) => {
+      const val = Object.prototype.hasOwnProperty.call(AN.map, sec.name) ? AN.map[sec.name] : (sec.tag || "");
+      const opts = [`<option value=""${val ? "" : " selected"}>— 待确认（不写入）—</option>`]
+        .concat(WEAK_TAGS.map((t) => `<option value="${esc(t)}"${val === t ? " selected" : ""}>${esc(t)}</option>`))
+        .concat([`<option value="__skip"${val === "__skip" ? " selected" : ""}>不写入看板</option>`]);
+      return `<tr class="${sec.tag ? "" : "warn"}">
+        <td><b>${esc(sec.name)}</b></td><td class="num">${sec.qCount}</td><td class="num">${fmtScore(sec.full)}</td>
+        <td>${esc(sec.mapWhy)}</td><td><select data-anmap="${esc(sec.name)}">${opts.join("")}</select></td></tr>`;
+    }).join("");
+
+    const stRows = p.students.map((st) => {
+      const cells = tags.map((t) => {
+        const x = st.secs.find((y) => y.name === t);
+        if (!x) {
+          const sk = st.skipped.find((k) => k.name === t);
+          return `<td class="an-rate off" title="${esc(sk ? sk.why : "没有可用的分")}">跳过</td>`;
+        }
+        const cls = x.level === "weak" ? "w" : x.level === "watch" ? "m" : "";
+        return `<td class="an-rate ${cls}" title="${esc(x.score + "/" + x.full + "（" + x.excel + "）")}">${anPct(x.rate)}</td>`;
+      }).join("");
+      const weak = st.weak.length
+        ? st.weak.map((t) => `<span class="sc-wtag auto">${esc(t)}</span>`).join("")
+        : `<span class="pf-none">—</span>`;
+      return `<tr><td><b>${esc(st.name)}</b>${st.matchedBy ? `<span class="hint" style="margin-left:4px">· ${esc(st.matchedBy)}匹配</span>` : ""}</td>
+        ${cells}<td class="col-sect">${weak}</td></tr>`;
+    }).join("");
+
+    const needCheck = p.unmatched.filter((x) => /同名|多个|需要老师/.test(x.why));
+    const guessLike = p.unmatched.filter((x) => /疑似/.test(x.why));
+    const notInRoster = p.unmatched.length - needCheck.length - guessLike.length;
+    const unHtml = needCheck.length
+      ? `<ul class="an-list">${needCheck.slice(0, 30).map((x) =>
+          `<li><b>${esc(x.name)}</b>${x.no ? `（学员号 ${esc(x.no)}）` : ""} —— ${esc(x.why)}</li>`).join("")}</ul>
+        ${needCheck.length > 30 ? `<p class="an-note">还有 ${needCheck.length - 30} 条需要确认的没列出。</p>` : ""}`
+      : `<p class="an-note">没有重名或姓名对不上的情况。</p>`;
+    const guessHtml = guessLike.length
+      ? `<p class="an-note">另有 <b>${guessLike.length}</b> 人与名单里某个名字很像（同音 / 形近），<b>没把握，不会自动写入</b>；如果确实是你班上的人，建议先把名单姓名改对再导一次。</p>`
+      : "";
+    const notInHtml = notInRoster
+      ? `<p class="an-note">另有 <b>${notInRoster}</b> 人不在本班名单里（全市/外班学生），会自动跳过、不写入。</p>`
+      : "";
+
+    const unkHtml = p.unknownCols.length
+      ? `<ul class="an-list">${p.unknownCols.map((x) =>
+          `<li><b>第 ${x.col + 1} 列</b>：${esc(x.raw)} —— ${esc(x.why)}</li>`).join("")}</ul>`
+      : `<p class="an-note">题目列全部识别成功。</p>`;
+
+    const warnHtml = p.warns.length
+      ? `<div class="an-warnbox"><b>总分对不上（${p.warns.length} 人）</b>：${p.warns.slice(0, 8).map((x) => esc(x.name) + " " + esc(x.why)).join("；")}${p.warns.length > 8 ? "…" : ""}<br>这不阻塞分析，但建议对一下原始表——可能是缺题或列错位。</div>`
+      : "";
+
+    const skipHtml = p.students.some((st) => st.skipped.length)
+      ? `<p class="an-note">有板块被跳过（缺分 / 单题 / 满分异常 / 未确认映射），鼠标停在学生表的「跳过」格上能看到具体原因。</p>`
+      : "";
+
+    return `<div class="an-box">
+        <h4>③ 分析预览</h4>
+        <div class="an-sum">
+          <div class="c"><span class="k">考试</span><b style="font-size:15px">${est}</b></div>
+          <div class="c"><span class="k">成功匹配</span><b>${s.matched}</b><span class="s">人</span></div>
+          <div class="c ${s.unmatched ? "bad" : ""}"><span class="k">未匹配 / 待确认</span><b>${s.unmatched}</b><span class="s">人</span></div>
+          <div class="c"><span class="k">识别题目</span><b>${s.questions}</b><span class="s">道</span></div>
+          <div class="c ${s.unknown ? "bad" : ""}"><span class="k">未识别题目</span><b>${s.unknown}</b><span class="s">道</span></div>
+          <div class="c"><span class="k">建议标薄弱</span><b>${s.weakStudents}</b><span class="s">人</span></div>
+        </div>
+        <p class="an-note">卷面满分合计 <b>${fmtScore(p.totalFull)}</b> 分（由每道题满分加总，不拿学生得分反推）。</p>
+      </div>
+
+      <div class="an-box">
+        <h4>④ 板块满分与映射（未确认的板块不会写入）</h4>
+        <div class="an-tab"><table><thead><tr><th>Excel 板块</th><th class="num">题目数</th><th class="num">满分</th><th>状态</th><th>写进看板</th></tr></thead>
+          <tbody>${mapRows}</tbody></table></div>
+        <p class="an-note">改这里的下拉再点「按新参数重算」（或直接确认写入）即可生效；确认过的映射会记下来，下次导入自动复用。</p>
+      </div>
+
+      <div class="an-box">
+        <h4>⑤ 每个学生的板块得分率与建议（匹配到 ${s.matched} 人）</h4>
+        ${p.students.length ? `<div class="an-tab"><table><thead><tr><th>姓名</th>${tags.map((t) => `<th class="num">${esc(t)}</th>`).join("")}<th>建议薄弱</th></tr></thead>
+          <tbody>${stRows}</tbody></table></div>` : `<div class="an-empty">一个学生都没匹配上 —— 先看下面的未匹配清单，确认姓名列对不对。</div>`}
+        <p class="an-note">红色 = 明显薄弱（低于 ${p.params.below}%）；黄色 = 需要关注（低于 ${p.params.watch}%）；「跳过」= 缺分、单题板块或映射未确认。</p>
+      </div>
+
+      <div class="an-box">
+        <h4>⑥ 需要老师确认的异常</h4>
+        <p class="an-note" style="margin-top:0"><b>重名 / 姓名对不上（${needCheck.length} 人）</b> —— 不会自动写入。</p>
+        ${unHtml}
+        ${guessHtml}
+        ${notInHtml}
+        <p class="an-note"><b>未识别题目（${p.unknownCols.length} 道）</b></p>
+        ${unkHtml}
+        ${warnHtml}${skipHtml}
+      </div>`;
+  }
+
+  function bindAnBody() {
+    const pf = $("anPickFile");
+    const fi = $("anFile");
+    if (pf && fi) {
+      pf.onclick = () => fi.click();
+      fi.onchange = () => { const f = fi.files && fi.files[0]; if (f) anReadFile(f); };
+    }
+    const pt = $("anParseText");
+    if (pt) pt.onclick = () => {
+      const t = $("anText");
+      const txt = t ? t.value : "";
+      if (!String(txt).trim()) return toast("先把表格粘进来");
+      const rows = parseCsvRows(txt);
+      if (!rows.length) return toast("没读出内容");
+      anIngest(rows, "粘贴内容", "");
+    };
+    const ex = $("anExam");
+    if (ex) ex.oninput = () => { AN.examName = ex.value; };
+    const dt = $("anDate");
+    if (dt) dt.onchange = () => { AN.date = dt.value; };
+    const rc = $("anRecompute");
+    if (rc) rc.onclick = anRecompute;
+    document.querySelectorAll("#anBody [data-anmap]").forEach((sel) => {
+      sel.onchange = () => {
+        if (!AN) return;
+        const k = sel.dataset.anmap;
+        const v = sel.value;
+        if (v) AN.map[k] = v; else delete AN.map[k];
+        anRecompute(true);
+      };
+    });
+  }
+
+  function anReadParams() {
+    const num = (id, d) => {
+      const el = $(id);
+      if (!el) return d;
+      const v = Number(el.value);
+      return isFinite(v) ? v : d;
+    };
+    AN.params = {
+      below: Math.max(0, Math.min(100, num("anBelow", 60))),
+      watch: Math.max(0, Math.min(100, num("anWatch", 75))),
+      minQ: Math.max(0, num("anMinQ", 1)),
+      minFull: Math.max(0, num("anMinFull", 0)),
+    };
+    if (AN.params.watch < AN.params.below) AN.params.watch = AN.params.below;
+  }
+
+  /** 参数或映射改了 → 用同一份 rows 重算（不重新读文件） */
+  function anRecompute(quiet) {
+    if (!AN || !AN.rows) return toast("先选一份带每题得分的表");
+    anReadParams();
+    const ex = $("anExam");
+    if (ex) AN.examName = ex.value;
+    const dt = $("anDate");
+    if (dt && dt.value) AN.date = dt.value;
+    const parsed = anAnalyze(AN.rows, { map: AN.map, params: AN.params });
+    if (parsed.error) { toast(parsed.error, 4200); return; }
+    AN.parsed = parsed;
+    renderAnBody();
+    if (!quiet) toast("已按新参数重算", 1800);
+  }
+
+  /** 确认写入：成绩 + 薄弱板块 + 整场分析留痕，全部落在这一场考试上 */
+  function anApply() {
+    if (!AN || !AN.parsed) return toast("还没有可写入的分析结果");
+    const exEl = $("anExam");
+    const dtEl = $("anDate");
+    const name = String((exEl ? exEl.value : AN.examName) || AN.examName || "").trim();
+    if (!name) {
+      toast("给这次考试起个名字（比如「七年级万人测」）");
+      if (exEl) exEl.focus();
+      return;
+    }
+    const p = AN.parsed;
+    if (!p.students.length) return toast("一个学生都没匹配上，先核对姓名列和看板名单", 4200);
+    const date = (dtEl && dtEl.value) || AN.date || todayStr();
+    const t = trackOf(name);
+    t.weak ||= {};
+    t.weakMeta ||= {};
+
+    const tKey = examKeyOf({ name });
+    let created = 0, updated = 0, tagged = 0, noScore = 0;
+    for (const st of p.students) {
+      if (!st.sid) continue;
+      const s = DB.students.find((x) => x.id === st.sid);
+      if (!s) continue;
+      s.exams ||= [];
+      dedupeStudentExams(s, tKey);
+      const full = st.totalFull > 0 ? st.totalFull : null;
+      if (st.total === null || !(st.total >= 0)) noScore++;
+      else {
+        const e = s.exams.find((x) => examKeyOf(x) === tKey);
+        if (e) {
+          e.score = st.total;
+          if (full) e.full = full;
+          if (!e.date) e.date = date;
+          if (!String(e.name || "").trim()) e.name = name;
+          updated++;
+        } else {
+          s.exams.push({ id: uid(), name, date, score: st.total, full: full || undefined });
+          created++;
+        }
+      }
+      // 自动标签 + 老师的手动标签合并；老师删掉的自动项（removed）不再加回来
+      const meta = t.weakMeta[st.sid] || {
+        auto: [], manual: Array.isArray(t.weak[st.sid]) ? t.weak[st.sid].slice() : [], removed: [],
+      };
+      const removed = Array.isArray(meta.removed) ? meta.removed : [];
+      const manual = Array.isArray(meta.manual) ? meta.manual : [];
+      const autoKept = st.weak.filter((x) => !removed.includes(x));
+      const final = [];
+      for (const x of autoKept.concat(manual)) if (WEAK_TAGS.includes(x) && !final.includes(x)) final.push(x);
+      if (final.length) t.weak[st.sid] = final; else delete t.weak[st.sid];
+      t.weakMeta[st.sid] = { auto: autoKept, manual, removed, at: Date.now() };
+      if (autoKept.length) tagged++;
+    }
+
+    // 整场留痕（成绩页点标签、学生档案查看依据都读这里）
+    // 未匹配的人只留「重名 / 姓名对不上」这些要老师动手的；全市外班的学生只记一个数，
+    // 不然一份万人测会把一千多个无关姓名塞进本地库。
+    const needCheck = p.unmatched.filter((x) => /同名|多个|需要老师/.test(x.why));
+    const guessLike = p.unmatched.filter((x) => /疑似/.test(x.why));
+    t.analysis = {
+      at: Date.now(),
+      source: AN.source || "",
+      sheet: AN.sheetName || "",
+      params: Object.assign({}, p.params),
+      sections: p.sections.map((x) => ({ name: x.name, tag: x.tag, full: x.full, qCount: x.qCount })),
+      totalFull: p.totalFull,
+      students: {},
+      unmatched: needCheck.slice(0, 100).map((x) => ({ name: x.name, no: x.no, why: x.why })),
+      unmatchedTotal: p.unmatched.length,
+      unmatchedNeed: needCheck.length,
+      unmatchedGuess: guessLike.length,
+      unknown: p.unknownCols.slice(0, 50),
+      summary: p.summary,
+    };
+    for (const st of p.students) {
+      if (!st.sid) continue;
+      t.analysis.students[st.sid] = {
+        name: st.name, matchedBy: st.matchedBy, total: st.total,
+        secs: st.secs.map((x) => ({ name: x.name, excel: x.excel, score: x.score, full: x.full, rate: x.rate, level: x.level })),
+        skipped: st.skipped, weak: st.weak, watch: st.watch,
+      };
+    }
+
+    // 映射与参数留作下次复用（需求：已确认的映射规则可以复用到以后导入的考试）
+    const cfg = analyzeCfg();
+    for (const sec of p.sections) {
+      if (AN.map && Object.prototype.hasOwnProperty.call(AN.map, sec.name)) cfg.map[sec.name] = AN.map[sec.name];
+      else if (sec.tag) cfg.map[sec.name] = sec.tag;
+    }
+    cfg.params = Object.assign({}, p.params);
+
+    if (p.totalFull > 0) rememberExam(name, p.totalFull);
+    save();
+    const modal = $("mAnalyze");
+    if (modal) modal.classList.remove("open");
+    if (view.mode === "score") { view.scoreExam = name; }
+    renderSide();
+    renderStage();
+    toast(`已写入「${name}」：新增 ${created} 条成绩、更新 ${updated} 条、自动标薄弱 ${tagged} 人`
+      + (noScore ? `；${noScore} 人没有分数，只写板块分析` : ""), 4600);
+  }
+
+  /* ---------------- 读已有分析结果（列表 / 档案 / 弹窗共用） ---------------- */
+
+  function analysisOfExam(name) {
+    const t = DB.scoreTrack && DB.scoreTrack[name];
+    return t && t.analysis && typeof t.analysis === "object" ? t.analysis : null;
+  }
+
+  function studentAnalysis(name, sid) {
+    const a = analysisOfExam(name);
+    return a && a.students && a.students[sid] ? a.students[sid] : null;
+  }
+
+  function weakMetaOf(name, sid) {
+    const t = DB.scoreTrack && DB.scoreTrack[name];
+    const m = t && t.weakMeta && t.weakMeta[sid];
+    return {
+      auto: Array.isArray(m && m.auto) ? m.auto : [],
+      manual: Array.isArray(m && m.manual) ? m.manual : [],
+      removed: Array.isArray(m && m.removed) ? m.removed : [],
+    };
+  }
+
+  /** 板块分析依据弹窗：从成绩页的自动标签、学生档案的「板块分析」都能打开 */
+  function openSecDetail(examName, sid) {
+    const st = DB.students.find((s) => s.id === sid);
+    const a = studentAnalysis(examName, sid);
+    const title = $("secDetailTitle");
+    const body = $("secDetailBody");
+    if (!body) return;
+    if (!st || !a) { toast("这个学生在这场考试下没有板块分析结果", 3200); return; }
+    if (title) title.textContent = st.name + " · " + examName + " · 板块分析";
+    const rows = (a.secs || []).map((x) => {
+      const lv = x.level === "weak" ? `<b style="color:var(--red)">明显薄弱</b>`
+        : x.level === "watch" ? `<b style="color:var(--amber)">需要关注</b>` : "正常";
+      return `<tr><td><b>${esc(x.name)}</b>${x.excel && x.excel !== x.name ? `<span class="hint" style="margin-left:4px">${esc(x.excel)}</span>` : ""}</td>
+        <td class="num">${fmtScore(x.score)}</td><td class="num">${fmtScore(x.full)}</td>
+        <td class="num">${anPct(x.rate)}</td><td>${lv}</td></tr>`;
+    }).join("");
+    const sk = (a.skipped || []).length
+      ? `<p class="an-note"><b>跳过的板块</b>：${a.skipped.map((x) => esc(x.name) + "（" + esc(x.why) + "）").join("；")}</p>` : "";
+    const cfg = analysisOfExam(examName);
+    body.innerHTML = `<div class="an-tab"><table><thead><tr><th>板块</th><th class="num">实际得分</th><th class="num">板块满分</th><th class="num">得分率</th><th>判定</th></tr></thead>
+      <tbody>${rows || `<tr><td colspan="5" class="an-empty">没有可用的板块分</td></tr>`}</tbody></table></div>
+      <p class="an-note">总分 ${a.total === null ? "—" : fmtScore(a.total)} / ${fmtScore((cfg && cfg.totalFull) || a.total || 0)}；
+      判定阈值：低于 ${(cfg && cfg.params && cfg.params.below) || 60}% 记薄弱，低于 ${(cfg && cfg.params && cfg.params.watch) || 75}% 记需要关注。</p>
+      ${sk}
+      <p class="an-note">这是按卷面每题得分算出来的，只针对这一场考试；不会影响其他考试的历史记录。</p>`;
+    $("mSecDetail").classList.add("open");
   }
 
   function scoreCols(name) {
@@ -15498,9 +16437,11 @@ const SYNC = (() => {
       listbar.innerHTML = `<b>成绩</b> · 0 场考试<span style="flex:1"></span>${headCompactBtn("scCompact")}`;
       stage.innerHTML = `<div class="empty-hint">还没有成绩记录。<br><br>
         <button class="btn primary" id="scoreGoAdd">＋ 加一场考试</button>
-        <button class="btn" id="scoreGoImport" style="margin-left:8px">导入成绩</button></div>`;
+        <button class="btn" id="scoreGoImport" style="margin-left:8px">导入成绩</button>
+        <button class="btn" id="scoreGoAnalyze" style="margin-left:8px">智能分析（每题得分明细）</button></div>`;
       const a = $("scoreGoAdd"); if (a) a.onclick = addExam;
       const b = $("scoreGoImport"); if (b) b.onclick = openScore;
+      const c = $("scoreGoAnalyze"); if (c) c.onclick = () => openAnalyze("");
       bindHeadCompact("scCompact");
       return;
     }
@@ -15525,7 +16466,8 @@ const SYNC = (() => {
       <span style="flex:1"></span>
       ${headCompactBtn("scCompact")}
       <button class="btn" id="scAdd">＋ 加考试</button>
-      <button class="btn ghost" id="scImport">导入成绩</button>`;
+      <button class="btn ghost" id="scImport">导入成绩</button>
+      <button class="btn ghost" id="scAnalyze">智能分析</button>`;
 
     // 「全部」= 跨考试总表：行是学生，列是每场考试的分数
     if (!cur) {
@@ -15810,6 +16752,7 @@ const SYNC = (() => {
     // 加 / 导入 / 改名 / 删
     const a = $("scAdd"); if (a) a.onclick = addExam;
     const b = $("scImport"); if (b) b.onclick = openScore;
+    const bz = $("scAnalyze"); if (bz) bz.onclick = () => openAnalyze(cur || "");
     bindHeadCompact("scCompact");
     // ------- 档次线 / 沟通 / 薄弱 / 筛选 / 批量（2026-10-28）
     const tb = $("scTrackBtn");
@@ -17355,6 +18298,8 @@ const SYNC = (() => {
       { key: "checkin", label: "语文打卡任务与状态", size: ((B.checkin && B.checkin.tasks) || []).length, unit: "项" },
       { key: "daily", label: "每日名单", size: ((B.daily && B.daily.ids) || []).length, unit: "人" },
       { key: "unmatched", label: "未匹配名单", size: (B.unmatched || []).length, unit: "条" },
+      { key: "analysis", label: "考试成绩智能分析（板块得分率 / 薄弱判定）",
+        size: Object.keys(B.scoreTrack || {}).filter((k) => B.scoreTrack[k] && B.scoreTrack[k].analysis).length, unit: "场" },
       { key: "config", label: "看板设置（名称、维度、标签）", size: (B.config && B.config.dims) ? B.config.dims.length : 0, unit: "项" },
     ].concat(isFile ? [
       { key: "attachments", label: "附件（答题卡、试卷照片等）", size: (B._attCount || 0), unit: "个" },
