@@ -2640,7 +2640,7 @@ button.ck-st-name.pf-link { color: inherit; }
         <button class="btn" id="scorePickFile">📄 选 Excel / CSV 文件</button>
         <button class="btn primary" id="scoreParse">解析</button>
         <span class="hint" style="margin:0" id="scoreHint">写完点「解析」，下面会列出识别结果。</span>
-        <input type="file" id="scoreFile" accept=".xlsx,.xlsm,.csv,.txt" hidden>
+        <input type="file" id="scoreFile" accept=".xlsx,.xlsm,.xls,.csv,.txt" hidden>
       </div>
       <p class="hint" id="scoreFileHint" style="margin:8px 0 0"></p>
       <div class="sect" style="margin-top:12px">
@@ -2707,8 +2707,8 @@ button.ck-st-name.pf-link { color: inherit; }
       </p>
       <div class="rowset">
         <button class="btn" id="plPickFile">📄 选 Excel / CSV 文件</button>
-        <span class="hint" style="margin:0" id="plHint">支持 .xlsx / .csv</span>
-        <input type="file" id="plFile" accept=".xlsx,.xlsm,.csv,.txt" hidden>
+        <span class="hint" style="margin:0" id="plHint">支持 .xlsx / .xls / .csv</span>
+        <input type="file" id="plFile" accept=".xlsx,.xlsm,.xls,.csv,.txt" hidden>
       </div>
       <p class="hint" id="plFileHint" style="margin:8px 0 0"></p>
       <div class="sect" style="margin-top:12px">
@@ -2743,8 +2743,8 @@ button.ck-st-name.pf-link { color: inherit; }
         前面几周已经打的卡原样保留，不会被清掉。
       </p>
       <div class="rowset" style="margin-top:10px">
-        <button class="btn primary" id="ckPick">选择 xlsx 文件</button>
-        <input type="file" id="ckFile" accept=".xlsx" hidden>
+        <button class="btn primary" id="ckPick">选择 xlsx / xls 文件</button>
+        <input type="file" id="ckFile" accept=".xlsx,.xls" hidden>
         <span class="hint" style="margin:0" id="ckImported">—</span>
       </div>
       <p class="hint" id="ckResult" style="margin-top:10px"></p>
@@ -2952,10 +2952,11 @@ button.ck-st-name.pf-link { color: inherit; }
 })(typeof globalThis !== 'undefined' ? globalThis : window);
 </script>
 <script>/* ==========================================================================
- * xlsx-lite —— 零依赖 xlsx 读取器
+ * xlsx-lite —— 零依赖 xlsx / xls 读取器
  *
  * 只用浏览器/Node 都有的能力：DataView + DecompressionStream('deflate-raw')
- * 解析顺序：EOCD → 中央目录 → 本地头 → 解压 → 正则提 XML
+ * .xlsx：EOCD → 中央目录 → 本地头 → 解压 → 正则提 XML
+ * .xls ：OLE2 复合文档 → Workbook 流 → BIFF8 记录（2026-10-29 加）
  *
  * 不引第三方库，是为了让整个应用能塞进一个 HTML 文件里离线运行。
  * ========================================================================== */
@@ -3137,6 +3138,400 @@ button.ck-st-name.pf-link { color: inherit; }
     return { sheets };
   }
 
+  /* ============================================================ XLS（BIFF8）
+   *
+   * 老 .xls 是 OLE2 复合文档（不是 zip），里面放一条叫 Workbook 的流，
+   * 流里是 BIFF8 二进制记录（2 字节类型 + 2 字节长度 + 内容）。
+   *
+   * 2026-10-29 加：老师手上的万人测同时有 .xls 和 .xlsx 两份，之前 .xls
+   * 直接报「不是有效的 xlsx」，等于导不进来。这里零依赖补上：
+   *   CFB 解析（FAT / 目录 / mini stream）→ BIFF8 记录 → 单元格。
+   *
+   * 只支持 BIFF8（Excel 97/2003 的 .xls）。更老的 BIFF5 给一句人话提示，
+   * 不假装能读。学校系统把网页表格直接存成 .xls 的，也走 HTML 兜底。
+   */
+
+  const u16 = (b, o) => b[o] | (b[o + 1] << 8);
+  const u32 = (b, o) => (b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] << 24)) >>> 0;
+  const f64 = (b, o) => {
+    const dv = new DataView(b.buffer, b.byteOffset + o, 8);
+    return dv.getFloat64(0, true);
+  };
+  const concatBytes = (parts) => {
+    let n = 0;
+    for (const p of parts) n += p.length;
+    const out = new Uint8Array(n);
+    let p = 0;
+    for (const x of parts) { out.set(x, p); p += x.length; }
+    return out;
+  };
+
+  /** OLE2 复合文档 → 取出 Workbook / Book 流（Uint8Array） */
+  function oleWorkbook(bytes) {
+    if (bytes.length < 512) throw new Error("不是有效的 xls（文件太小）");
+    const sectorSize = 1 << u16(bytes, 30);
+    const miniSize = 1 << u16(bytes, 32);
+    const nFat = u32(bytes, 44);
+    const dirStart = u32(bytes, 48);
+    const miniCut = u32(bytes, 56);
+    const miniFatStart = u32(bytes, 60);
+    const nMiniFat = u32(bytes, 64);
+    const difatStart = u32(bytes, 68);
+    const nDifat = u32(bytes, 72);
+    const secOff = (s) => (s + 1) * sectorSize;
+    const END = 0xFFFFFFFE;
+    const FREE = 0xFFFFFFFF;
+
+    // ① DIFAT：FAT 扇区清单（头里 109 个 + 后续 DIFAT 扇区）
+    const fatSectors = [];
+    for (let i = 0; i < 109; i++) {
+      const s = u32(bytes, 76 + i * 4);
+      if (s === FREE) break;
+      fatSectors.push(s);
+    }
+    let ds = difatStart;
+    for (let n = 0; n < nDifat && ds !== END && ds !== FREE && fatSectors.length < nFat; n++) {
+      const off = secOff(ds);
+      if (off + sectorSize > bytes.length) break;
+      const per = sectorSize / 4 - 1;
+      for (let i = 0; i < per; i++) {
+        const s = u32(bytes, off + i * 4);
+        if (s !== FREE) fatSectors.push(s);
+      }
+      ds = u32(bytes, off + sectorSize - 4);
+    }
+
+    // ② FAT 表
+    const fat = [];
+    for (const fs of fatSectors) {
+      const off = secOff(fs);
+      for (let i = 0; i < sectorSize / 4; i++) {
+        const o = off + i * 4;
+        fat.push(o + 4 <= bytes.length ? u32(bytes, o) : END);
+      }
+    }
+
+    // ③ 按 FAT 链读一段流（普通扇区）
+    const readChain = (start, size) => {
+      const out = new Uint8Array(size);
+      let s = start, p = 0, guard = 0;
+      while (p < size && s !== END && s !== FREE && guard++ < 200000) {
+        const off = secOff(s);
+        if (off >= bytes.length) break;
+        const n = Math.min(sectorSize, size - p, bytes.length - off);
+        if (n <= 0) break;
+        out.set(bytes.subarray(off, off + n), p);
+        p += n;
+        s = fat[s] === undefined ? END : fat[s];
+      }
+      return out;
+    };
+    const readChainAll = (start) => {
+      const parts = [];
+      let s = start, guard = 0;
+      while (s !== END && s !== FREE && guard++ < 200000) {
+        const off = secOff(s);
+        if (off >= bytes.length) break;
+        parts.push(bytes.subarray(off, Math.min(off + sectorSize, bytes.length)));
+        s = fat[s] === undefined ? END : fat[s];
+      }
+      return concatBytes(parts);
+    };
+
+    // ④ 目录（找 Workbook / Book，以及根项里的 mini stream）
+    const dir = readChainAll(dirStart);
+    const entries = [];
+    for (let o = 0; o + 128 <= dir.length; o += 128) {
+      const nameLen = u16(dir, o + 64);
+      const type = dir[o + 66];
+      let name = "";
+      for (let i = 0; i + 1 < Math.max(0, nameLen - 2); i += 2) {
+        const code = u16(dir, o + i);
+        if (!code) break;
+        name += String.fromCharCode(code);
+      }
+      entries.push({
+        name, type,
+        start: u32(dir, o + 116),
+        size: u32(dir, o + 120),       // 低 32 位；xls 不会超过 4GB
+      });
+    }
+    const root = entries.find((e) => e.type === 5);
+    const streamEntry = entries.find((e) => e.type === 2 && /^(Workbook|Book)$/i.test(e.name));
+    if (!streamEntry) throw new Error("这个 xls 里没找到工作表数据（可能不是 Excel 文件）");
+
+    // ⑤ 小于 4096 字节的流走 mini stream
+    let miniData = new Uint8Array(0), miniFat = [];
+    if (root && root.start !== END && root.size > 0) {
+      miniData = readChain(root.start, root.size);
+      const mf = [];
+      let ms = miniFatStart, guard = 0;
+      while (ms !== END && ms !== FREE && guard++ < 200000) {
+        const off = secOff(ms);
+        if (off + sectorSize > bytes.length) break;
+        for (let i = 0; i < sectorSize / 4; i++) mf.push(u32(bytes, off + i * 4));
+        ms = fat[ms] === undefined ? END : fat[ms];
+      }
+      miniFat = mf;
+    }
+    const readMini = (start, size) => {
+      const out = new Uint8Array(size);
+      let s = start, p = 0, guard = 0;
+      while (p < size && s !== END && s !== FREE && guard++ < 200000) {
+        const off = s * miniSize;
+        if (off >= miniData.length) break;
+        const n = Math.min(miniSize, size - p, miniData.length - off);
+        if (n <= 0) break;
+        out.set(miniData.subarray(off, off + n), p);
+        p += n;
+        s = miniFat[s] === undefined ? END : miniFat[s];
+      }
+      return out;
+    };
+
+    if (streamEntry.size < miniCut && miniData.length) return readMini(streamEntry.start, streamEntry.size);
+    return readChain(streamEntry.start, streamEntry.size);
+  }
+
+  /** 把 Workbook 流切成 BIFF8 记录 [{id, off, data}] */
+  function biffRecords(buf) {
+    const recs = [];
+    let p = 0;
+    while (p + 4 <= buf.length) {
+      const id = u16(buf, p);
+      const len = u16(buf, p + 2);
+      if (p + 4 + len > buf.length) break;
+      recs.push({ id, off: p, data: buf.subarray(p + 4, p + 4 + len) });
+      p += 4 + len;
+    }
+    return recs;
+  }
+
+  /** 记录内的 XLUnicodeString（短串，不跨记录） */
+  function xlString(d, o) {
+    const cch = u16(d, o);
+    const grbit = d[o + 2] || 0;
+    const fHigh = (grbit & 1) === 1;
+    const rich = (grbit & 8) === 8;
+    const ext = (grbit & 4) === 4;
+    let p = o + 3;
+    let cRun = 0, cbExt = 0;
+    if (rich) { cRun = u16(d, p); p += 2; }
+    if (ext) { cbExt = u32(d, p); p += 4; }
+    let s = "";
+    if (fHigh) {
+      for (let i = 0; i < cch && p + i * 2 + 1 < d.length; i++) s += String.fromCharCode(u16(d, p + i * 2));
+    } else {
+      for (let i = 0; i < cch && p + i < d.length; i++) s += String.fromCharCode(d[p + i]);
+    }
+    // cRun / cbExt 只是说明长度，这里不需要跳过（反正不再读这个串）
+    return s;
+  }
+
+  /** BOUNDSHEET 里的短表名 */
+  function sheetName(d) {
+    const cch = d[6], grbit = d[7] || 0;
+    const fHigh = (grbit & 1) === 1;
+    let s = "";
+    if (fHigh) {
+      for (let i = 0; i < cch && 8 + i * 2 + 1 < d.length; i++) s += String.fromCharCode(u16(d, 8 + i * 2));
+    } else {
+      for (let i = 0; i < cch && 8 + i < d.length; i++) s += String.fromCharCode(d[8 + i]);
+    }
+    return s;
+  }
+
+  /**
+   * SST（共享字符串表）。它可能被切成 SST + N 个 CONTINUE 记录；
+   * **字符串的字符数据跨记录时，新记录的第一个字节是编码标志**（1=UTF-16，0=压缩）。
+   * 这是 BIFF8 最容易读错的地方，所以单独写一个带状态的读取器。
+   */
+  function readSst(chunks) {
+    if (!chunks.length) return [];
+    const chunks_ = chunks.filter((c) => c && c.length);
+    let ci = 0, p = 0, inChars = false, fHigh = false;
+    const ensure = () => {
+      while (ci < chunks_.length && p >= chunks_[ci].length) {
+        ci++; p = 0;
+        if (ci >= chunks_.length) return false;
+        if (inChars) { fHigh = (chunks_[ci][0] & 1) === 1; p = 1; }
+      }
+      return ci < chunks_.length;
+    };
+    const byte = () => { if (!ensure()) return 0; return chunks_[ci][p++]; };
+    const u16r = () => { const a = byte(), b = byte(); return a | (b << 8); };
+    const u32r = () => { const a = u16r(), b = u16r(); return (a + b * 65536) >>> 0; };
+    const skip = (n) => {
+      while (n > 0 && ensure()) {
+        const take = Math.min(n, chunks_[ci].length - p);
+        p += take;
+        n -= take;
+      }
+    };
+
+    const out = [];
+    if (!ensure()) return out;
+    u32r();                                  // 总引用数（用不上）
+    const unique = u32r();
+    for (let i = 0; i < unique; i++) {
+      if (!ensure()) break;
+      const cch = u16r();
+      const grbit = byte();
+      const rich = (grbit & 8) === 8;
+      const ext = (grbit & 4) === 4;
+      fHigh = (grbit & 1) === 1;
+      const cRun = rich ? u16r() : 0;
+      const cbExt = ext ? u32r() : 0;
+      let s = "";
+      inChars = true;
+      for (let j = 0; j < cch; j++) {
+        if (!ensure()) break;
+        if (fHigh) s += String.fromCharCode(u16r());
+        else s += String.fromCharCode(byte());
+      }
+      inChars = false;
+      if (rich) skip(cRun * 4);
+      if (ext) skip(cbExt);
+      out.push(s);
+    }
+    return out;
+  }
+
+  /** RK 压缩数：低 2 位是标志，其余是 30 位整数或 double 的高 30 位 */
+  function rkNum(rk) {
+    if (rk & 2) {
+      let v = rk >>> 2;
+      if (rk & 0x80000000) v |= 0xC0000000;
+      return v | 0;
+    }
+    const dv = new DataView(new ArrayBuffer(8));
+    dv.setUint32(0, 0, true);
+    dv.setUint32(4, (rk & 0xFFFFFFFC) >>> 0, true);
+    return dv.getFloat64(0, true);
+  }
+
+  /** 一个 sheet 的记录区间 → 二维数组 */
+  function parseXlsSheet(recs, start, sst) {
+    const rows = [];
+    const setCell = (r, c, v) => {
+      while (rows.length <= r) rows.push([]);
+      const row = rows[r];
+      while (row.length < c) row.push("");
+      row[c] = v;
+    };
+    let pending = null;                       // FORMULA 的字符串结果等 STRING 记录
+    for (let i = start; i < recs.length; i++) {
+      const rec = recs[i];
+      const d = rec.data;
+      if (rec.id === 0x000A) break;           // EOF
+      if (rec.id === 0x00FD) {                // LABELSST
+        setCell(u16(d, 0), u16(d, 2), sst[u32(d, 6)] !== undefined ? sst[u32(d, 6)] : "");
+      } else if (rec.id === 0x0204) {         // LABEL
+        setCell(u16(d, 0), u16(d, 2), xlString(d, 6));
+      } else if (rec.id === 0x0203) {         // NUMBER
+        setCell(u16(d, 0), u16(d, 2), f64(d, 6));
+      } else if (rec.id === 0x027E) {         // RK
+        setCell(u16(d, 0), u16(d, 2), rkNum(u32(d, 6)));
+      } else if (rec.id === 0x00BD) {         // MULRK
+        const r = u16(d, 0), c1 = u16(d, 2);
+        const n = Math.max(0, Math.floor((rec.data.length - 6) / 6));
+        for (let k = 0; k < n; k++) setCell(r, c1 + k, rkNum(u32(d, 4 + k * 6 + 2)));
+      } else if (rec.id === 0x0006) {         // FORMULA（取缓存结果，不重算）
+        const r = u16(d, 0), c = u16(d, 2);
+        if (d[6] === 0xFF && d[7] === 0xFF) {
+          const t = d[8];
+          if (t === 0) pending = { r, c };
+          else if (t === 1) setCell(r, c, d[10] ? 1 : 0);
+          else if (t === 3) setCell(r, c, "");
+          // t === 2 是错误值，宁可不写也不乱写
+        } else {
+          setCell(r, c, f64(d, 6));
+        }
+      } else if (rec.id === 0x0207) {         // STRING（上一条 FORMULA 的文本结果）
+        if (pending) { setCell(pending.r, pending.c, xlString(d, 0)); pending = null; }
+      } else if (rec.id === 0x0205) {         // BOOLERR
+        const r = u16(d, 0), c = u16(d, 2);
+        if (!d[7]) setCell(r, c, d[6] ? 1 : 0);
+      }
+    }
+    while (rows.length && (!rows[rows.length - 1] || rows[rows.length - 1].length === 0)) rows.pop();
+    return rows.map((r) => {
+      const a = r || [];
+      while (a.length && (a[a.length - 1] === "" || a[a.length - 1] === undefined)) a.pop();
+      return a;
+    });
+  }
+
+  /** 主入口：.xls（BIFF8）→ { sheets: [{name, rows}] } */
+  function readXls(buffer) {
+    const bytes = new Uint8Array(buffer);
+    const wb = oleWorkbook(bytes);
+    const recs = biffRecords(wb);
+    // 版本：BOF 里 u16 是 0x0600（BIFF8）；0x0500/0x0400 是老版本
+    const bof = recs.find((r) => r.id === 0x0809);
+    const ver = bof && bof.data.length >= 2 ? u16(bof.data, 0) : 0x0600;
+    if (ver && ver < 0x0600) throw new Error("这个 .xls 是 Excel 95 及更老的格式，请用 Excel / WPS 另存为 .xlsx 再导入");
+
+    let sst = [];
+    const bounds = [];
+    for (let i = 0; i < recs.length; i++) {
+      const r = recs[i];
+      if (r.id === 0x00FC) {                  // SST + 紧跟的 CONTINUE
+        const chunks = [r.data];
+        let j = i + 1;
+        while (j < recs.length && recs[j].id === 0x003C) { chunks.push(recs[j].data); j++; }
+        sst = readSst(chunks);
+        i = j - 1;
+      } else if (r.id === 0x0085) {           // BOUNDSHEET
+        bounds.push({ pos: u32(r.data, 0), name: sheetName(r.data) });
+      }
+    }
+    if (!bounds.length) throw new Error("这个 .xls 里没读到工作表，可能文件损坏或不是 Excel 文件");
+
+    parseXlsSheet.sst = null;
+    const started = recs.map((r, i) => (r.id === 0x0809 ? i : -1)).filter((i) => i >= 0);
+    const sheets = bounds.map((b, idx) => {
+      const start = started.find((i) => recs[i].off >= b.pos);
+      return {
+        name: b.name || `Sheet${idx + 1}`,
+        rows: parseXlsSheet(recs, start === undefined ? 0 : start, sst),
+      };
+    });
+    return { sheets };
+  }
+
+  /** 学校系统常把网页表格存成 .xls：按最简单的 HTML 表格读 */
+  function parseHtmlTable(text) {
+    const rows = [];
+    for (const tr of text.match(/<tr[\s\S]*?<\/tr>/gi) || []) {
+      const cells = [];
+      for (const td of tr.match(/<t[dh][\s\S]*?<\/t[dh]>/gi) || []) {
+        let v = td.replace(/<[^>]*>/g, "");
+        v = unesc(v).replace(/&nbsp;/gi, " ").replace(/\s+/g, " ").trim();
+        cells.push(v);
+      }
+      if (cells.some((c) => c !== "")) rows.push(cells);
+    }
+    return rows;
+  }
+
+  /** 自动识别：xlsx（zip）/ xls（OLE2）/ 伪装成 xls 的网页表格 */
+  async function readWorkbook(buffer) {
+    const head = new Uint8Array(buffer, 0, Math.min(8, buffer.byteLength));
+    if (head[0] === 0x50 && head[1] === 0x4B) return readXlsx(buffer);           // "PK"
+    if (head[0] === 0xD0 && head[1] === 0xCF && head[2] === 0x11 && head[3] === 0xE0) {
+      return readXls(buffer);
+    }
+    const peek = td.decode(new Uint8Array(buffer, 0, Math.min(4000, buffer.byteLength))).trim();
+    if (/^<(!doctype|html|table)/i.test(peek)) {
+      const rows = parseHtmlTable(peek.length < buffer.byteLength
+        ? td.decode(new Uint8Array(buffer)) : peek);
+      if (!rows.length) throw new Error("这个 .xls 其实是网页表格，但没读到内容，请另存为 .xlsx");
+      return { sheets: [{ name: "Sheet1", rows }] };
+    }
+    throw new Error("不是有效的 Excel 文件（既不是 .xlsx 也不是 .xls）");
+  }
+
   /* ------------------------------------------------- CSV / TSV（备用通路） */
 
   function parseDelimited(text) {
@@ -3159,7 +3554,7 @@ button.ck-st-name.pf-link { color: inherit; }
     return { sheets: [{ name: "粘贴内容", rows: rows.map((r) => { const a = [...r]; while (a.length && a[a.length - 1] === "") a.pop(); return a; }) }] };
   }
 
-  root.XlsxLite = { readXlsx, parseDelimited, unzip };
+  root.XlsxLite = { readXlsx, readXls, readWorkbook, parseDelimited, unzip };
 })(typeof globalThis !== "undefined" ? globalThis : window);
 </script>
 <script>/* ==========================================================================
@@ -7338,9 +7733,9 @@ const SYNC = (() => {
         <div class="drop" id="drop">
           <div class="big">📄</div>
           <div class="t">把 Excel 拖进来，或点击选择文件</div>
-          <div class="s">支持 .xlsx · 也可以直接从 Excel 复制整块粘贴</div>
+          <div class="s">支持 .xlsx / .xls · 也可以直接从 Excel 复制整块粘贴</div>
         </div>
-        <input type="file" id="fileXlsx" accept=".xlsx" hidden>
+        <input type="file" id="fileXlsx" accept=".xlsx,.xls" hidden>
 
         <div class="or">— 或者 —</div>
         <div class="rowset" style="justify-content:center">
@@ -7393,16 +7788,16 @@ const SYNC = (() => {
     el.addEventListener("drop", (e) => {
       const f = e.dataTransfer.files[0];
       if (!f) return;
-      if (/\.xlsx$/i.test(f.name)) handleXlsxFile(f);
+      if (/\.(xlsx|xlsm|xls)$/i.test(f.name)) handleXlsxFile(f);
       else if (/\.(csv|txt)$/i.test(f.name)) handleCsvFile(f);
-      else toast("只支持 .xlsx / .csv");
+      else toast("只支持 .xlsx / .xls / .csv");
     });
   }
 
   async function handleXlsxFile(file) {
     try {
       const buf = await file.arrayBuffer();
-      const wb = await globalThis.XlsxLite.readXlsx(buf);
+      const wb = await globalThis.XlsxLite.readWorkbook(buf);
       if (!wb.sheets.length) return toast("这个文件里没有工作表");
       openWizard(wb.sheets, file.name);
     } catch (err) {
@@ -13856,7 +14251,7 @@ const SYNC = (() => {
       let rows = null;
       if (/\.(xlsx|xlsm|xls)$/.test(name)) {
         const buf = await file.arrayBuffer();
-        const wb = await globalThis.XlsxLite.readXlsx(buf);
+        const wb = await globalThis.XlsxLite.readWorkbook(buf);
         if (!wb.sheets.length) return toast("这个文件里没有工作表");
         rows = wb.sheets[0].rows;
       } else {
@@ -14098,18 +14493,15 @@ const SYNC = (() => {
     if (!file) return;
     const name = String(file.name || "").toLowerCase();
     try {
-      if (/\.xls$/.test(name)) {
-        return toast("老 .xls 读不了：请先用 WPS / Excel 另存为 .xlsx 再导", 6500);
-      }
       let rows = null;
-      if (/\.(xlsx|xlsm)$/.test(name)) {
-        const wb = await globalThis.XlsxLite.readXlsx(await file.arrayBuffer());
+      if (/\.(xlsx|xlsm|xls)$/.test(name)) {
+        const wb = await globalThis.XlsxLite.readWorkbook(await file.arrayBuffer());
         if (!wb.sheets.length) return toast("这个文件里没有工作表");
         rows = wb.sheets[0].rows;
       } else if (/\.(csv|txt)$/.test(name)) {
         rows = parseCsvRows(await file.text());
       } else {
-        return toast("只支持 .xlsx / .csv（老的 .xls 请另存为 .xlsx）", 6000);
+        return toast("只支持 .xlsx / .xls / .csv", 6000);
       }
       if (!rows || !rows.length) return toast("这个文件里没读到内容");
       const cols = guessLinkCols(rows);
@@ -14237,7 +14629,7 @@ const SYNC = (() => {
   async function handleCheckinFile(file) {
     try {
       const buf = await file.arrayBuffer();
-      const wb = await globalThis.XlsxLite.readXlsx(buf);
+      const wb = await globalThis.XlsxLite.readWorkbook(buf);
       if (!wb.sheets.length) return toast("这个文件里没有工作表");
       const tasks = parseCheckinPlan(wb.sheets);
       if (!tasks.length) return toast("没在「打卡计划」表里读到任务，检查一下是不是这个文件");
@@ -15820,7 +16212,7 @@ const SYNC = (() => {
       const nm = String(file.name || "").toLowerCase();
       if (/\.(xlsx|xlsm|xls)$/.test(nm)) {
         const buf = await file.arrayBuffer();
-        const wb = await globalThis.XlsxLite.readXlsx(buf);
+        const wb = await globalThis.XlsxLite.readWorkbook(buf);
         if (!wb.sheets.length) return toast("这个文件里没有工作表");
         const pick = anPickSheet(wb.sheets);
         if (!pick) return toast("这个文件里没有一张带「每题得分」的表", 4200);
