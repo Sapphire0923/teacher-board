@@ -2562,6 +2562,124 @@ button.ck-st-name.pf-link { color: inherit; }
 }
 .pf-more { display: flex; justify-content: center; margin-top: 14px; }
 
+/* ==========================================================================
+ * 续班页（2026-11-05）
+ *
+ * 页面主体复用成绩页 / 电联页那套（.sc-tabs / .sc-stats / .ck-sticky / table.grid），
+ * 这里只补三样新东西：三态徽标、行内状态按钮、未续原因。
+ * 三条硬约束：
+ *   ① 状态永远「图形 + 文字 + 边框」三种表达，不只靠颜色；
+ *   ② 「未标记」用虚线边框，跟真的「未续」区分开，不能看着像同一件事；
+ *   ③ 色值一律走 :root 变量，别在这里写死。
+ * ========================================================================== */
+
+.rn-badge {
+  display: inline-flex; align-items: center; gap: 5px; flex: none;
+  padding: 3px 10px; white-space: nowrap;
+  font-size: var(--fs-aux); font-weight: 650;
+  border: 1px solid; border-radius: 999px;
+}
+.rn-badge-ico { font-weight: 800; }
+.rn-badge.st-none { color: var(--ink-2); background: var(--panel-3); border-color: var(--line-strong); border-style: dashed; }
+.rn-badge.st-done { color: var(--green); background: var(--green-soft); border-color: var(--green-line); }
+.rn-badge.st-fix { color: var(--red); background: var(--red-soft); border-color: var(--red-line); }
+.rn-badge.st-redo { color: var(--amber); background: var(--amber-soft); border-color: var(--amber-line); }
+
+/* 续班率口径说明：用户明确要求「续班率请明确显示计算口径」，所以它常驻在统计卡下面 */
+.rn-rate-note {
+  margin: -4px 0 12px; padding: 9px 13px;
+  font-size: var(--fs-aux); line-height: 1.7; color: var(--ink-2);
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius-s);
+}
+.rn-rate-note b { color: var(--ink); }
+
+/* 原因 / 班级 / 等级三个筛选 */
+.rn-filters { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-top: 10px; }
+
+/* 名单表的几个特殊格 */
+.rn-table td, .rn-table th { vertical-align: middle; }
+/* 8 列在详情抽屉打开时会挤：给表一个下限，宁可横向滚动也别把三个状态按钮折成两行 */
+.rn-table { min-width: 1020px; }
+.rn-pick { width: 36px; text-align: center; }
+.rn-pick input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+.rn-name { font-weight: 700; color: var(--ink); cursor: pointer; border-bottom: 1px dashed transparent; }
+.rn-name:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.rn-cls { font-size: var(--fs-aux); color: var(--ink-2); cursor: pointer; border-bottom: 1px dashed var(--line-strong); }
+.rn-cls:hover { color: var(--accent); border-bottom-color: var(--accent); }
+/* 还没填班级：淡一档、不抢眼，但整列都可点 */
+.rn-cls-add { color: var(--ink-3); border-bottom-style: dotted; }
+.rn-acts { display: inline-flex; flex-wrap: nowrap; gap: 6px; }
+.rn-acts .chip {
+  display: inline-flex; align-items: center; gap: 5px; min-height: 32px; padding: 0 11px;
+  font-size: var(--fs-aux); font-weight: 650; line-height: 1;
+  color: var(--ink-2); background: var(--panel-2);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-s); cursor: pointer;
+}
+.rn-acts .chip:hover { color: var(--accent); background: var(--accent-soft); border-color: var(--accent); }
+.rn-acts .chip.on { border-width: 2px; font-weight: 750; }
+.rn-acts .chip.on[data-rnset="已续"] { color: var(--green); background: var(--green-soft); border-color: var(--green-line); }
+.rn-acts .chip.on[data-rnset="未续"] { color: var(--red); background: var(--red-soft); border-color: var(--red-line); }
+.rn-acts .chip.on[data-rnset="待沟通"] { color: var(--amber); background: var(--amber-soft); border-color: var(--amber-line); }
+
+/* 未续原因：可点的小按钮（没填就写「填原因」，不装成已经填过） */
+.rn-why {
+  max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 3px 9px; font-size: var(--fs-aux); font-weight: 600;
+  color: var(--red); background: var(--red-soft); border: 1px solid var(--red-line);
+  border-radius: 999px; cursor: pointer;
+}
+.rn-why:hover { border-color: var(--red); }
+.rn-note { display: block; max-width: 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); }
+.rn-at { color: var(--ink-3); font-size: var(--fs-mini); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rn-mini { display: block; margin-top: 3px; font-size: var(--fs-mini); color: var(--ink-3); }
+tr.rn-on td { background: var(--accent-soft); }
+
+/* 弹窗：未续原因标签 */
+/* .modal textarea 默认 min-height 220px，会把这两个弹窗撑出屏幕 —— 单独压矮 */
+#mRenewRound textarea { min-height: 84px; }
+#mRenewWhy textarea { min-height: 96px; }
+.rn-why-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 6px; }
+.rn-why-chips .chip {
+  min-height: 34px; padding: 0 13px; font-size: var(--fs-cell); font-weight: 650;
+  color: var(--ink-2); background: var(--panel-2);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-s); cursor: pointer;
+}
+.rn-why-chips .chip:hover { border-color: var(--accent); color: var(--accent); }
+.rn-why-chips .chip.on { color: var(--red); background: var(--red-soft); border-color: var(--red-line); border-width: 2px; }
+.rn-reason-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.rn-reason-row input {
+  flex: 1; min-height: 34px; padding: 6px 10px; font: inherit; font-size: var(--fs-cell);
+  color: var(--ink); background: var(--panel-solid);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-s); outline: none;
+}
+.rn-reason-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+/* 轮次编辑弹窗里的标签与复选 */
+.rn-lab { flex: 0 0 76px; font-size: var(--fs-aux); color: var(--ink-3); }
+.rn-chk {
+  display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px;
+  font-size: var(--fs-cell); color: var(--ink);
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius-s); cursor: pointer;
+}
+.rn-chk input { width: 17px; height: 17px; accent-color: var(--accent); cursor: pointer; }
+
+/* 详情面板里的续班小块 */
+.rn-det-acts { display: flex; flex-wrap: wrap; gap: 7px; }
+.rn-det-acts .chip {
+  display: inline-flex; align-items: center; gap: 5px; min-height: 32px; padding: 0 11px;
+  font-size: var(--fs-aux); font-weight: 650; color: var(--ink-2); background: var(--panel-2);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-s); cursor: pointer;
+}
+.rn-det-acts .chip:hover { color: var(--accent); border-color: var(--accent); }
+.rn-det-acts .chip:disabled { cursor: not-allowed; }
+.rn-det-acts .chip.on[data-drnset="已续"] { color: var(--green); background: var(--green-soft); border-color: var(--green-line); border-width: 2px; }
+.rn-det-acts .chip.on[data-drnset="未续"] { color: var(--red); background: var(--red-soft); border-color: var(--red-line); border-width: 2px; }
+.rn-det-acts .chip.on[data-drnset="待沟通"] { color: var(--amber); background: var(--amber-soft); border-color: var(--amber-line); border-width: 2px; }
+
+/* 学生档案的「续班」选项卡 */
+.pf-renew .wrap-table { overflow-x: auto; }
+.pf-renew .rn-table th { white-space: nowrap; }
+
 @media (max-width: 820px) {
   /* 顶栏在窄屏不要横向撑破：搜索独占一行，模式切换/工具条各自横向滚 */
   .top-main { flex-wrap: wrap; padding: 8px 12px 6px; }
@@ -2810,6 +2928,58 @@ button.ck-st-name.pf-link { color: inherit; }
 <!-- 电联：一次沟通的完整记录（备注 / 录音 / 转写 / AI 纪要 / 导出） -->
 <div class="mask" id="mCallLog"><div class="modal wide" id="clgBody"></div></div>
 <div class="mask" id="mCallHist"><div class="modal" id="clhBody"></div></div>
+
+<!-- 续班：新建 / 编辑一轮（2026-11-05） -->
+<div class="mask" id="mRenewRound">
+  <div class="modal wide">
+    <header id="rnRoundTitle">新建续班轮次</header>
+    <div class="body" id="rnRoundBody"></div>
+    <footer>
+      <span class="result"></span>
+      <button class="btn" data-close="mRenewRound">取消</button>
+      <button class="btn primary" id="rnRoundSave">保存</button>
+    </footer>
+  </div>
+</div>
+
+<!-- 续班：未续原因（常见原因标签 + 补充说明） -->
+<div class="mask" id="mRenewWhy">
+  <div class="modal">
+    <header id="rnWhyTitle">未续原因</header>
+    <div class="body">
+      <p class="hint" style="margin-top:0">记成未续，顺手写下为什么 —— 下次沟通前一眼能想起来。</p>
+      <div class="rn-why-chips" id="rnWhyChips"></div>
+      <p class="hint">点一下选中，再点一下取消；原因标签可以自己改（续班页右上角「原因标签」）。</p>
+      <div class="sect">
+        <h4>补充说明（可选）</h4>
+        <textarea id="rwNote" rows="3" placeholder="比如：妈妈说时间跟英语班冲突，寒假再看"></textarea>
+      </div>
+    </div>
+    <footer>
+      <span class="result"></span>
+      <button class="btn" data-close="mRenewWhy">取消</button>
+      <button class="btn primary" id="rnWhySave">保存</button>
+    </footer>
+  </div>
+</div>
+
+<!-- 续班：管理「未续原因」的可选标签 -->
+<div class="mask" id="mRenewReason">
+  <div class="modal">
+    <header>未续原因标签</header>
+    <div class="body">
+      <p class="hint" style="margin-top:0">这些是「未续」时可选的常见原因，想加想删都行。<br>
+        改名只影响以后新选的，<b>已经记过的原因不会被改写</b>（历史记录保持原样）。</p>
+      <div id="rnReasonRows"></div>
+      <div class="rowset" style="margin-top:10px"><button class="btn" id="rnReasonAdd">＋ 加一条</button></div>
+    </div>
+    <footer>
+      <span class="result"></span>
+      <button class="btn" data-close="mRenewReason">取消</button>
+      <button class="btn primary" id="rnReasonSave">保存</button>
+    </footer>
+  </div>
+</div>
 
 <!-- 录音进行中的悬浮条（只要还在录就一直看得到，能随时停） -->
 <div class="recbar" id="recBar">
@@ -4427,6 +4597,21 @@ const SYNC = (() => {
     { label: "老人带", color: "#c47f17", group: "话语权" },
   ];
 
+  /* ------------------------------------------------------------ 续班（2026-11-05）
+   * 「续班」页：按轮次（秋续寒 / 寒续春 …）记每个学员续没续。
+   * 四个常量是**界面和统计共用的一套口径**，改的时候两边一起改，别各写一份：
+   *   ① 三态：已续 / 未续 / 待沟通；
+   *   ② 没录过 = 未标记，**不是**未续、也**不是**待沟通（这条最要紧 ——
+   *      不许为了凑满分母把人替老师判了）；
+   *   ③ 未续原因默认六个，老师可以自己增删改（存在 DB.renewal.reasons）；
+   *   ④ 续班率 = 已续人数 ÷ 本轮适用学员总人数。
+   */
+  const RENEW_ST = ["已续", "未续", "待沟通"];
+  const RENEW_UNMARKED = "未标记";
+  const RENEW_ICON = { "已续": "✓", "未续": "✕", "待沟通": "…" };
+  const RENEW_BADGE = { "已续": "done", "未续": "fix", "待沟通": "redo" };
+  const RENEW_REASONS_DEFAULT = ["时间冲突", "费用考虑", "转校/搬家", "学习安排调整", "暂未决定", "其他"];
+
   const DONE_WORDS = ["1", "是", "有", "✓", "√", "已", "完成", "done", "y", "yes", "true", "ok"];
   const NONE_WORDS = ["0", "否", "无", "×", "x", "-", "—", "no", "n", "false"];
 
@@ -4555,6 +4740,23 @@ const SYNC = (() => {
         d.calls ||= { batches: [], status: {} };
         // 考试成绩智能分析（2026-10-29）：板块映射 + 判定参数。老库没有就补空。
         d.analyze = Object.assign({ map: {}, params: {} }, d.analyze || {});
+        /* 续班（2026-11-05）：轮次 + 每个学员每轮的状态 + 可改的未续原因。
+         * 老库没有就补空 —— 补的是「空轮次」，绝不拿现有成绩/沟通记录去猜谁续了。 */
+        d.renewal = Object.assign({ rounds: [], marks: {}, reasons: [] }, d.renewal || {});
+        d.renewal.rounds = Array.isArray(d.renewal.rounds) ? d.renewal.rounds : [];
+        d.renewal.marks = (d.renewal.marks && typeof d.renewal.marks === "object") ? d.renewal.marks : {};
+        if (!Array.isArray(d.renewal.reasons) || !d.renewal.reasons.length) {
+          d.renewal.reasons = RENEW_REASONS_DEFAULT.slice();
+        }
+        for (const r of d.renewal.rounds) {
+          if (!r.id) r.id = uid();
+          r.name = String(r.name || "未命名轮次");
+          r.classes = Array.isArray(r.classes) ? r.classes.filter(Boolean) : [];
+          r.sids = Array.isArray(r.sids) ? r.sids.filter(Boolean) : [];
+          r.note = String(r.note || "");
+          r.start = String(r.start || "");
+          r.end = String(r.end || "");
+        }
         migrateAttRoles(d);
         return d;
       }
@@ -4565,6 +4767,7 @@ const SYNC = (() => {
       checkin: { importedAt: "", tasks: [], status: {} },
       calls: { batches: [], status: {} },
       analyze: { map: {}, params: {} },
+      renewal: { rounds: [], marks: {}, reasons: RENEW_REASONS_DEFAULT.slice() },
     };
   }
 
@@ -7270,6 +7473,12 @@ const SYNC = (() => {
     // 学生个人档案（2026-10-28）：独立页；profileSid 是学生主键
     profileSid: null, profileTab: "score", profileFrom: null,
     profileTimelineType: "all", profileTimelineLimit: 30, profileCheckinAll: false,
+    /* 续班（2026-11-05）：当前轮次（null = 自动落在进行中的那轮，"" = 全部轮次）+
+     * 筛选（状态 / 未续原因 / 班级 / 等级 / 姓名搜索）+ 勾选的人。
+     * 这些只影响这一页的名单，不写库。 */
+    renewRound: null, rnQ: "", rnQFocus: false,
+    rnStatus: "all", rnReason: "all", rnCls: "all", rnLevel: "all",
+    rnSel: [],
   };
   // 详情面板的滚动位置（面板很长，重绘时要放回原位）
   let _detScroll = 0;
@@ -8251,6 +8460,7 @@ const SYNC = (() => {
               <button data-mode="score" class="${view.mode === "score" ? "on" : ""}">成绩</button>
               <button data-mode="call" class="${view.mode === "call" ? "on" : ""}">电联</button>
               <button data-mode="paper" class="${view.mode === "paper" ? "on" : ""}">答题卡</button>
+              <button data-mode="renewal" class="${view.mode === "renewal" ? "on" : ""}">续班</button>
             </div>
             <div class="spacer"></div>
             <div class="tools">
@@ -8284,6 +8494,12 @@ const SYNC = (() => {
       if (view.mode === "follow") view.filter = { kind: "follow" };
       if (view.mode !== "checkin") view.checkinTask = null;
       if (view.mode !== "call") view.callBatch = null;
+      // 续班：从顶栏/侧栏进来都先落回「当前轮次」，并清掉上一轮的筛选
+      if (view.mode === "renewal") {
+        view.renewRound = null; view.rnSel = [];
+        view.rnQ = ""; view.rnStatus = "all"; view.rnReason = "all";
+        view.rnCls = "all"; view.rnLevel = "all";
+      }
       setListMode(view.mode);
       syncSeg();
       renderSide(); renderStage();
@@ -8365,6 +8581,13 @@ const SYNC = (() => {
       <span class="nav-l"><span class="nav-t">电联</span></span><span class="n">${callBatches}</span></button>`;
     html += `<button class="nav ${view.mode === "paper" ? "on" : ""}" data-paper="1">
       <span class="nav-l"><span class="nav-t">答题卡</span></span><span class="n">${pPending ? pPending : pB.length}</span></button>`;
+    // 续班（2026-11-05）：跟打卡 / 成绩 / 电联 / 答题卡平级的工作区入口，不带彩色圆点
+    const rnRounds = renewData().rounds.length;
+    const rnCurId = currentRenewRoundId();
+    const rnCurSt = rnCurId ? renewStats(rnCurId) : null;
+    html += `<button class="nav ${view.mode === "renewal" ? "on" : ""}" data-renew="1">
+      <span class="nav-l"><span class="nav-t">续班</span></span><span class="n">${
+        rnCurSt ? rnCurSt.rate + "%" : rnRounds}</span></button>`;
 
     /* ---- ② 学员分层：S/A/B/C/D 级，可折叠（默认展开 —— 这是老师最常用的筛法） ---- */
     if (hasLevels()) {
@@ -8416,10 +8639,11 @@ const SYNC = (() => {
       if (el.dataset.score) { enterScore(); return; }
       if (el.dataset.call) { enterCall(); return; }
       if (el.dataset.paper) { enterPaper(); return; }
+      if (el.dataset.renew) { enterRenewal(); return; }
       if (el.dataset.queue) { enterQueue(); return; }
       // 侧栏这些筛选全是「学员列表」的东西。停在打卡/成绩/电联/答题卡页时，光改 filter 是没用的
       // （那几页根本不看 filter），点下去像没反应——所以先把 mode 放回列表页再筛。
-      if (view.mode === "checkin" || view.mode === "score" || view.mode === "call" || view.mode === "paper" || view.mode === "queue" || view.mode === "workbench" || view.mode === "profile") {
+      if (view.mode === "checkin" || view.mode === "score" || view.mode === "call" || view.mode === "paper" || view.mode === "renewal" || view.mode === "queue" || view.mode === "workbench" || view.mode === "profile") {
         view.mode = view.listMode;
         view.checkinTask = null; view.callBatch = null; view.scoreExam = null;
         view.profileSid = null; view.profileFrom = null;
@@ -8680,6 +8904,7 @@ const SYNC = (() => {
     // 表头靠 sticky 吸顶，跟打卡页那种「一条滚动、工具条始终在视野里」的观感一致。
     const solo = view.mode === "score"
       || (view.mode === "call" && !view.callBatch)
+      || view.mode === "renewal"
       || view.mode === "paper";
     setListSolo(solo);
     // 成绩页专属样式的挂钩（宽度分配、数字对齐、数据区实底都挂在 .sc-wide 上）
@@ -8687,7 +8912,7 @@ const SYNC = (() => {
     // 打卡页专属样式的挂钩（.ck-page）：放大字号 / 加高行 / 实底背景 / 吸顶工具栏
     // 全都挂在这一个 class 上，绝不波及卡片页、成绩页、电联页。
     const secEl = document.querySelector("section.list");
-    if (secEl) secEl.classList.toggle("ck-page", view.mode === "checkin");
+    if (secEl) secEl.classList.toggle("ck-page", view.mode === "checkin" || view.mode === "renewal");
     // 「收起顶栏」只在 solo 页生效；一旦离开（点侧栏、回卡片页），顶栏必须自己回来，
     // 否则用户会被困在一个没有工具栏的页面上。
     document.body.classList.toggle("head-compact", solo && !!view.headCompact);
@@ -8698,6 +8923,8 @@ const SYNC = (() => {
     if (view.mode === "score") { closeDetailIfNotSelected(); renderScorePage(); syncStick(); return; }
     if (view.mode === "call") { closeDetailIfNotSelected(); renderCallPage(); syncStick(); return; }
     if (view.mode === "paper") { closeDetailIfNotSelected(); renderPaperPage(); syncStick(); return; }
+    // 续班页（2026-11-05）：独立页，统计 + 名单 + 轮次管理都在里面
+    if (view.mode === "renewal") { closeDetailIfNotSelected(); renderRenewalPage(); syncStick(); return; }
     if (view.mode === "queue") { closeDetailIfNotSelected(); renderQueuePage(); return; }
     if (view.mode === "workbench") { closeDetailIfNotSelected(); renderWorkbench(); return; }
     // 学生个人档案：独立页，数据只读；编辑仍走右侧详情抽屉
@@ -12481,6 +12708,8 @@ const SYNC = (() => {
       ${DB.config.flags.length ? `<div class="box"><h4>跟进状态</h4>
         ${DB.config.flags.map((f) => flagRow(s, f)).join("")}</div>` : ""}
 
+      ${detailRenewHtml(s)}
+
       <div class="box" data-detbox="daily"><h4>优点</h4>
         <textarea class="mini" id="dPros" placeholder="他哪里做得好？">${esc(s.pros || "")}</textarea></div>
 
@@ -12569,6 +12798,24 @@ const SYNC = (() => {
 
     $("dClose").onclick = () => { view.selected = null; renderStage(); };
     $("dProfile").onclick = () => enterProfile(s.id);
+
+    /* ---- 续班（2026-11-05）：详情里直接改「当前轮次」的状态，跟续班页同一份数据 ---- */
+    d.querySelectorAll("[data-drnset]").forEach((b) => b.onclick = () => {
+      const rid = currentRenewRoundId();
+      if (!rid) return;
+      const set = b.dataset.drnset;
+      if (set === "未续") { openRenewWhy(s.id, rid); return; }
+      setRenewStatus(rid, s.id, set);
+      renderSide(); renderDetail();
+      if (view.mode === "renewal") renderStage();
+    });
+    const dRenewWhy = d.querySelector("[data-drnwhy]");
+    if (dRenewWhy) dRenewWhy.onclick = () => {
+      const rid = currentRenewRoundId();
+      if (rid) openRenewWhy(s.id, rid);
+    };
+    const dRenewGo = $("dRenewGo");
+    if (dRenewGo) dRenewGo.onclick = () => enterRenewal();
 
     const commit = (msg) => { save(); renderStats(); renderSide(); renderStage(); if (msg) toast(msg); };
     /**
@@ -12870,6 +13117,9 @@ const SYNC = (() => {
       DB.students = DB.students.filter((x) => x.id !== s.id);
       DB.daily.ids = (DB.daily.ids || []).filter((id) => id !== s.id);
       DB.daily.done = (DB.daily.done || []).filter((id) => id !== s.id);
+      // 续班（2026-11-05）：人删了，他在各轮的续班记录也一起清 —— 只删他的，别的轮次/别人不动
+      const rnMarks = renewData().marks;
+      for (const rid of Object.keys(rnMarks)) if (rnMarks[rid]) delete rnMarks[rid][s.id];
       view.selected = null;
       save(); toast("已删除"); renderStats(); renderSide(); renderStage();
     };
@@ -13263,7 +13513,10 @@ const SYNC = (() => {
     const comm = pfCommOf(s);
     const ck = pfCheckinOf(s);
     const tl = pfTimelineOf(s);
-    const tab = ["score", "daily", "comm", "checkin", "timeline"].includes(view.profileTab) ? view.profileTab : "score";
+    // 续班（2026-11-05）：档案里也看得到每一轮的去向，跟续班页同一份数据
+    const renewN = renewData().rounds.filter((r) => renewMark(r.id, s.id)).length;
+    const renewAll = renewData().rounds.length;
+    const tab = ["score", "daily", "comm", "checkin", "renew", "timeline"].includes(view.profileTab) ? view.profileTab : "score";
     view.profileTab = tab;
     const pending = pendingFlags(s);
     const total = hasDims() ? scoreTotal(s) : null;
@@ -13277,6 +13530,7 @@ const SYNC = (() => {
       : tab === "daily" ? pfDailyHtml(s, daily)
       : tab === "comm" ? pfCommHtml(s, comm)
       : tab === "checkin" ? pfCheckinHtml(s, ck)
+      : tab === "renew" ? pfRenewHtml(s)
       : pfTimelineHtml(tl, shownTl, filteredTl.length, type);
 
     const tabs = [
@@ -13284,6 +13538,7 @@ const SYNC = (() => {
       ["daily", "日常表现", String(daily.length)],
       ["comm", "家校沟通", String(comm.length)],
       ["checkin", "语文打卡", recordedCk + "/" + ck.length],
+      ["renew", "续班", renewAll ? renewN + "/" + renewAll : "0"],
       ["timeline", "时间线", String(tl.all.length)],
     ].map(([k, label, n]) => `<button class="pf-tab${tab === k ? " on" : ""}" type="button" role="tab" aria-selected="${tab === k}" data-pftab="${k}">${label}<span class="n">${n}</span></button>`).join("");
 
@@ -13323,6 +13578,11 @@ const SYNC = (() => {
     $("pfBackTop").onclick = exitProfile;
     $("pfEdit").onclick = () => openProfileEdit();
     $("pfFollow").onclick = () => openProfileEdit("follow");
+    // 续班（2026-11-05）：档案里没有轮次就去新建；有就走详情抽屉改状态
+    const pfRenewGo = $("pfRenewGo");
+    if (pfRenewGo) pfRenewGo.onclick = () => { view.renewRound = null; enterRenewal(); };
+    const pfRenewEdit = $("pfRenewEdit");
+    if (pfRenewEdit) pfRenewEdit.onclick = () => { view.selected = s.id; renderDetail(); };
     stage.querySelectorAll("[data-pftab]").forEach((b) => b.onclick = () => {
       view.profileTab = b.dataset.pftab;
       renderStage();
@@ -17745,7 +18005,759 @@ const SYNC = (() => {
     $("mCallBatch").classList.remove("open");
   }
 
+  /* ============================================================ 续班（2026-11-05）
+   * 需求来源：用户要「记录每个学员是否继续报名后续课程，并统计续班情况」。
+   *
+   * 五条硬规矩（改这块之前先读，跟打卡 / 电联页是同一套做法）：
+   *   1. **不推断**：没录过状态的人显示「未标记」，不落库、不算未续、不算待沟通；
+   *   2. **不串轮次**：marks 按 [轮次 id][学员 id] 两级存，改一格只动这一格；
+   *   3. **按 id 关人**：改名不影响记录；删学员时顺手把他的续班记录清掉；
+   *   4. **续班率口径写在界面上**：已续 ÷ 本轮适用学员总人数，未标记 / 待沟通单列，
+   *      不从分母里悄悄剔出去；
+   *   5. **删除轮次先报影响范围**：这轮有几人在什么状态、删了会一起没。
+   */
+
+  const renewData = () => (DB.renewal ||= { rounds: [], marks: {}, reasons: RENEW_REASONS_DEFAULT.slice() });
+  const renewReasons = () => {
+    const d = renewData();
+    if (!Array.isArray(d.reasons) || !d.reasons.length) d.reasons = RENEW_REASONS_DEFAULT.slice();
+    return d.reasons;
+  };
+
+  /** 学生班级：名单导入没有班级列，由老师在续班页按人设（s.cls）；空 = 未填 */
+  const clsOf = (s) => String((s && s.cls) || "").trim();
+
+  /** 名单里出现过的班级（含「未填班级」），按人数从多到少 */
+  function classList() {
+    const n = {};
+    for (const s of DB.students) {
+      const c = clsOf(s) || "未填班级";
+      n[c] = (n[c] || 0) + 1;
+    }
+    return Object.entries(n).sort((a, b) => b[1] - a[1]).map(([name, count]) => ({ name, count }));
+  }
+
+  function roundOf(id) { return renewData().rounds.find((r) => r.id === id) || null; }
+  const roundLabel = (r) => String((r && r.name) || "未命名轮次");
+
+  /** 一轮的适用学员：指定了人 → 只算这些人；否则按班级（一个班都没选 = 全班） */
+  function roundApplies(r, s) {
+    if (!r || !s) return false;
+    if (Array.isArray(r.sids) && r.sids.length) return r.sids.includes(s.id);
+    const cls = (r.classes || []).filter(Boolean);
+    if (!cls.length) return true;
+    return cls.includes(clsOf(s) || "未填班级");
+  }
+  const roundStudents = (r) => (DB.students || []).filter((s) => roundApplies(r, s));
+  function roundPeriod(r) {
+    const a = String((r && r.start) || ""), b = String((r && r.end) || "");
+    if (a && b && a !== b) return a + " ~ " + b;
+    return a || b || "没写日期";
+  }
+
+  function renewMark(rid, sid) {
+    const m = renewData().marks[rid];
+    return (m && m[sid]) || null;
+  }
+  /** 只动 [rid][sid] 这一格 —— 别的轮次、别的学员一个字都不碰 */
+  function setRenewMark(rid, sid, patch) {
+    const d = renewData();
+    d.marks[rid] ||= {};
+    const cur = d.marks[rid][sid] || {};
+    d.marks[rid][sid] = Object.assign({}, cur, patch, { at: new Date().toISOString() });
+  }
+  function clearRenewMark(rid, sid) {
+    const m = renewData().marks[rid];
+    if (m) delete m[sid];
+  }
+  /** 改状态：三态才写库；「未标记」= 删掉这一格，不存一个假状态 */
+  function setRenewStatus(rid, sid, st) {
+    if (st === RENEW_UNMARKED) clearRenewMark(rid, sid);
+    else setRenewMark(rid, sid, { st });
+    save();
+  }
+
+  /** 当前轮次：今天落在哪一轮的日期里；都不在就是最近结束的那轮；再没有就是第一轮 */
+  function currentRenewRoundId() {
+    const rs = renewData().rounds;
+    if (!rs.length) return null;
+    const t = todayStr();
+    const live = rs.find((r) => (!r.start || r.start <= t) && (!r.end || r.end >= t));
+    if (live) return live.id;
+    const past = rs.filter((r) => r.end && r.end < t);
+    if (past.length) return past[past.length - 1].id;
+    return rs[0].id;
+  }
+
+  /** 统计：分母是本轮适用学员总人数；未标记 / 待沟通各自单列，不静默并进去 */
+  function renewStats(rid) {
+    const r = roundOf(rid);
+    const list = r ? roundStudents(r) : [];
+    const c = { total: list.length, "已续": 0, "未续": 0, "待沟通": 0, unmarked: 0 };
+    for (const s of list) {
+      const m = renewMark(rid, s.id);
+      if (!m || !RENEW_ST.includes(m.st)) c.unmarked++;
+      else c[m.st]++;
+    }
+    c.rate = c.total ? Math.round((c["已续"] / c.total) * 1000) / 10 : 0;
+    return c;
+  }
+  const rateText = (c) => (c.total ? c.rate.toFixed(1).replace(/\.0$/, "") + "%" : "—");
+  /** 给人看的状态：没录过 = 未标记，不许当成「未续」 */
+  const renewStatusOf = (rid, sid) => {
+    const m = renewMark(rid, sid);
+    return m && RENEW_ST.includes(m.st) ? m.st : RENEW_UNMARKED;
+  };
+  /** 徽标：图形 + 文字 + 边框三种表达，跟打卡 / 电联一套 */
+  const renewBadge = (st) => (st === RENEW_UNMARKED
+    ? `<span class="rn-badge st-none"><span class="rn-badge-ico">○</span>未标记</span>`
+    : `<span class="rn-badge st-${RENEW_BADGE[st]}"><span class="rn-badge-ico">${RENEW_ICON[st]}</span>${esc(st)}</span>`);
+  const renewAtText = (m) => (m && m.at ? fmtWhen(m.at) : "—");
+
+  function enterRenewal() {
+    view.mode = "renewal";
+    view.renewRound = null;                 // 每次进来先落在「当前轮次」
+    view.rnQ = ""; view.rnQFocus = false; view.rnSel = [];
+    view.rnStatus = "all"; view.rnReason = "all"; view.rnCls = "all"; view.rnLevel = "all";
+    syncSeg();
+    renderSide(); renderStage();
+  }
+
+  /* ---- 轮次增 / 改 / 排 / 删 ---- */
+
+  let RENEW_EDIT = null;      // 正在编辑的轮次草稿（id 为空 = 新建）
+
+  function openRenewRound(id) {
+    const r = id ? roundOf(id) : null;
+    if (id && !r) return toast("这一轮已经不在了");
+    RENEW_EDIT = r
+      ? { id: r.id, name: r.name, start: r.start || "", end: r.end || "", classes: (r.classes || []).slice(), sids: (r.sids || []).slice(), note: r.note || "" }
+      : { id: "", name: "", start: todayStr(), end: "", classes: [], sids: [], note: "" };
+    renderRenewRoundModal();
+    $("mRenewRound").classList.add("open");
+  }
+
+  function renderRenewRoundModal() {
+    const e = RENEW_EDIT;
+    if (!e) return;
+    const cls = classList();
+    const sidNames = (e.sids || []).map((id) => {
+      const s = DB.students.find((x) => x.id === id);
+      return s ? s.name : "";
+    }).filter(Boolean);
+    const hasRealCls = cls.some((c) => c.name !== "未填班级");
+    $("rnRoundTitle").textContent = e.id ? "编辑续班轮次" : "新建续班轮次";
+    $("rnRoundBody").innerHTML = `
+      <div class="rowset">
+        <label class="rn-lab">轮次名称</label>
+        <input type="text" id="rrName" value="${esc(e.name)}" placeholder="比如 秋续寒 / 寒续春 / 春续暑" style="flex:1;min-width:200px" autocomplete="off">
+      </div>
+      <div class="rowset">
+        <label class="rn-lab">开始日期</label>
+        <input type="date" id="rrStart" value="${esc(e.start)}">
+        <label class="rn-lab">结束日期</label>
+        <input type="date" id="rrEnd" value="${esc(e.end)}">
+      </div>
+      <p class="hint" style="margin:6px 0 0">日期范围只用来判断「当前轮到哪一轮」；只填一个也行，两个都空也不影响记录。</p>
+      <div class="sect">
+        <h4>适用班级</h4>
+        <div class="rowset" id="rrClasses">${cls.length ? cls.map((c) =>
+          `<label class="rn-chk"><input type="checkbox" data-rrcls="${esc(c.name)}"${(e.classes || []).includes(c.name) ? " checked" : ""}>${esc(c.name)}（${c.count} 人）</label>`).join("")
+          : `<span class="hint" style="margin:0">名单里还没有班级信息</span>`}</div>
+        <p class="hint">一个都不勾 = <b>全体学员</b>。勾了只统计这些班的人。</p>
+        ${cls.length && !hasRealCls ? `<p class="hint">名单里的学员还没填班级。想按班分，保存后点学员行的「班级」给他填。</p>` : ""}
+      </div>
+      <div class="sect">
+        <h4>只算指定学员（可选）</h4>
+        <textarea id="rrSids" rows="2" placeholder="一行一个姓名；留空 = 上面选的全部班级">${esc(sidNames.join("\n"))}</textarea>
+        <p class="hint">填了就<b>只统计这些人</b>，上面的班级不再生效。认不出 / 重名的名字不会猜，保存时会提示你先处理。</p>
+      </div>
+      <div class="sect">
+        <h4>备注</h4>
+        <textarea id="rrNote" rows="2" placeholder="比如：本轮冲刺班续报，家长会后再确认">${esc(e.note)}</textarea>
+      </div>`;
+    const nm = $("rrName");
+    if (nm) nm.focus();
+  }
+
+  function saveRenewRound() {
+    const e = RENEW_EDIT;
+    if (!e) return;
+    const name = String(($("rrName") || {}).value || "").trim();
+    if (!name) return toast("给这一轮起个名字（比如「秋续寒」）");
+    const start = String(($("rrStart") || {}).value || "").trim();
+    const end = String(($("rrEnd") || {}).value || "").trim();
+    if (start && end && end < start) return toast("结束日期不能早于开始日期");
+    const body = $("rnRoundBody");
+    const classes = [...body.querySelectorAll("[data-rrcls]")].filter((x) => x.checked).map((x) => x.dataset.rrcls);
+    // 指定学员：按姓名认人，重名 / 认不出都如实提示，不猜
+    const raw = String(($("rrSids") || {}).value || "").split(/[\n\r、，,;；\t]+/).map((x) => x.trim()).filter(Boolean);
+    const sids = [], miss = [], dup = [];
+    for (const nm of raw) {
+      const hit = DB.students.filter((s) => s.name === nm);
+      if (!hit.length) { miss.push(nm); continue; }
+      if (hit.length > 1) { dup.push(nm); continue; }
+      if (!sids.includes(hit[0].id)) sids.push(hit[0].id);
+    }
+    if (miss.length || dup.length) {
+      return toast((miss.length ? "认不出：" + miss.slice(0, 4).join("、") : "")
+        + (dup.length ? (miss.length ? "；" : "") + "重名，请先在名单里分清：" + dup.slice(0, 4).join("、") : ""), 5600);
+    }
+    const note = String(($("rrNote") || {}).value || "").trim();
+    const list = renewData().rounds;
+    const nowIso = new Date().toISOString();
+    if (e.id) {
+      const r = list.find((x) => x.id === e.id);
+      if (!r) return toast("这一轮已经不在了");
+      Object.assign(r, { name, start, end, classes, sids, note, updatedAt: nowIso });
+    } else {
+      const fresh = { id: uid(), name, start, end, classes, sids, note, createdAt: nowIso, updatedAt: nowIso };
+      list.push(fresh);
+      view.renewRound = fresh.id;
+    }
+    save();
+    $("mRenewRound").classList.remove("open");
+    renderSide(); renderStage();
+    toast(e.id ? "已保存这一轮" : "已新建「" + name + "」", 2600);
+  }
+
+  function moveRenewRound(id, dir) {
+    const list = renewData().rounds;
+    const i = list.findIndex((r) => r.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    [list[i], list[j]] = [list[j], list[i]];
+    save(); renderSide(); renderStage();
+  }
+
+  /** 删除前把「这一轮会带走什么」摆清楚，再让人点确定 */
+  function deleteRenewRound(r) {
+    const st = renewStats(r.id);
+    const marked = st["已续"] + st["未续"] + st["待沟通"];
+    const msg = "删除「" + roundLabel(r) + "」？\n\n"
+      + "这一轮适用 " + st.total + " 名学员，其中已经记了 " + marked + " 人的续班状态"
+      + "（已续 " + st["已续"] + " / 未续 " + st["未续"] + " / 待沟通 " + st["待沟通"] + "），"
+      + "还没标记 " + st.unmarked + " 人。\n\n"
+      + "删除后这一轮的记录会一起消失，不能撤销；\n"
+      + "其他轮次的记录不受影响，学员档案本身也不会被删。";
+    if (!window.confirm(msg)) return;
+    const d = renewData();
+    d.rounds = d.rounds.filter((x) => x.id !== r.id);
+    delete d.marks[r.id];
+    view.renewRound = null; view.rnSel = [];
+    save(); renderSide(); renderStage();
+    toast("已删除这一轮", 2400);
+  }
+
+  /* ---- 未续原因 ---- */
+
+  let RENEW_WHY = null;      // { rid, sid, reason }
+
+  function openRenewWhy(sid, rid) {
+    const s = DB.students.find((x) => x.id === sid);
+    const r = roundOf(rid);
+    if (!s || !r) return;
+    const m = renewMark(rid, sid) || {};
+    RENEW_WHY = { rid, sid, reason: m.reason || "" };
+    $("rnWhyTitle").textContent = "未续原因 · " + s.name + " · " + roundLabel(r);
+    $("rwNote").value = m.note || "";
+    const chips = renewReasons().map((x) =>
+      `<button type="button" class="chip${m.reason === x ? " on" : ""}" data-why="${esc(x)}">${esc(x)}</button>`).join("");
+    $("rnWhyChips").innerHTML = chips;
+    $("rnWhyChips").querySelectorAll("[data-why]").forEach((b) => b.onclick = () => {
+      const v = b.dataset.why;
+      RENEW_WHY.reason = RENEW_WHY.reason === v ? "" : v;
+      $("rnWhyChips").querySelectorAll("[data-why]").forEach((x) =>
+        x.classList.toggle("on", x.dataset.why === RENEW_WHY.reason));
+    });
+    $("mRenewWhy").classList.add("open");
+    const nt = $("rwNote");
+    if (nt) nt.focus();
+  }
+
+  function saveRenewWhy() {
+    if (!RENEW_WHY) return;
+    const { rid, sid } = RENEW_WHY;
+    setRenewMark(rid, sid, { st: "未续", reason: RENEW_WHY.reason || "", note: String(($("rwNote") || {}).value || "").trim() });
+    save();
+    $("mRenewWhy").classList.remove("open");
+    renderSide(); renderStage();
+    // 详情面板可能正开着（从详情里点的「未续」）—— 一起刷新，别让它显示旧状态
+    if (view.selected) renderDetail();
+    toast("已记下未续原因", 2400);
+  }
+
+  let RENEW_REASON_EDIT = [];
+
+  function openRenewReasons() {
+    RENEW_REASON_EDIT = renewReasons().slice();
+    renderRenewReasonsModal();
+    $("mRenewReason").classList.add("open");
+  }
+
+  function renderRenewReasonsModal() {
+    $("rnReasonRows").innerHTML = RENEW_REASON_EDIT.map((x, i) =>
+      `<div class="rn-reason-row">
+        <input type="text" value="${esc(x)}" data-ridx="${i}" autocomplete="off">
+        <button class="btn ghost" data-rdel="${i}" title="删掉这个原因标签">删除</button>
+      </div>`).join("") || `<p class="hint" style="margin:0">还没有原因标签。点下面「＋ 加一条」。</p>`;
+    $("rnReasonRows").querySelectorAll("[data-ridx]").forEach((inp) => {
+      inp.oninput = () => { RENEW_REASON_EDIT[+inp.dataset.ridx] = inp.value; };
+    });
+    $("rnReasonRows").querySelectorAll("[data-rdel]").forEach((b) => b.onclick = () => {
+      RENEW_REASON_EDIT.splice(+b.dataset.rdel, 1);
+      renderRenewReasonsModal();
+    });
+    const add = $("rnReasonAdd");
+    if (add) add.onclick = () => { RENEW_REASON_EDIT.push(""); renderRenewReasonsModal(); };
+  }
+
+  function saveRenewReasons() {
+    const seen = new Set();
+    const out = [];
+    for (const x of RENEW_REASON_EDIT) {
+      const v = String(x || "").trim();
+      if (!v || seen.has(v)) continue;
+      seen.add(v); out.push(v);
+    }
+    if (!out.length) return toast("至少留一条原因标签");
+    renewData().reasons = out;
+    save();
+    $("mRenewReason").classList.remove("open");
+    renderStage();
+    toast("已保存原因标签（已经记过的历史原因不会被改写）", 3200);
+  }
+
+  /* ---- 名单操作：批量 / 导出 / 复制 ---- */
+
+  /** 导出用的行：当前筛选后实际显示的这批人 */
+  function renewExportRows(rid) {
+    const list = view.rnList || [];
+    const lv = (s) => (DB.config.levels.find((l) => l.key === levelOf(s)) || {}).label || "";
+    return list.map((s) => {
+      const m = renewMark(rid, s.id);
+      const stt = renewStatusOf(rid, s.id);
+      return {
+        name: s.name, cls: clsOf(s), level: lv(s), st: stt,
+        reason: m && m.st === "未续" ? (m.reason || "") : "",
+        note: m ? (m.note || "") : "",
+        at: m && m.at ? fmtWhen(m.at) : "",
+      };
+    });
+  }
+
+  function exportRenewCsv(rid) {
+    const rows = renewExportRows(rid);
+    if (!rows.length) return toast("当前筛选下没有人");
+    const header = ["姓名", "班级", "等级", "续班状态", "未续原因", "备注", "最后修改"];
+    const csv = [header, ...rows.map((x) => [x.name, x.cls, x.level, x.st, x.reason, x.note, x.at])]
+      .map((r) => r.map(csvCell).join(",")).join("\r\n");
+    download(`续班-${safePart(roundLabel(roundOf(rid)))}-${todayStr()}.csv`, "\ufeff" + csv, "text/csv");
+    toast(`已导出 ${rows.length} 人（CSV）`, 2600);
+  }
+
+  function exportRenewXlsx(rid) {
+    const rows = renewExportRows(rid);
+    if (!rows.length) return toast("当前筛选下没有人");
+    const st = renewStats(rid);
+    const head = ["姓名", "班级", "等级", "续班状态", "未续原因", "备注", "最后修改"];
+    const body = rows.map((x) => [x.name, x.cls, x.level, x.st, x.reason, x.note, x.at]);
+    body.push([]);
+    body.push(["本轮适用学员", st.total]);
+    body.push(["已续", st["已续"]]);
+    body.push(["未续", st["未续"]]);
+    body.push(["待沟通", st["待沟通"]]);
+    body.push(["未标记", st.unmarked]);
+    body.push(["续班率", rateText(st) + "（已续 ÷ 本轮适用学员总人数）"]);
+    const nm = roundLabel(roundOf(rid));
+    const blob = FB().makeXlsx([{
+      name: safeFileName(nm),
+      widths: [10, 12, 8, 10, 14, 26, 18],
+      rows: [head, ...body],
+    }]);
+    downloadBlob(`续班_${safeFileName(nm)}.xlsx`, blob);
+    toast(`已导出 Excel（${rows.length} 人，含统计口径）`, 3000);
+  }
+
+  /** 批量标记：只动勾中的这些人，没勾的一个都不碰 */
+  function applyRenewBatch(st) {
+    const rid = view.renewRound && roundOf(view.renewRound) ? view.renewRound : currentRenewRoundId();
+    if (!rid) return toast("先选一轮续班");
+    const ids = (view.rnSel || []).slice();
+    if (!ids.length) return toast("先勾几个人");
+    for (const sid of ids) setRenewStatus(rid, sid, st);
+    view.rnSel = [];
+    save(); renderSide(); renderStage();
+    toast(`已把 ${ids.length} 人标成「${st === RENEW_UNMARKED ? "未标记" : st}」`, 2800);
+  }
+
+  /* ---- 页面渲染 ---- */
+
+  function renderRenewalPage() {
+    const stage = $("stage"), listbar = $("listbar");
+    if (!stage || !listbar) return;
+    const rounds = renewData().rounds;
+
+    if (!rounds.length) {
+      listbar.innerHTML = `<b>续班</b> · 0 轮<span style="flex:1"></span>
+        <button class="btn primary" id="rnNewTop">＋ 新建续班轮次</button>`;
+      stage.innerHTML = `<div class="empty-hint">
+        还没有续班轮次。<br><br>
+        先建一轮（比如「秋续寒」），再把每个学员记成<b>已续 / 未续 / 待沟通</b>。<br>
+        <span class="hint-inline">不会根据成绩或沟通记录推断谁续了 —— 只统计你亲手记的。</span><br><br>
+        <button class="btn primary" id="rnNewEmpty">＋ 新建续班轮次</button></div>`;
+      const go = () => openRenewRound(null);
+      const a = $("rnNewTop"), b = $("rnNewEmpty");
+      if (a) a.onclick = go;
+      if (b) b.onclick = go;
+      return;
+    }
+
+    const all = view.renewRound === "";
+    const want = view.renewRound && roundOf(view.renewRound) ? view.renewRound : null;
+    const curId = all ? null : (want || currentRenewRoundId());
+    const cur = curId ? roundOf(curId) : null;
+    if (!all && curId) view.renewRound = curId;    // 把「当前轮次」记在 tab 上
+
+    const tabs = `<button class="nav sc-tab ${all ? "on" : ""}" data-rntab="">全部轮次 <span class="n">${rounds.length}</span></button>` +
+      rounds.map((r) => {
+        const st = renewStats(r.id);
+        return `<button class="nav sc-tab ${!all && curId === r.id ? "on" : ""}" data-rntab="${esc(r.id)}" title="${esc(roundPeriod(r))}">
+          ${esc(roundLabel(r))}<span class="n">${rateText(st)}</span><span class="a">${esc(roundPeriod(r))}</span></button>`;
+      }).join("");
+
+    let bar = `<b>续班</b> · ${rounds.length} 轮`;
+    if (cur) {
+      const st = renewStats(curId);
+      bar += ` · ${esc(roundLabel(cur))} 已续 ${st["已续"]}/${st.total} 人`;
+    } else bar += " · 全部轮次";
+    bar += `<span style="flex:1"></span>
+      <button class="btn" id="rnReasons" title="改「未续」时可选的常见原因标签">原因标签</button>
+      <button class="btn primary" id="rnNew">＋ 新建一轮</button>`;
+    listbar.innerHTML = bar;
+
+    if (all) renderRenewAll(stage, rounds, tabs);
+    else renderRenewRoundView(stage, cur, tabs);
+    bindRenewCommon();
+  }
+
+  /** 「全部轮次」：跨轮次总表，一眼看全班每一轮的去向 */
+  function renderRenewAll(stage, rounds, tabs) {
+    const q = String(view.rnQ || "").trim();
+    const hit = (s) => !q || String(s.name || "").includes(q);
+    const list = DB.students.filter(hit);
+    const statRow = (label, fn) => `<tr class="stat-row"><td class="sticky-l">${esc(label)}</td>${
+      rounds.map((r) => `<td>${esc(fn(renewStats(r.id)))}</td>`).join("")}</tr>`;
+    const head = `<th class="sticky-l">姓名</th><th>班级</th>` +
+      rounds.map((r) => `<th>${esc(roundLabel(r))}</th>`).join("");
+    const body = list.map((s) => {
+      const cells = rounds.map((r) => {
+        const stt = renewStatusOf(r.id, s.id);
+        const m = renewMark(r.id, s.id);
+        const why = m && m.st === "未续" && m.reason ? `<span class="rn-mini">${esc(m.reason)}</span>` : "";
+        return `<td class="${stt === RENEW_UNMARKED ? "none" : ""}">${renewBadge(stt)}${why}</td>`;
+      }).join("");
+      return `<tr data-id="${s.id}"><td class="sticky-l"><b>${esc(s.name)}</b>${ntBadges(s)}</td>
+        <td>${esc(clsOf(s) || "—")}</td>${cells}</tr>`;
+    }).join("");
+    stage.innerHTML = `
+      <div class="sc-tabs stick">${tabs}</div>
+      <div class="ck-sticky">
+        <div class="sc-tools">
+          <input class="sc-q" id="rnQ" placeholder="搜姓名…" autocomplete="off" value="${esc(view.rnQ)}">
+          <span class="sc-hit">${q ? `筛出 ${list.length} / ${DB.students.length} 人` : ""}</span>
+          <span style="flex:1"></span>
+          <button class="btn" id="rnCopy"${list.length ? "" : " disabled"}>复制姓名（${list.length} 人）</button>
+        </div>
+        <p class="hint" style="margin:0 0 8px">全部轮次只做对照，改状态请点上面的轮次标签进去改。</p>
+      </div>
+      <div class="wrap-table"><table class="grid rn-table"><thead><tr>${head}</tr></thead>
+        <tbody>${body || `<tr><td class="sc-nohit" colspan="${rounds.length + 2}">${q ? `没有名字含「${esc(q)}」的人` : "还没有学员名单"}</td></tr>`}</tbody>
+        <tfoot>
+          ${statRow("适用人数", (c) => c.total + " 人")}
+          ${statRow("已续", (c) => c["已续"])}
+          ${statRow("未续", (c) => c["未续"])}
+          ${statRow("待沟通", (c) => c["待沟通"])}
+          ${statRow("未标记", (c) => c.unmarked)}
+          ${statRow("续班率", (c) => rateText(c))}
+        </tfoot></table></div>`;
+    // 表格行点击 → 学生详情（跟其他页面一致）
+    stage.querySelectorAll("tbody tr[data-id]").forEach((tr) => tr.onclick = () => {
+      view.selected = tr.dataset.id;
+      renderDetail();
+    });
+    view.rnList = list;
+  }
+
+  /** 单轮视图：统计 + 筛选 + 名单（行内直接改状态） */
+  function renderRenewRoundView(stage, cur, tabs) {
+    const rid = cur.id;
+    const st = renewStats(rid);
+    const allStu = roundStudents(cur);
+    const q = String(view.rnQ || "").trim();
+    const hit = (s) => !q || String(s.name || "").includes(q);
+    const okStatus = (s) => view.rnStatus === "all" || renewStatusOf(rid, s.id) === view.rnStatus;
+    const okReason = (s) => {
+      if (view.rnReason === "all") return true;
+      const m = renewMark(rid, s.id);
+      if (!m || m.st !== "未续") return false;
+      return (m.reason || "") === view.rnReason;
+    };
+    const okCls = (s) => view.rnCls === "all" || (clsOf(s) || "未填班级") === view.rnCls;
+    const okLv = (s) => view.rnLevel === "all" || levelOf(s) === view.rnLevel;
+    const list = allStu.filter((s) => hit(s) && okStatus(s) && okReason(s) && okCls(s) && okLv(s));
+    view.rnList = list;
+    // 勾选只保留还在当前筛选里的人，免得「撤销后还勾着看不见的人」
+    const alive = new Set(list.map((s) => s.id));
+    view.rnSel = (view.rnSel || []).filter((id) => alive.has(id));
+
+    const statCell = (label, val, sub) =>
+      `<div class="sc-stat"><span class="k">${esc(label)}</span><b>${esc(val)}</b>${sub ? `<span class="s">${esc(sub)}</span>` : ""}</div>`;
+    const statsHtml = `<div class="sc-stats">
+      ${statCell("本轮适用学员", st.total + " 人", "续班率的分母")}
+      ${statCell("已续", st["已续"] + " 人", "续班率的分子")}
+      ${statCell("未续", st["未续"] + " 人")}
+      ${statCell("待沟通 / 待确认", st["待沟通"] + " 人", "单独列，不算已续")}
+      ${statCell("未标记", st.unmarked + " 人", "还没录，不当成未续")}
+      ${statCell("续班率", rateText(st), "已续 ÷ 适用总人数")}
+    </div>`;
+    const rateNote = `<p class="rn-rate-note">续班率 = 已续 <b>${st["已续"]}</b> ÷ 本轮适用学员 <b>${st.total}</b> = <b>${rateText(st)}</b>。
+      待沟通 <b>${st["待沟通"]}</b> 人和未标记 <b>${st.unmarked}</b> 人<b>没有</b>从分母里剔掉，也<b>没有</b>算成已续；点上面的状态标签可以把他们单独筛出来。</p>`;
+
+    const stTabs = [["all", "全部", st.total], ["已续", "已续", st["已续"]], ["未续", "未续", st["未续"]],
+      ["待沟通", "待沟通", st["待沟通"]], [RENEW_UNMARKED, "未标记", st.unmarked]]
+      .map(([k, label, n]) => `<button class="nav ck-st${view.rnStatus === k ? " on" : ""}" data-rnst="${esc(k)}" aria-pressed="${view.rnStatus === k}">
+        <span class="ico">${k === "all" ? "≡" : k === RENEW_UNMARKED ? "○" : RENEW_ICON[k]}</span>${esc(label)} <span class="n">${n}</span></button>`).join("");
+
+    const reasonOpts = [`<option value="all"${view.rnReason === "all" ? " selected" : ""}>全部原因</option>`]
+      .concat(renewReasons().map((x) => `<option value="${esc(x)}"${view.rnReason === x ? " selected" : ""}>${esc(x)}</option>`))
+      .concat([`<option value=""${view.rnReason === "" ? " selected" : ""}>未填原因</option>`]).join("");
+    const clsOpts = [`<option value="all"${view.rnCls === "all" ? " selected" : ""}>全部班级</option>`]
+      .concat(classList().map((c) => `<option value="${esc(c.name)}"${view.rnCls === c.name ? " selected" : ""}>${esc(c.name)}（${c.count}）</option>`)).join("");
+    const lvOpts = [`<option value="all"${view.rnLevel === "all" ? " selected" : ""}>全部等级</option>`]
+      .concat((DB.config.levels || []).map((l) => `<option value="${esc(l.key)}"${view.rnLevel === l.key ? " selected" : ""}>${esc(l.label)} 级（${DB.students.filter((s) => levelOf(s) === l.key).length}）</option>`)).join("");
+
+    const selN = view.rnSel.length;
+    const batchBar = `<div class="ck-batchbar">
+      <label class="ck-selall"><input type="checkbox" id="rnSelAll"${list.length && selN === list.length ? " checked" : ""}${list.length ? "" : " disabled"}>全选当前筛选</label>
+      <span class="ck-selinfo">已选 <b>${selN}</b> 人</span>
+      <span class="ck-grow"></span>
+      ${RENEW_ST.map((x) => `<button class="btn" data-rnbatch="${esc(x)}"${selN ? "" : " disabled"}>标记为${esc(x)}</button>`).join("")}
+      <button class="btn" data-rnbatch="${RENEW_UNMARKED}"${selN ? "" : " disabled"}>清除标记</button>
+      <button class="btn" id="rnExportX"${list.length ? "" : " disabled"}>导出 Excel</button>
+      <button class="btn" id="rnExportC"${list.length ? "" : " disabled"}>导出 CSV</button>
+    </div>`;
+
+    const rows = list.map((s) => {
+      const m = renewMark(rid, s.id);
+      const stt = renewStatusOf(rid, s.id);
+      const chips = RENEW_ST.map((x) =>
+        `<button class="chip${stt === x ? " on" : ""}" data-rnset="${esc(x)}" data-sid="${s.id}"
+          aria-pressed="${stt === x}" title="把这个学员记成「${esc(x)}」">
+          <span class="ck-set-ico">${RENEW_ICON[x]}</span>${esc(x)}</button>`).join("");
+      const whyCell = m && m.st === "未续"
+        ? `<button class="rn-why" data-rnwhy="${s.id}" title="改未续原因 / 补充说明">${esc(m.reason || "填原因")}</button>`
+        : `<span class="none">—</span>`;
+      const noteCell = m && m.note
+        ? `<span class="rn-note" title="${esc(m.note)}">${esc(m.note)}</span>`
+        : `<span class="none">—</span>`;
+      return `<tr data-id="${s.id}" class="${view.rnSel.includes(s.id) ? "rn-on" : ""}">
+        <td class="rn-pick"><input type="checkbox" data-rnpick="${s.id}"${view.rnSel.includes(s.id) ? " checked" : ""} aria-label="勾选 ${esc(s.name)}"></td>
+        <td class="sticky-l"><span class="rn-name" data-rnopen="${s.id}" title="打开这个学员的详情">${esc(s.name)}</span>${ntBadges(s)}</td>
+        <td><span class="rn-cls${clsOf(s) ? "" : " rn-cls-add"}" data-rncls="${s.id}" title="点一下给他填班级（按班级筛选要用）">${esc(clsOf(s) || "填班级")}</span></td>
+        <td>${levelBadge(s) || `<span class="none">—</span>`}</td>
+        <td><span class="rn-acts">${stt === RENEW_UNMARKED ? renewBadge(stt) : ""}${chips}</span></td>
+        <td>${whyCell}</td>
+        <td>${noteCell}</td>
+        <td class="rn-at">${esc(renewAtText(m))}</td>
+      </tr>`;
+    }).join("");
+
+    const clsTxt = (cur.classes || []).length ? "适用班级：" + cur.classes.join("、") : "适用学员：全班";
+    const sidsTxt = (cur.sids || []).length ? " · 只算指定 " + cur.sids.length + " 人" : "";
+    stage.innerHTML = `
+      <div class="sc-tabs">${tabs}</div>
+      <div class="sc-detail-h">
+        <div class="sc-detail-title"><span>${esc(roundLabel(cur))}</span>
+          <span class="sc-actions">
+            <button class="btnmini" id="rnEdit">编辑这一轮</button>
+            <button class="btnmini" id="rnUp" title="往前挪一位">↑ 上移</button>
+            <button class="btnmini" id="rnDown" title="往后挪一位">↓ 下移</button>
+            <span class="sc-danger-sep"></span><button class="btnmini danger" id="rnDel">删除这一轮</button>
+          </span>
+        </div>
+        <div class="sc-detail-src">${esc(roundPeriod(cur))} · ${esc(clsTxt)}${esc(sidsTxt)}${cur.note ? " · " + esc(cur.note) : ""}</div>
+      </div>
+      ${statsHtml}
+      ${rateNote}
+      <div class="ck-sticky">
+        <div class="sc-tools">
+          <input class="sc-q" id="rnQ" placeholder="搜姓名…" autocomplete="off" value="${esc(view.rnQ)}">
+          <span class="sc-hit">${q ? `筛出 ${list.length} / ${allStu.length} 人` : ""}</span>
+          <span style="flex:1"></span>
+          <button class="btn" id="rnCopy"${list.length ? "" : " disabled"}>复制姓名（${list.length} 人）</button>
+        </div>
+        <div class="ck-tabs">${stTabs}</div>
+        <div class="ck-tools-row rn-filters">
+          <label class="ck-f">原因<select id="rnFReason">${reasonOpts}</select></label>
+          <label class="ck-f">班级<select id="rnFCls">${clsOpts}</select></label>
+          <label class="ck-f">等级<select id="rnFLevel">${lvOpts}</select></label>
+        </div>
+        ${batchBar}
+      </div>
+      <div class="wrap-table"><table class="grid rn-table"><thead><tr>
+        <th class="rn-pick"></th><th class="sticky-l">姓名</th><th>班级</th><th>等级</th>
+        <th>续班状态（点一下就改）</th><th>未续原因</th><th>备注</th><th>最后修改</th>
+      </tr></thead>
+        <tbody>${rows || `<tr><td class="sc-nohit" colspan="8">${allStu.length
+          ? "当前筛选下没有人 —— 换个状态 / 原因 / 班级，或者清掉搜索"
+          : "这一轮的适用范围里没有学员，点上面「编辑这一轮」调整班级或指定名单"}</td></tr>`}</tbody>
+      </table></div>`;
+
+    // 轮次操作
+    $("rnEdit").onclick = () => openRenewRound(rid);
+    $("rnUp").onclick = () => moveRenewRound(rid, -1);
+    $("rnDown").onclick = () => moveRenewRound(rid, 1);
+    $("rnDel").onclick = () => deleteRenewRound(cur);
+
+    // 行内改状态
+    stage.querySelectorAll("[data-rnset]").forEach((b) => b.onclick = (ev) => {
+      ev.stopPropagation();
+      const sid = b.dataset.sid, set = b.dataset.rnset;
+      // 「未续」先把原因问清楚再落库（原因可以留空，之后再补）
+      if (set === "未续") { openRenewWhy(sid, rid); return; }
+      setRenewStatus(rid, sid, set);
+      renderSide(); renderStage();
+    });
+    // 「未续原因」
+    stage.querySelectorAll("[data-rnwhy]").forEach((b) => b.onclick = (ev) => {
+      ev.stopPropagation(); openRenewWhy(b.dataset.rnwhy, rid);
+    });
+    // 点姓名 → 右边详情（跟电联 / 打卡页一致，不跳走）
+    stage.querySelectorAll("[data-rnopen]").forEach((el) => el.onclick = (ev) => {
+      ev.stopPropagation();
+      view.selected = el.dataset.rnopen;
+      renderDetail();
+    });
+    // 点班级 → 就地填（按班级筛选要用；只写这个学生自己的 s.cls）
+    stage.querySelectorAll("[data-rncls]").forEach((el) => el.onclick = (ev) => {
+      ev.stopPropagation();
+      const s = DB.students.find((x) => x.id === el.dataset.rncls);
+      if (!s) return;
+      const v = window.prompt("给「" + s.name + "」填班级（同一个班写一样的名字）：", clsOf(s));
+      if (v === null) return;
+      s.cls = String(v).trim();
+      save(); renderSide(); renderStage();
+    });
+    // 勾选
+    stage.querySelectorAll("[data-rnpick]").forEach((ck) => ck.onclick = (ev) => {
+      ev.stopPropagation();
+      const id = ck.dataset.rnpick;
+      view.rnSel = ck.checked ? [...new Set([...view.rnSel, id])] : view.rnSel.filter((x) => x !== id);
+      renderStage();
+    });
+    $("rnSelAll").onclick = (ev) => {
+      view.rnSel = ev.target.checked ? list.map((s) => s.id) : [];
+      renderStage();
+    };
+    stage.querySelectorAll("[data-rnbatch]").forEach((b) => b.onclick = () => applyRenewBatch(b.dataset.rnbatch));
+    $("rnExportX").onclick = () => exportRenewXlsx(rid);
+    $("rnExportC").onclick = () => exportRenewCsv(rid);
+  }
+
+  /** 页面级公共绑定：tab 切换 / 搜索 / 筛选 / 复制姓名 / 新建轮次 / 原因标签 */
+  function bindRenewCommon() {
+    const stage = $("stage");
+    stage.querySelectorAll("[data-rntab]").forEach((b) => b.onclick = () => {
+      view.renewRound = b.dataset.rntab || "";
+      view.rnQ = ""; view.rnQFocus = false; view.rnSel = []; view.rnReason = "all";
+      renderSide(); renderStage();
+    });
+    stage.querySelectorAll("[data-rnst]").forEach((b) => b.onclick = () => {
+      view.rnStatus = b.dataset.rnst; view.rnSel = []; renderStage();
+    });
+    const fr = $("rnFReason"), fc = $("rnFCls"), fl = $("rnFLevel");
+    if (fr) fr.onchange = () => { view.rnReason = fr.value; view.rnSel = []; renderStage(); };
+    if (fc) fc.onchange = () => { view.rnCls = fc.value; view.rnSel = []; renderStage(); };
+    if (fl) fl.onchange = () => { view.rnLevel = fl.value; view.rnSel = []; renderStage(); };
+    const qEl = $("rnQ");
+    if (qEl) {
+      qEl.oninput = () => { view.rnQ = qEl.value; view.rnQFocus = true; renderStage(); };
+      qEl.onblur = () => { view.rnQFocus = false; };
+      if (view.rnQFocus) {
+        qEl.focus();
+        try { qEl.setSelectionRange(qEl.value.length, qEl.value.length); } catch { /* 忽略 */ }
+      }
+      nameSearchBox(qEl, { onPick: () => { view.rnQFocus = true; renderStage(); } });
+    }
+    const cp = $("rnCopy");
+    if (cp) cp.onclick = () => copyStudentNames((view.rnList || []).slice(), { scope: "当前筛选" });
+    const nn = $("rnNew");
+    if (nn) nn.onclick = () => openRenewRound(null);
+    const rr = $("rnReasons");
+    if (rr) rr.onclick = openRenewReasons;
+  }
+
+  /* ---- 学员详情 / 档案里的续班块（跟续班页同一份数据，不另存） ---- */
+
+  /** 详情面板的「续班」小块：当前轮次 + 三个按钮 + 原因 / 修改时间 */
+  function detailRenewHtml(s) {
+    const rid = currentRenewRoundId();
+    if (!rid) {
+      return `<div class="box" data-detbox="renew"><h4>续班</h4>
+        <p class="hint" style="margin:0">还没有续班轮次。
+          <button class="btn ghost" id="dRenewGo" style="padding:2px 8px">去续班页新建</button></p></div>`;
+    }
+    const r = roundOf(rid);
+    const inRound = roundApplies(r, s);
+    const stt = renewStatusOf(rid, s.id);
+    const m = renewMark(rid, s.id);
+    const why = m && m.st === "未续"
+      ? `<p class="hint" style="margin:6px 0 0">未续原因：${m.reason ? esc(m.reason) : "（没填）"}${m.note ? " · " + esc(m.note) : ""}
+          <button class="btn ghost" data-drnwhy="1" style="padding:1px 7px;margin-left:4px">改</button></p>`
+      : "";
+    return `<div class="box" data-detbox="renew"><h4>续班${inRound ? "" : "（不在本轮适用范围）"}</h4>
+      <p class="hint" style="margin:-2px 0 7px">${esc(roundLabel(r))} · ${esc(roundPeriod(r))} · 最后修改 ${esc(renewAtText(m))}</p>
+      <div class="rn-det-acts">
+        ${RENEW_ST.map((x) => `<button class="chip${inRound && stt === x ? " on" : ""}" data-drnset="${esc(x)}"${inRound ? "" : " disabled"}>
+          <span class="ck-set-ico">${RENEW_ICON[x]}</span>${esc(x)}</button>`).join("")}
+        ${inRound && stt !== RENEW_UNMARKED ? `<button class="btn ghost" data-drnset="${RENEW_UNMARKED}" style="padding:2px 8px;font-size:12px">清除</button>` : ""}
+      </div>${why}
+      ${inRound ? "" : `<p class="hint" style="margin:6px 0 0">这一轮的适用班级是「${esc((r.classes || []).join("、") || "全班")}」，改状态请先调整轮次范围。</p>`}
+    </div>`;
+  }
+
+  /** 档案「续班」选项卡：每一轮一行，只读展示 + 去详情改 */
+  function pfRenewHtml(s) {
+    const rounds = renewData().rounds;
+    if (!rounds.length) {
+      return `<div class="pf-empty">还没有续班轮次。<br><br>
+        <button class="btn primary" type="button" id="pfRenewGo">去续班页新建一轮</button></div>`;
+    }
+    const rows = rounds.map((r) => {
+      const inRound = roundApplies(r, s);
+      const stt = renewStatusOf(r.id, s.id);
+      const m = renewMark(r.id, s.id);
+      return `<tr>
+        <td><b>${esc(roundLabel(r))}</b></td>
+        <td>${esc(roundPeriod(r))}</td>
+        <td>${inRound ? renewBadge(stt) : `<span class="none">不在本轮范围</span>`}</td>
+        <td>${m && m.st === "未续" ? esc(m.reason || "（没填原因）") + (m.note ? " · " + esc(m.note) : "") : `<span class="none">—</span>`}</td>
+        <td>${esc(renewAtText(m))}</td>
+      </tr>`;
+    }).join("");
+    return `<div class="pf-renew">
+      <p class="hint" style="margin-top:0">续班记录跟续班页是<b>同一份数据</b>（按学生 ID 关联），这里改了那边立刻一致。</p>
+      <div class="wrap-table"><table class="grid rn-table"><thead><tr>
+        <th>轮次</th><th>日期</th><th>状态</th><th>未续原因 / 备注</th><th>最后修改</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>
+      <div class="rowset" style="margin-top:10px">
+        <button class="btn" type="button" id="pfRenewEdit">去详情页改状态</button>
+      </div></div>`;
+  }
+
   /* ======================================================== 设置 */
+
 
   /* --------------------------------------------------- 多设备同步 */
 
@@ -18569,6 +19581,10 @@ const SYNC = (() => {
     // 电联批量导入名单
     const cbp = $("clBatchParse"); if (cbp) cbp.onclick = parseCallBatch;
     const cbs = $("clBatchSave"); if (cbs) cbs.onclick = saveCallBatch;
+    // 续班（2026-11-05）：轮次 / 未续原因 / 原因标签三个弹窗
+    const rrs = $("rnRoundSave"); if (rrs) rrs.onclick = saveRenewRound;
+    const rws = $("rnWhySave"); if (rws) rws.onclick = saveRenewWhy;
+    const rns = $("rnReasonSave"); if (rns) rns.onclick = saveRenewReasons;
     document.querySelectorAll("[data-close]").forEach((el) => el.onclick = () => $(el.dataset.close).classList.remove("open"));
     document.querySelectorAll(".mask").forEach((m) => m.onclick = (e) => { if (e.target === m) m.classList.remove("open"); });
 
@@ -18688,6 +19704,9 @@ const SYNC = (() => {
       { key: "chats", label: "家长聊天记录", size: (B.students || []).reduce((a, s) => a + ((s.chats || []).length), 0), unit: "条" },
       { key: "notes", label: "备注（优点 / 问题 / 家长类型 / 跟进）", size: (B.students || []).reduce((a, s) => a + (s.note ? 1 : 0), 0), unit: "人" },
       { key: "calls", label: "电联批次与状态", size: ((B.calls && B.calls.batches) || []).length, unit: "批" },
+      { key: "renewal", label: "续班轮次与学员记录",
+        size: ((B.renewal && B.renewal.rounds) || []).length,
+        unit: "轮" },
       { key: "checkin", label: "语文打卡任务与状态", size: ((B.checkin && B.checkin.tasks) || []).length, unit: "项" },
       { key: "daily", label: "每日名单", size: ((B.daily && B.daily.ids) || []).length, unit: "人" },
       { key: "unmatched", label: "未匹配名单", size: (B.unmatched || []).length, unit: "条" },
@@ -18964,6 +19983,9 @@ const SYNC = (() => {
     let curExams = 0, newExams = 0, curChats = 0, newChats = 0;
     for (const s of (cur.students || [])) { curExams += (s.exams || []).length; curChats += (s.chats || []).length; }
     for (const s of (board.students || [])) { newExams += (s.exams || []).length; newChats += (s.chats || []).length; }
+    // 续班（2026-11-05）：恢复会整份替换，轮次和学员记录也一起变，这里如实列出来
+    const curRn = ((cur.renewal && cur.renewal.rounds) || []).length;
+    const newRn = ((board.renewal && board.renewal.rounds) || []).length;
     const secs = boardSections(Object.assign({}, board, { _attCount: (attList || []).length }), !!(attList && attList.length));
     const attr = source.attrcount != null ? source.attrcount : (attList || []).length;
     const miss = source.missing || 0;
@@ -18972,7 +19994,7 @@ const SYNC = (() => {
       <p class="desc"><b>备份日期：</b>${esc0(source.when || "文件里没有时间，看你的下载时间")}</p>
       <p class="desc"><b>备份里有什么：</b></p>
       <ul class="bk-list">${secs.map((s) => `<li>${esc0(s.label)}：<b>${s.size}</b> ${s.unit}</li>`).join("")}</ul>
-      <p class="desc"><b>会替换掉现在的：</b>现在有 ${(cur.students || []).length} 名学生、${curExams} 场考试、${curChats} 条聊天；恢复后会变成备份里的 ${(board.students || []).length} 名学生、${newExams} 场考试、${newChats} 条聊天。</p>
+      <p class="desc"><b>会替换掉现在的：</b>现在有 ${(cur.students || []).length} 名学生、${curExams} 场考试、${curChats} 条聊天、${curRn} 轮续班；恢复后会变成备份里的 ${(board.students || []).length} 名学生、${newExams} 场考试、${newChats} 条聊天、${newRn} 轮续班。</p>
       ${miss ? `<p class="desc" style="color:#b4532a"><b>注意：有 ${miss} 个附件没在备份里</b>（备份打包时读不到），这部分<u>无法恢复</u>，恢复后这些附件会变成「缺文件」。</p>` : ""}
       <p class="desc"><b>不能恢复或不会跟随备份的东西：</b>自定义背景图、浏览器本机存的表情记忆、AI 密钥（备份里本来就被抹掉了，需要重新填）。</p>
       <label class="bk-ack"><input type="checkbox" id="bkAck"> 我已经看过上面的内容，明白恢复会覆盖当前数据</label>
