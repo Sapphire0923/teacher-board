@@ -18139,6 +18139,21 @@ const SYNC = (() => {
     return callBatchId(list[list.length - 1]);
   }
 
+  /**
+   * 某学员「最近一次有结果的电联」——**跨所有轮次**从后往前找。
+   * 续班页要的是「这个人之前打过没有、打没打通」，而不是「新一轮（还没打）里记了什么」。
+   * 新一轮空着时，这里会回退到上一轮/更早的结果；一条都没有才是「未联系」。
+   */
+  function callLatestOf(sid) {
+    const bs = DB.calls?.batches || [];
+    for (let i = bs.length - 1; i >= 0; i--) {
+      const b = bs[i];
+      const st = (DB.calls?.status?.[callBatchId(b)] || {})[sid];
+      if (st && st !== "未联系") return { st, batch: b };
+    }
+    return { st: "未联系", batch: null };
+  }
+
   function enterRenewal() {
     view.mode = "renewal";
     view.renewRound = null;                 // 每次进来先落在「当前轮次」
@@ -18359,7 +18374,6 @@ const SYNC = (() => {
   function renewExportRows(rid) {
     const list = view.rnList || [];
     const lv = (s) => (DB.config.levels.find((l) => l.key === levelOf(s)) || {}).label || "";
-    const cbid = renewCallBatchId(false);
     return list.map((s) => {
       const m = renewMark(rid, s.id);
       const stt = renewStatusOf(rid, s.id);
@@ -18367,7 +18381,7 @@ const SYNC = (() => {
         name: s.name, cls: clsOf(s), level: lv(s), st: stt,
         reason: m && m.st === "未续" ? (m.reason || "") : "",
         note: m ? (m.note || "") : "",
-        call: cbid ? callStatusOf(cbid, s.id) : "未联系",
+        call: callLatestOf(s.id).st,
       };
     });
   }
@@ -18596,10 +18610,12 @@ const SYNC = (() => {
         <td>${whyCell}</td>
         <td>${noteCell}</td>
         <td>${(() => {
-          const cbid = renewCallBatchId(false);
-          const cst = cbid ? callStatusOf(cbid, s.id) : "未联系";
-          return `<select class="rn-call" data-rncall="${s.id}" data-st="${esc(cst)}"
-            title="这个学员的电联结果${cbid ? "" : "（还没建电联轮次，选一个会自动建「第一轮电联」）"}">
+          const last = callLatestOf(s.id);
+          const cst = last.st;
+          const tip = last.batch
+            ? `最近一次：${last.batch.name}（${last.batch.date}）`
+            : "还没打过电联，选一个会自动建「第一轮电联」";
+          return `<select class="rn-call" data-rncall="${s.id}" data-st="${esc(cst)}" title="${esc(tip)}">
             ${CALL_STATUSES.map((x) => `<option value="${esc(x)}"${x === cst ? " selected" : ""}>${esc(x)}</option>`).join("")}
           </select>`;
         })()}</td>
