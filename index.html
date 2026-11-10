@@ -1533,6 +1533,9 @@ input[type=range] { accent-color: var(--accent); }
   box-shadow: var(--shadow-lg); font-size: var(--fs-cell); opacity: 0;
   transition: transform .18s ease, opacity .18s ease; pointer-events: none; }
 .recbar.on { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
+/* 2026-11-10 修：button.btn 的 color 是 inherit，.recbar 深色底上的浅色文字被按钮继承，
+   「暂停」就成了白字白底看不见。这里把悬浮条里的按钮文字钉回深色。 */
+.recbar button.btn { color: var(--ink); }
 .recbar .dot, .rec-now .dot { width: 9px; height: 9px; border-radius: 50%; background: #e5484d;
   box-shadow: 0 0 0 0 rgba(229, 72, 77, .7); animation: recpulse 1.4s infinite; flex: none; }
 @keyframes recpulse {
@@ -5508,6 +5511,11 @@ const SYNC = (() => {
     REC.sec = recSecNow();
     const t = $("recTime");
     if (t) t.textContent = recFmt(REC.sec);
+    // 电联记录弹窗里那条录音条也要实时走 —— 2026-11-10 修：
+    // 原来它只在打开弹窗时渲染一次，时间定住不动（弹窗 01:42、底部 09:26）。
+    document.querySelectorAll("#mCallLog .rec-now .rectime").forEach((el) => {
+      el.textContent = recFmt(REC.sec);
+    });
   }
 
   /** 开始录音。src: "mic" | "screen"。用完一定要 recStop() 或 recDrop() 收尾。 */
