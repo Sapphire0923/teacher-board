@@ -2631,6 +2631,14 @@ button.ck-st-name.pf-link { color: inherit; }
 .rn-why:hover { border-color: var(--red); }
 .rn-note { display: block; max-width: 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); }
 .rn-at { color: var(--ink-3); font-size: var(--fs-mini); white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* 续班页的「电联」列：下拉选完即落库，数据与电联页共用同一份 calls.status */
+.rn-call { width: 92px; height: 30px; padding: 0 5px; font-size: var(--fs-aux); font-weight: 600;
+  color: var(--ink-2); background: var(--panel-2);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-s); cursor: pointer; }
+.rn-call:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.rn-call[data-st="已沟通"] { color: var(--green); background: var(--green-soft); border-color: var(--green-line); }
+.rn-call[data-st="未接听"], .rn-call[data-st="号码有误"] { color: var(--red); background: var(--red-soft); border-color: var(--red-line); }
+.rn-call[data-st="改天再打"] { color: var(--amber); background: var(--amber-soft); border-color: var(--amber-line); }
 .rn-mini { display: block; margin-top: 3px; font-size: var(--fs-mini); color: var(--ink-3); }
 tr.rn-on td { background: var(--accent-soft); }
 
@@ -18114,6 +18122,23 @@ const SYNC = (() => {
     : `<span class="rn-badge st-${RENEW_BADGE[st]}"><span class="rn-badge-ico">${RENEW_ICON[st]}</span>${esc(st)}</span>`);
   const renewAtText = (m) => (m && m.at ? fmtWhen(m.at) : "—");
 
+  /**
+   * 续班页「电联」列用哪一轮：**最近一轮电联**（电联页新加的批次在数组末尾）。
+   * 一轮都还没有时：只看不建；真选了结果才按需建「第一轮电联」——
+   * 跟详情面板 callBidFor() 同一套做法，不凭空造一堆空记录。
+   */
+  function renewCallBatchId(create) {
+    DB.calls ||= { batches: [], status: {} };
+    DB.calls.batches ||= [];
+    const list = DB.calls.batches;
+    if (!list.length) {
+      if (!create) return null;
+      list.push({ id: uid(), name: "第一轮电联", date: todayStr() });
+      save();
+    }
+    return callBatchId(list[list.length - 1]);
+  }
+
   function enterRenewal() {
     view.mode = "renewal";
     view.renewRound = null;                 // 每次进来先落在「当前轮次」
@@ -18334,6 +18359,7 @@ const SYNC = (() => {
   function renewExportRows(rid) {
     const list = view.rnList || [];
     const lv = (s) => (DB.config.levels.find((l) => l.key === levelOf(s)) || {}).label || "";
+    const cbid = renewCallBatchId(false);
     return list.map((s) => {
       const m = renewMark(rid, s.id);
       const stt = renewStatusOf(rid, s.id);
@@ -18341,7 +18367,7 @@ const SYNC = (() => {
         name: s.name, cls: clsOf(s), level: lv(s), st: stt,
         reason: m && m.st === "未续" ? (m.reason || "") : "",
         note: m ? (m.note || "") : "",
-        at: m && m.at ? fmtWhen(m.at) : "",
+        call: cbid ? callStatusOf(cbid, s.id) : "未联系",
       };
     });
   }
@@ -18349,8 +18375,8 @@ const SYNC = (() => {
   function exportRenewCsv(rid) {
     const rows = renewExportRows(rid);
     if (!rows.length) return toast("当前筛选下没有人");
-    const header = ["姓名", "班级", "等级", "续班状态", "未续原因", "备注", "最后修改"];
-    const csv = [header, ...rows.map((x) => [x.name, x.cls, x.level, x.st, x.reason, x.note, x.at])]
+    const header = ["姓名", "班级", "等级", "续班状态", "未续原因", "备注", "电联"];
+    const csv = [header, ...rows.map((x) => [x.name, x.cls, x.level, x.st, x.reason, x.note, x.call])]
       .map((r) => r.map(csvCell).join(",")).join("\r\n");
     download(`续班-${safePart(roundLabel(roundOf(rid)))}-${todayStr()}.csv`, "\ufeff" + csv, "text/csv");
     toast(`已导出 ${rows.length} 人（CSV）`, 2600);
@@ -18360,8 +18386,8 @@ const SYNC = (() => {
     const rows = renewExportRows(rid);
     if (!rows.length) return toast("当前筛选下没有人");
     const st = renewStats(rid);
-    const head = ["姓名", "班级", "等级", "续班状态", "未续原因", "备注", "最后修改"];
-    const body = rows.map((x) => [x.name, x.cls, x.level, x.st, x.reason, x.note, x.at]);
+    const head = ["姓名", "班级", "等级", "续班状态", "未续原因", "备注", "电联"];
+    const body = rows.map((x) => [x.name, x.cls, x.level, x.st, x.reason, x.note, x.call]);
     body.push([]);
     body.push(["本轮适用学员", st.total]);
     body.push(["已续", st["已续"]]);
@@ -18372,7 +18398,7 @@ const SYNC = (() => {
     const nm = roundLabel(roundOf(rid));
     const blob = FB().makeXlsx([{
       name: safeFileName(nm),
-      widths: [10, 12, 8, 10, 14, 26, 18],
+      widths: [10, 12, 8, 10, 14, 26, 12],
       rows: [head, ...body],
     }]);
     downloadBlob(`续班_${safeFileName(nm)}.xlsx`, blob);
@@ -18569,7 +18595,14 @@ const SYNC = (() => {
         <td><span class="rn-acts">${stt === RENEW_UNMARKED ? renewBadge(stt) : ""}${chips}</span></td>
         <td>${whyCell}</td>
         <td>${noteCell}</td>
-        <td class="rn-at">${esc(renewAtText(m))}</td>
+        <td>${(() => {
+          const cbid = renewCallBatchId(false);
+          const cst = cbid ? callStatusOf(cbid, s.id) : "未联系";
+          return `<select class="rn-call" data-rncall="${s.id}" data-st="${esc(cst)}"
+            title="这个学员的电联结果${cbid ? "" : "（还没建电联轮次，选一个会自动建「第一轮电联」）"}">
+            ${CALL_STATUSES.map((x) => `<option value="${esc(x)}"${x === cst ? " selected" : ""}>${esc(x)}</option>`).join("")}
+          </select>`;
+        })()}</td>
       </tr>`;
     }).join("");
 
@@ -18607,7 +18640,7 @@ const SYNC = (() => {
       </div>
       <div class="wrap-table"><table class="grid rn-table"><thead><tr>
         <th class="rn-pick"></th><th class="sticky-l">姓名</th><th>班级</th><th>等级</th>
-        <th>续班状态（点一下就改）</th><th>未续原因</th><th>备注</th><th>最后修改</th>
+        <th>续班状态（点一下就改）</th><th>未续原因</th><th>备注</th><th>电联（点一下就改）</th>
       </tr></thead>
         <tbody>${rows || `<tr><td class="sc-nohit" colspan="8">${allStu.length
           ? "当前筛选下没有人 —— 换个状态 / 原因 / 班级，或者清掉搜索"
@@ -18632,6 +18665,20 @@ const SYNC = (() => {
     // 「未续原因」
     stage.querySelectorAll("[data-rnwhy]").forEach((b) => b.onclick = (ev) => {
       ev.stopPropagation(); openRenewWhy(b.dataset.rnwhy, rid);
+    });
+    // 电联：选完直接落库（跟电联页共用同一份 calls.status，不另存）
+    stage.querySelectorAll("[data-rncall]").forEach((sel) => sel.onchange = () => {
+      const sid = sel.dataset.rncall;
+      const st = sel.value;
+      const bid = renewCallBatchId(true);
+      DB.calls.status ||= {};
+      DB.calls.status[bid] ||= {};
+      if (st === "未联系") delete DB.calls.status[bid][sid];
+      else DB.calls.status[bid][sid] = st;
+      // 跟电联页一致：记「已沟通」顺手把跟进项「电联」标完成
+      if (st === "已沟通") syncCallFlag(DB.students.find((x) => x.id === sid));
+      save(); renderSide(); renderStage();
+      toast(`电联记为「${st}」`, 1800);
     });
     // 点姓名 → 右边详情（跟电联 / 打卡页一致，不跳走）
     stage.querySelectorAll("[data-rnopen]").forEach((el) => el.onclick = (ev) => {
