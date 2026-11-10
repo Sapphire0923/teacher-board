@@ -5507,6 +5507,16 @@ const SYNC = (() => {
     if (s2) s2.onclick = () => recStop();
   }
 
+  /**
+   * 底部「正在录音」悬浮条要不要露脸。
+   * 2026-11-10：打开电联记录弹窗时收起（弹窗里已有一套完整控制，两条并存容易点错），
+   * 关掉弹窗后如果还在录，再露出来 —— 录音本身不中断。
+   */
+  function recBarSync() {
+    const inLog = !!($("mCallLog") && $("mCallLog").classList.contains("open"));
+    recBarShow(!!REC.mr && !inLog);
+  }
+
   function recTick() {
     REC.sec = recSecNow();
     const t = $("recTime");
@@ -5562,7 +5572,7 @@ const SYNC = (() => {
     try { mr.start(1000); } catch (err) { REC.starting = false; return toast("录音启动失败：" + err.message, 5000); }
 
     REC.starting = false;
-    recBarShow(true);
+    recBarSync();
     const s = $("recSrc"); if (s) s.textContent = REC_SRC_NAME[src] || src;
     clearInterval(REC.timer);
     REC.timer = setInterval(recTick, 500);
@@ -5603,7 +5613,7 @@ const SYNC = (() => {
     REC.stream = null;
     REC.mr = null;
     recStopSR();
-    recBarShow(false);
+    recBarSync();
 
     const mime = (REC.chunks[0] && REC.chunks[0].type) || "audio/webm";
     const blob = new Blob(REC.chunks, { type: mime });
@@ -5845,6 +5855,7 @@ const SYNC = (() => {
     view.callDraft.bid = bid;
     renderCallSheet();
     $("mCallLog").classList.add("open");
+    recBarSync();   // 弹窗里有完整控制，底部悬浮条先收起
   }
 
   /**
@@ -5988,6 +5999,7 @@ const SYNC = (() => {
     if (box) box.innerHTML = "";
     const mk = $("mCallLog");
     if (mk) mk.classList.remove("open");
+    recBarSync();   // 关掉弹窗，还在录的话底部悬浮条再露出来
     view.callEdit = null;
     view.callDraft = null;
     view.callDirty = false;
