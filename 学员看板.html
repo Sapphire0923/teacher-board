@@ -2602,7 +2602,7 @@ button.ck-st-name.pf-link { color: inherit; }
 /* 名单表的几个特殊格 */
 .rn-table td, .rn-table th { vertical-align: middle; }
 /* 8 列在详情抽屉打开时会挤：给表一个下限，宁可横向滚动也别把三个状态按钮折成两行 */
-.rn-table { min-width: 1020px; }
+.rn-table { min-width: 1060px; }
 .rn-pick { width: 36px; text-align: center; }
 .rn-pick input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
 .rn-name { font-weight: 700; color: var(--ink); cursor: pointer; border-bottom: 1px dashed transparent; }
@@ -2642,6 +2642,13 @@ button.ck-st-name.pf-link { color: inherit; }
 .rn-call[data-st="已沟通"] { color: var(--green); background: var(--green-soft); border-color: var(--green-line); }
 .rn-call[data-st="未接听"], .rn-call[data-st="号码有误"] { color: var(--red); background: var(--red-soft); border-color: var(--red-line); }
 .rn-call[data-st="改天再打"] { color: var(--amber); background: var(--amber-soft); border-color: var(--amber-line); }
+/* 电联列里再挂一个 🎙：点了直接开这个学员的电联记录面板（能录音/转写/写备注） */
+.rn-callwrap { display: inline-flex; align-items: center; gap: 6px; }
+.rn-callbtn { width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 14px; line-height: 1; color: var(--ink); background: var(--panel-2);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-s); cursor: pointer; }
+.rn-callbtn svg { width: 15px; height: 15px; display: block; }
+.rn-callbtn:hover { color: var(--accent); background: var(--accent-soft); border-color: var(--accent); }
 .rn-mini { display: block; margin-top: 3px; font-size: var(--fs-mini); color: var(--ink-3); }
 tr.rn-on td { background: var(--accent-soft); }
 
@@ -18635,9 +18642,12 @@ const SYNC = (() => {
           const tip = last.batch
             ? `最近一次：${last.batch.name}（${last.batch.date}）`
             : "还没打过电联，选一个会自动建「第一轮电联」";
-          return `<select class="rn-call" data-rncall="${s.id}" data-st="${esc(cst)}" title="${esc(tip)}">
-            ${CALL_STATUSES.map((x) => `<option value="${esc(x)}"${x === cst ? " selected" : ""}>${esc(x)}</option>`).join("")}
-          </select>`;
+          return `<span class="rn-callwrap">
+            <select class="rn-call" data-rncall="${s.id}" data-st="${esc(cst)}" title="${esc(tip)}">
+              ${CALL_STATUSES.map((x) => `<option value="${esc(x)}"${x === cst ? " selected" : ""}>${esc(x)}</option>`).join("")}
+            </select>
+            <button class="rn-callbtn" data-rncallog="${s.id}" title="记一次电联 / 录音（打开记录面板）" aria-label="记一次电联"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></button>
+          </span>`;
         })()}</td>
       </tr>`;
     }).join("");
@@ -18715,6 +18725,11 @@ const SYNC = (() => {
       if (st === "已沟通") syncCallFlag(DB.students.find((x) => x.id === sid));
       save(); renderSide(); renderStage();
       toast(`电联记为「${st}」`, 1800);
+    });
+    // 🎙 直接开这个学员的电联记录面板（里面能录音、转写、写备注）
+    stage.querySelectorAll("[data-rncallog]").forEach((b) => b.onclick = (ev) => {
+      ev.stopPropagation();
+      openCallLog(b.dataset.rncallog, renewCallBatchId(true), "");
     });
     // 点姓名 → 右边详情（跟电联 / 打卡页一致，不跳走）
     stage.querySelectorAll("[data-rnopen]").forEach((el) => el.onclick = (ev) => {
