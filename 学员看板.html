@@ -698,6 +698,10 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 18px 24px 60px;
   min-height: 26px; display: inline-flex; align-items: center; gap: 4px;
   border-radius: 7px; background: var(--panel-3); color: var(--ink-2); border: 1px solid var(--line); }
 .chip.ok { background: var(--green-soft); color: var(--green); border-color: var(--green-line); }
+/* 成绩页「答题卡状态」列：待核对/已核对的 chip 可点（2026-11-13） */
+.col-pap .papst { cursor: pointer; }
+.col-pap .papst:hover { filter: brightness(.95); }
+.col-pap .papst:active { transform: translateY(1px); }
 .chip.no { background: var(--red-soft); color: var(--red); border-color: var(--red-line); }
 /* 「还没做」芯片：2026-10-16 绿白改版后从暖橘改成琥珀。
    原因：绿现在是品牌色（主按钮、选中态都在用），提醒色再借用绿色系就分不清
@@ -15836,6 +15840,7 @@ const SYNC = (() => {
     { k: "diff", label: "与平均分", sort: true },
     { k: "sec", label: "板块得分" },
     { k: "prev", label: "较上次", sort: true },
+    { k: "pap", label: "答题卡状态" },
     { k: "link", label: "答题卡" },
   ];
 
@@ -16902,6 +16907,12 @@ const SYNC = (() => {
     const showPrev = examRecords(name).some((r) => prevExamOf(r.sid, name));
     // 整场都没有答题卡外链 → 「答题卡」列根本不出现（跟板块得分一个规矩：没有就不摆空列）
     const showLink = examRecords(name).some((r) => examLinkOf(r.sid, name));
+    // 整场都没有人传过答题卡 → 「答题卡状态」列也不摆（2026-11-13）
+    const showPap = examRecords(name).some((r) => {
+      const s = DB.students.find((x) => x.id === r.sid);
+      const e = s ? batchExamOf(s, name) : null;
+      return !!(e && paperHas(e));
+    });
     return [
       { k: "rank", label: "名次", cls: "sticky-l col-num", always: true },
       { k: "pick", label: "", cls: "col-pick", always: true },
@@ -16911,9 +16922,10 @@ const SYNC = (() => {
       { k: "weak", label: "薄弱板块", cls: "col-sect" },
       ...SC_OPT_COLS.filter((o) => C[o.k]
         && (o.k !== "sec" || showSec) && (o.k !== "prev" || showPrev)
-        && (o.k !== "link" || showLink)).map((o) => ({
+        && (o.k !== "link" || showLink) && (o.k !== "pap" || showPap)).map((o) => ({
         k: o.k, label: o.label, sort: o.sort,
-        cls: o.k === "sec" ? "col-sect" : o.k === "link" ? "col-link" : "col-num",
+        cls: o.k === "sec" ? "col-sect" : o.k === "link" ? "col-link"
+          : o.k === "pap" ? "col-pap" : "col-num",
       })),
     ];
   }
@@ -16939,6 +16951,11 @@ const SYNC = (() => {
         comm: commOf(name, r.sid),
         weak: weakOf(name, r.sid),
         link: examLinkOf(r.sid, name),
+        // 答题卡状态列要用到「这个学生这场考试」的那条记录（2026-11-13）
+        pap: (() => {
+          const s = DB.students.find((x) => x.id === r.sid);
+          return s ? batchExamOf(s, name) : null;
+        })(),
       };
     });
     const total = rows.length;
@@ -16977,7 +16994,7 @@ const SYNC = (() => {
   function exportScoreXlsx(name) {
     const c = DB.config;
     const V = scoreView(name);
-    const cols = scoreCols(name).filter((x) => x.k !== "pick");
+    const cols = scoreCols(name).filter((x) => x.k !== "pick" && x.k !== "pap");
     const TT = trackStats(name);
     if (!V.total) { toast("这场考试还没有人录分数"); return; }
     if (!V.rows.length) { toast("当前搜索条件下一个人都没有"); return; }
@@ -17213,6 +17230,11 @@ const SYNC = (() => {
       const hasSec = recs.some((r) => studentSections(r.sid, cur));
       const hasPrev = recs.some((r) => prevExamOf(r.sid, cur));
       const hasLink = recs.some((r) => examLinkOf(r.sid, cur));
+      const hasPap = recs.some((r) => {
+        const s = DB.students.find((x) => x.id === r.sid);
+        const e = s ? batchExamOf(s, cur) : null;
+        return !!(e && paperHas(e));
+      });
       const cell = (x, k) => {
         if (k === "rank") return `<td class="sticky-l" data-col="rank">${x.rank}</td>`;
         if (k === "pick") return `<td class="col-pick"><input type="checkbox" data-pick="${x.sid}"${
@@ -17223,6 +17245,21 @@ const SYNC = (() => {
         if (k === "name") return `<td class="sticky-l sticky-2" data-col="name"><b>${esc(x.name)}</b>${
           ntBadges(DB.students.find((s) => s.id === x.sid))}</td>`;
         if (k === "score") return `<td data-col="score"><b>${x.score}</b>${typeof x.full === "number" ? "/" + x.full : ""}</td>`;
+        if (k === "pap") {
+          const pe = x.pap;
+          if (!pe || !paperHas(pe)) {
+            return `<td class="col-pap" data-col="pap"><span class="sc-none" title="这场考试还没传答题卡">—</span></td>`;
+          }
+          const pst = paperState(pe);
+          const PT = PAPER_ST[pst] || PAPER_ST.none;
+          if (pst === "review") {
+            return `<td class="col-pap" data-col="pap"><button class="chip ${PT.c} papst" data-paprev="${esc(pe.id)}" title="识别完了还没核对 —— 点开核对，确认后写进成绩">${esc(PT.t)}</button></td>`;
+          }
+          if (pst === "confirmed" || pst === "analyzed") {
+            return `<td class="col-pap" data-col="pap"><button class="chip ${PT.c} papst" data-papgo="${esc(x.sid)}" data-papex="${esc(pe.id)}" title="已核对 —— 点开看这份答题卡的完整分析">${esc(PT.t)}</button></td>`;
+          }
+          return `<td class="col-pap" data-col="pap"><span class="chip ${PT.c}" title="传了图还没识别 —— 去「答题卡」页点「识别答题卡」">${esc(PT.t)}</span></td>`;
+        }
         if (k === "link") return `<td class="col-link" data-col="link">${x.link
           ? `<a class="sc-link" href="${esc(x.link)}" target="_blank" rel="noopener noreferrer" title="在新标签页打开原始答题卡">答题卡</a>`
           : `<span class="sc-none">—</span>`}</td>`;
@@ -17310,9 +17347,11 @@ const SYNC = (() => {
             <button class="btn ghost" id="scColBtn">列 ▾</button>
             <span class="sc-colpick${view.scColOpen ? " on" : ""}" id="scColPick">
               ${SC_OPT_COLS.map((o) => {
-                const has = o.k === "sec" ? hasSec : o.k === "prev" ? hasPrev : o.k === "link" ? hasLink : true;
+                const has = o.k === "sec" ? hasSec : o.k === "prev" ? hasPrev
+                  : o.k === "link" ? hasLink : o.k === "pap" ? hasPap : true;
                 const why = o.k === "sec" ? "这场考试还没有人传过答题卡，暂时没有板块分"
                   : o.k === "link" ? "这场考试还没有人填过答题卡链接，暂时没有链接列"
+                  : o.k === "pap" ? "这场考试还没有人传过答题卡，暂时没有状态列"
                   : "还没有可比的上一场考试";
                 return `<label class="${has ? "" : "off"}"${has ? "" : ` title="${why}"`}><input type="checkbox" data-sccol="${o.k}"${
                   C0[o.k] ? " checked" : ""}${has ? "" : " disabled"}>${esc(o.label)}</label>`;
@@ -17371,6 +17410,24 @@ const SYNC = (() => {
     stage.querySelectorAll("[data-exam]").forEach((b) => b.onclick = () => {
       view.scoreExam = b.dataset.exam || null;
       view.scQ = ""; view.scSort = ""; view.scDir = 1; view.scPage = 1;
+      renderStage();
+    });
+    // 答题卡状态列（2026-11-13）：「待核对」就地开核对页；「已核对/已分析」切到答题卡页看完整分析
+    stage.querySelectorAll("[data-paprev]").forEach((el) => el.onclick = (ev) => {
+      ev.stopPropagation();
+      const ex = findExam(el.dataset.paprev);
+      const s = ex ? studentOfExam(ex.id) : null;
+      if (ex && s && paperHas(ex)) openPaperReview(s.id, ex.id);
+    });
+    stage.querySelectorAll("[data-papgo]").forEach((el) => el.onclick = (ev) => {
+      ev.stopPropagation();
+      const ex = findExam(el.dataset.papex);
+      const s = ex ? studentOfExam(ex.id) : null;
+      if (!ex || !s) return;
+      view.mode = "paper";
+      view.paperBatch = batchKeyOf(ex);
+      view.paperFilter = "all";
+      view.paperStudent = s.id;
       renderStage();
     });
     // 表格行点击 → 打开学生详情
