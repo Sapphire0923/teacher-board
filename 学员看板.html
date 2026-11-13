@@ -698,6 +698,12 @@ section.list { flex: 1; min-width: 0; overflow-y: auto; padding: 18px 24px 60px;
   min-height: 26px; display: inline-flex; align-items: center; gap: 4px;
   border-radius: 7px; background: var(--panel-3); color: var(--ink-2); border: 1px solid var(--line); }
 .chip.ok { background: var(--green-soft); color: var(--green); border-color: var(--green-line); }
+/* 各板块的「身份 / 分数」筛选条（2026-11-13） */
+.bf-f { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-aux); color: var(--ink-3); white-space: nowrap; }
+.bf-f select { height: 28px; font-size: var(--fs-aux); padding: 0 4px; }
+.bf-score { display: inline-flex; align-items: center; gap: 3px; }
+.bf-num { width: 58px; height: 28px; font-size: var(--fs-aux); text-align: center; padding: 0 4px; }
+.bf-dash { color: var(--ink-3); font-size: var(--fs-aux); }
 /* 成绩页「答题卡状态」列：待核对/已核对的 chip 可点（2026-11-13） */
 .col-pap .papst { cursor: pointer; }
 .col-pap .papst:hover { filter: brightness(.95); }
@@ -7234,7 +7240,23 @@ const SYNC = (() => {
       const n = (e.name || "").trim();
       if (n && !names.includes(n)) names.push(n);
     }
-    return names;
+    // 2026-11-13 用户要求：按考试日期排（早的在前），没填日期的保持原顺序排在最后。
+    // 之前是「录入顺序」，所以老师给考试补了日期、标签顺序也不会变，看着像没生效。
+    const dateOf = (nm) => {
+      for (const s of DB.students) {
+        const e = (s.exams || []).find((x) => (x.name || "").trim() === nm && String(x.date || "").trim());
+        if (e) return String(e.date).trim();
+      }
+      return "";
+    };
+    const withDate = names.map((nm) => ({ nm, d: dateOf(nm) }));
+    withDate.sort((a, b) => {
+      if (a.d && b.d) return a.d < b.d ? -1 : a.d > b.d ? 1 : 0;
+      if (a.d) return -1;
+      if (b.d) return 1;
+      return 0;
+    });
+    return withDate.map((x) => x.nm);
   }
 
   /** 某场考试下所有有分数的记录：{ sid, name, date, score, full }，按分数降序 */
@@ -8728,8 +8750,63 @@ const SYNC = (() => {
       (s.chats || []).map((c) => c.text).join(" ")].join(" ").toLowerCase().includes(q);
   }
 
+  /* ==================== 名单筛选：住校 / 分数（2026-11-13 用户要求） ====================
+   * 每个板块共用一份设置：
+   *   身份：全部 / 住校 / 走读（学生身上的「住校」「走读」标签）
+   *   分数：最低/最高（只有「每个学生对应一场考试分数」的板块才摆，比如成绩页、答题卡名单；
+   *         打卡/电联/续班/学员列表这些没分数的板块不摆，免得看着能用其实筛不了）
+   */
+  function bfOf() {
+    if (!view.bf || typeof view.bf !== "object") view.bf = { board: "all", min: null, max: null };
+    return view.bf;
+  }
+  const bfActive = () => {
+    const b = bfOf();
+    return b.board !== "all" || b.min != null || b.max != null;
+  };
+  /** s：学生对象；score：这场考试的分数（没有就传 null —— 此时分数条件不生效） */
+  function bfPass(s, score) {
+    const b = bfOf();
+    if (b.board === "board" && !parentTagsOf(s).includes("住校")) return false;
+    if (b.board === "walk" && !parentTagsOf(s).includes("走读")) return false;
+    if (b.min != null && (score == null || score < b.min)) return false;
+    if (b.max != null && (score == null || score > b.max)) return false;
+    return true;
+  }
+  /** 工具条上的筛选控件；withScore=true 才摆分数两个输入 */
+  function bfCtlHtml(withScore) {
+    const b = bfOf();
+    return `<label class="bf-f" title="按住校 / 走读筛选"><span>身份</span>
+        <select id="bfBoardSel">
+          <option value="all"${b.board === "all" ? " selected" : ""}>全部</option>
+          <option value="board"${b.board === "board" ? " selected" : ""}>住校</option>
+          <option value="walk"${b.board === "walk" ? " selected" : ""}>走读</option>
+        </select></label>${withScore ? `<span class="bf-score" title="按这场考试的分数筛（留空 = 不限）">
+        <input class="bf-num" id="bfMin" type="number" inputmode="numeric" placeholder="分≥" value="${b.min ?? ""}">
+        <span class="bf-dash">—</span>
+        <input class="bf-num" id="bfMax" type="number" inputmode="numeric" placeholder="分≤" value="${b.max ?? ""}">
+      </span>` : ""}${bfActive() ? `<button class="btnmini" id="bfClear" title="清空筛选">清空</button>` : ""}`;
+  }
+  // 事件只注册一次（document 级委托）—— 每个页面渲染后不用自己再绑，少踩「换页丢了事件」的坑
+  (function bindBfOnce() {
+    document.addEventListener("change", (e) => {
+      const t = e.target;
+      if (!t || !t.id) return;
+      if (t.id === "bfBoardSel") { bfOf().board = t.value; view.scPage = 1; view.ckPage = 1; renderStage(); }
+      else if (t.id === "bfMin") { const v = String(t.value || "").trim(); bfOf().min = v === "" ? null : Number(v); view.scPage = 1; renderStage(); }
+      else if (t.id === "bfMax") { const v = String(t.value || "").trim(); bfOf().max = v === "" ? null : Number(v); view.scPage = 1; renderStage(); }
+    });
+    document.addEventListener("click", (e) => {
+      if (e.target && e.target.id === "bfClear") {
+        view.bf = { board: "all", min: null, max: null };
+        view.scPage = 1;
+        renderStage();
+      }
+    });
+  })();
+
   function visible() {
-    let list = DB.students.filter((s) => passes(s) && matches(s));
+    let list = DB.students.filter((s) => passes(s) && matches(s) && bfPass(s, null));
     const { key, dir } = view.sort;
     const val = (s) => key === "total" ? scoreTotal(s)
       : key === "name" ? s.name
@@ -12237,7 +12314,8 @@ const SYNC = (() => {
     // 名单页的姓名搜索：只筛这张表 —— 不动批次、不动上面的筛选签
     const pq = String(view.papQ || "").trim();
     const show = (filt === "all" ? rows : rows.filter((r) => r.st === filt))
-      .filter((r) => !pq || r.s.name.includes(pq));
+      .filter((r) => !pq || r.s.name.includes(pq))
+      .filter((r) => bfPass(r.s, r.e && r.e.score != null ? r.e.score : null));
     const tabs = [["all", `全部 ${rows.length}`]]
       .concat(PAPER_ORDER.map((k) => [k, `${PAPER_ST[k].t} ${cnt[k]}`]));
 
@@ -12253,6 +12331,7 @@ const SYNC = (() => {
       <div class="sc-tools stick">
         <input class="sc-q" id="papQ" placeholder="搜姓名…" autocomplete="off" value="${esc(pq)}">
         <span class="hint-inline">${pq ? `筛出 ${show.length} 人` : "边打边联想，选中就筛到他"}</span>
+        ${bfCtlHtml(true)}
         <span style="flex:1"></span>
         <button class="btn" id="papCopy"${show.length ? "" : " disabled"}
           title="复制当前状态筛选 + 搜索后的 ${show.length} 名学生（每行一个姓名）">复制姓名（${show.length} 人）</button>
@@ -15134,6 +15213,7 @@ const SYNC = (() => {
               <option value="all"${view.ckLevel === "all" ? " selected" : ""}>全部等级</option>
               ${levels.map((x) => `<option value="${esc(x.key)}"${view.ckLevel === x.key ? " selected" : ""}>${esc(x.label)}</option>`).join("")}
             </select></label>
+          ${bfCtlHtml(false)}
           <span class="ck-f-note"></span>
         </div>
         <div class="ck-tabs" id="ckTabs">${statusTabs}</div>
@@ -15197,7 +15277,8 @@ const SYNC = (() => {
       (view.checkinStatus === CK_ALL || checkinStatusOf(view.checkinTask, s.id) === view.checkinStatus)
       && (view.ckLevel === "all" || levelOf(s) === view.ckLevel)
       && (view.ckGrade === "all" || ckGradeOf(s) === view.ckGrade)
-      && ckQueryHit(s));
+      && ckQueryHit(s)
+      && bfPass(s, null));
   }
 
   function ckBadgeHtml(cur) {
@@ -16967,6 +17048,13 @@ const SYNC = (() => {
     if (view.scWeak && view.scWeak !== "all") {
       rows = rows.filter((x) => (view.scWeak === "none" ? !x.weak.length : x.weak.includes(view.scWeak)));
     }
+    // 身份 / 分数筛选（2026-11-13）：分数取「这个学生这场考试」的分
+    if (bfActive()) {
+      rows = rows.filter((x) => {
+        const s = DB.students.find((y) => y.id === x.sid);
+        return s ? bfPass(s, x.score) : true;
+      });
+    }
     const sk = view.scSort;
     const keyOf = {
       rank: (x) => x.rank, score: (x) => x.score, rate: (x) => x.rate,
@@ -17325,6 +17413,7 @@ const SYNC = (() => {
         <div class="sc-tools stick">
           <input class="sc-q" id="scQ" placeholder="搜姓名…" autocomplete="off" value="${esc(V.q)}">
           <span class="sc-hit">${V.q ? `筛出 ${V.hit} / ${V.total} 人` : ""}</span>
+          ${bfCtlHtml(true)}
           <select class="sc-sel" id="scBand">
             <option value="all"${view.scBand === "all" || !view.scBand ? " selected" : ""}>全部档次</option>
             <option value="A"${view.scBand === "A" ? " selected" : ""}>A 档</option>
@@ -17717,6 +17806,7 @@ const SYNC = (() => {
         <div class="sc-tools stick">
           <input class="sc-q" id="clQ" placeholder="搜姓名…" autocomplete="off" value="${esc(view.callQ)}">
           <span class="sc-hit">${q ? `筛出 ${hit} / ${total} 人` : ""}</span>
+          ${bfCtlHtml(false)}
           <span style="flex:1"></span>
           <button class="btn" id="clCopy"${hit ? "" : " disabled"}
             title="复制当前搜索 + 结果筛选后的 ${hit} 名学生（每行一个姓名）">复制姓名（${hit} 人）</button>
@@ -17779,7 +17869,7 @@ const SYNC = (() => {
       const st = callBatchStats(curId);
       const inStatus = (s) => callStatusOf(curId, s.id) === view.callStatus;
       const rostered = DB.students.filter(inStatus);
-      const list = rostered.filter(hitName);   // 搜索跟「结果筛选」叠加，两个都只筛名单
+      const list = rostered.filter(hitName).filter((s) => bfPass(s, null));   // 搜索 + 结果 + 身份筛选叠加
       const doneRatio = st.total ? Math.round(st["已沟通"] / st.total * 100) : 0;
       const statCell = (label, val, sub) =>
         `<div class="sc-stat"><span class="k">${esc(label)}</span><b>${esc(val)}</b>${sub ? `<span class="s">${esc(sub)}</span>` : ""}</div>`;
@@ -18569,7 +18659,7 @@ const SYNC = (() => {
   function renderRenewAll(stage, rounds, tabs) {
     const q = String(view.rnQ || "").trim();
     const hit = (s) => !q || String(s.name || "").includes(q);
-    const list = DB.students.filter(hit);
+    const list = DB.students.filter(hit).filter((s) => bfPass(s, null));
     const statRow = (label, fn) => `<tr class="stat-row"><td class="sticky-l">${esc(label)}</td>${
       rounds.map((r) => `<td>${esc(fn(renewStats(r.id)))}</td>`).join("")}</tr>`;
     const head = `<th class="sticky-l">姓名</th><th>班级</th>` +
@@ -18590,6 +18680,7 @@ const SYNC = (() => {
         <div class="sc-tools">
           <input class="sc-q" id="rnQ" placeholder="搜姓名…" autocomplete="off" value="${esc(view.rnQ)}">
           <span class="sc-hit">${q ? `筛出 ${list.length} / ${DB.students.length} 人` : ""}</span>
+          ${bfCtlHtml(false)}
           <span style="flex:1"></span>
           <button class="btn" id="rnCopy"${list.length ? "" : " disabled"}>复制姓名（${list.length} 人）</button>
         </div>
@@ -18629,7 +18720,7 @@ const SYNC = (() => {
     };
     const okCls = (s) => view.rnCls === "all" || (clsOf(s) || "未填班级") === view.rnCls;
     const okLv = (s) => view.rnLevel === "all" || levelOf(s) === view.rnLevel;
-    const list = allStu.filter((s) => hit(s) && okStatus(s) && okReason(s) && okCls(s) && okLv(s));
+    const list = allStu.filter((s) => hit(s) && okStatus(s) && okReason(s) && okCls(s) && okLv(s) && bfPass(s, null));
     view.rnList = list;
     // 勾选只保留还在当前筛选里的人，免得「撤销后还勾着看不见的人」
     const alive = new Set(list.map((s) => s.id));
@@ -18730,6 +18821,7 @@ const SYNC = (() => {
         <div class="sc-tools">
           <input class="sc-q" id="rnQ" placeholder="搜姓名…" autocomplete="off" value="${esc(view.rnQ)}">
           <span class="sc-hit">${q ? `筛出 ${list.length} / ${allStu.length} 人` : ""}</span>
+          ${bfCtlHtml(false)}
           <span style="flex:1"></span>
           <button class="btn" id="rnCopy"${list.length ? "" : " disabled"}>复制姓名（${list.length} 人）</button>
         </div>
