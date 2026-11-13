@@ -2381,6 +2381,21 @@ section.list { background: var(--bg); }
    —— 2026-10-29 智能分析上线后加的。 */
 .sc-wtag.auto { border: 1px dashed var(--accent-2-line); background: var(--accent-soft); }
 .sc-wtag.auto::before { content: "·"; margin-right: 2px; color: var(--accent); font-weight: 800; }
+/* 2026-11-13：薄弱分「主要 / 次要」两级 —— 主要红、次要琥珀，都保留虚线=自动识别 */
+.sc-wtag.sec { border: 1px dashed var(--amber-line); background: var(--amber-soft); color: var(--ink); }
+.sc-wtag.sec::before { content: "·"; margin-right: 2px; color: var(--amber); font-weight: 800; }
+.sc-weakpop-b label .tier { margin-left: auto; font-size: var(--fs-mini); color: var(--ink-3); }
+.sc-weakpop-b label.sec .tier { color: var(--amber); }
+
+/* 答题卡页的「主要 / 次要薄弱」块 */
+.pap-weakbox { margin: 8px 0 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+.pap-weakbox > b { font-size: var(--fs-body); margin-right: 8px; }
+.pap-weakrow { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.pap-weakk { font-size: var(--fs-mini); color: var(--ink-3); flex: 0 0 62px; }
+.pap-wtag { font-size: var(--fs-mini); padding: 2px 8px; border-radius: 6px; background: var(--tag-bg); }
+.pap-wtag.main { border: 1px solid var(--red-line); background: var(--red-soft); color: var(--red); }
+.pap-wtag.sec { border: 1px dashed var(--amber-line); background: var(--amber-soft); color: var(--amber); }
+.pap-wnone { font-size: var(--fs-mini); color: var(--ink-3); }
 .chip.no.auto { border-style: dashed; }
 .chip.no.auto::before { content: "·"; margin-right: 2px; font-weight: 800; }
 .sc-weakpop-b label.auto { color: var(--accent); }
@@ -9474,6 +9489,92 @@ const SYNC = (() => {
     }
   }
 
+  /**
+   * 答题卡长图切段（2026-11-13 用户要求：较大较长的图先裁切再识别）。
+   *
+   * 为什么要切：DeepSeek 收图后会缩到约 1024px 再算，一张 1080×5000 的竖拍长图
+   * 缩完每行字只剩十几个像素，手写答案和分数就糊了。纵向切成几段单独发，
+   * 每段都能保住分辨率；段与段留 9% 重叠，防一行字正好被切断。
+   *
+   * 小图**原样不动**（保留 2026-10-16 定的「原图直出」规矩），只有
+   * 「高/宽 ≥ 1.35 或最长边 > 2600」才切。最多 8 段，再多 token 不划算。
+   */
+  const PAPER_SEG_MAX = 8;
+  const PAPER_SEG_OVERLAP = 0.09;
+
+  async function paperImageSegments(blob, tag) {
+    let bmp = null;
+    try {
+      bmp = await createImageBitmap(blob);
+      const W = bmp.width, H = bmp.height;
+      const tall = H >= W * 1.35 || Math.max(W, H) > 2600;
+      if (!tall || H <= W * 1.15) return [{ blob, label: tag }];
+
+      // 每段目标高度 ≈ 宽 × 1.25（接近手机一屏），最少 900、最多 2400
+      const segH = Math.max(900, Math.min(2400, Math.round(W * 1.25)));
+      const step = Math.max(1, Math.round(segH * (1 - PAPER_SEG_OVERLAP)));
+      const cuts = [];
+      for (let y = 0; y < H; y += step) {
+        const h = Math.min(segH, H - y);
+        cuts.push({ y, h });
+        if (y + h >= H) break;
+      }
+      if (cuts.length <= 1) return [{ blob, label: tag }];
+
+      // 段数超上限：按比例合并（每段变长），别切成十几张
+      const keep = [];
+      if (cuts.length > PAPER_SEG_MAX) {
+        const stride = cuts.length / PAPER_SEG_MAX;
+        for (let i = 0; i < PAPER_SEG_MAX; i++) {
+          const from = cuts[Math.floor(i * stride)];
+          const to = i === PAPER_SEG_MAX - 1 ? cuts[cuts.length - 1] : cuts[Math.floor((i + 1) * stride) - 1];
+          keep.push({ y: from.y, h: Math.min(H - from.y, to.y + to.h - from.y) });
+        }
+      } else keep.push(...cuts);
+
+      const out = [];
+      for (let i = 0; i < keep.length; i++) {
+        const c = keep[i];
+        const cvs = document.createElement("canvas");
+        // 只缩宽、不放大；宽 2200 已经比模型的有效分辨率高了
+        const scale = Math.min(1, 2200 / W);
+        cvs.width = Math.max(1, Math.round(W * scale));
+        cvs.height = Math.max(1, Math.round(c.h * scale));
+        const cx = cvs.getContext("2d");
+        cx.drawImage(bmp, 0, c.y, W, c.h, 0, 0, cvs.width, cvs.height);
+        const b = await new Promise((res) => cvs.toBlob(res, "image/jpeg", 0.92));
+        if (b) out.push({ blob: b, label: tag + "·第" + (i + 1) + "/" + keep.length + "段" });
+      }
+      return out.length ? out : [{ blob, label: tag }];
+    } catch (e) {
+      // 切图失败就退回原图：宁可糊一点，也不能因为预处理把识别整个弄挂
+      console.warn("答题卡切段失败，按原图发", e);
+      return [{ blob, label: tag }];
+    } finally {
+      if (bmp && bmp.close) bmp.close();
+    }
+  }
+
+  /**
+   * 读这场考试的所有答题卡，按「每张图再切段」展开成待发图片列表。
+   * 返回 [{ url, label }]，顺序就是发给模型的顺序。
+   */
+  async function paperImageParts(cards) {
+    const parts = [];
+    let n = 0;
+    for (const a of cards) {
+      const blob = await FB().get(a.id);
+      if (!blob || blob.size > 20 * 1024 * 1024) continue;
+      n++;
+      const segs = await paperImageSegments(blob, "第" + n + "张");
+      for (const sg of segs) {
+        // 段是 JPEG 0.92（已经够清晰）；原图沿用 blobToDataUrl 的「原图直出」
+        parts.push({ url: await blobToDataUrl(sg.blob), label: sg.label });
+      }
+    }
+    return parts;
+  }
+
   /** 把文本里的学生真名抹掉。防的是姓名混进备注/标签/考试名里。 */
   function anonymize(text, name) {
     let t = String(text == null ? "" : text);
@@ -9757,6 +9858,27 @@ const SYNC = (() => {
   const paperDone = (e) => !!(e.paper && e.paper.status === "confirmed");
   const isMockPaper = (e) => !!(e.paper && e.paper.mock);
 
+  /**
+   * 答题卡上读到的板块得分 → 「主要薄弱 / 次要薄弱」。
+   * 判法和成绩页的智能分析同一套：得分率 < 60% 主要，60%~75% 次要；
+   * 只认卡上**两个数字都读到**的板块，缺一个就跳过（不按总分反推）。
+   */
+  const PAPER_WEAK_BELOW = 0.6;
+  const PAPER_WEAK_WATCH = 0.75;
+  function paperWeakTiers(ocr) {
+    const out = { main: [], secondary: [] };
+    for (const x of (ocr && ocr.sections) || []) {
+      const sc = numOrNull(x.score), fu = numOrNull(x.full);
+      if (sc === null || fu === null || !(fu > 0) || sc > fu) continue;
+      const tag = secTagOf(x.name).tag;
+      if (!tag || !WEAK_TAGS.includes(tag)) continue;
+      const rate = sc / fu;
+      const bucket = rate < PAPER_WEAK_BELOW ? out.main : rate < PAPER_WEAK_WATCH ? out.secondary : null;
+      if (bucket && !bucket.includes(tag)) bucket.push(tag);
+    }
+    return out;
+  }
+
   const numOrNull = (v) => {
     if (v === null || v === undefined || v === "") return null;
     const n = Number(String(v).replace(/[^0-9.\-]/g, ""));
@@ -9778,6 +9900,9 @@ const SYNC = (() => {
       model: aiModel(),
       messages: [{ role: "system", content: sys }, { role: "user", content: userContent }],
       thinking: { type: "disabled" },
+      // 答题卡这种「逐字读数」的活，温度低一点更稳（2026-11-13 加）。
+      // 只影响这里；其他 AI 入口没传 temperature，保持原来的默认值。
+      temperature: typeof o.temperature === "number" ? o.temperature : 0,
       max_tokens: o.maxTokens || 6000,
       stream: false,
     };
@@ -9815,9 +9940,14 @@ const SYNC = (() => {
     + "看不清、被遮住、或图上根本没有的信息，一律记进 unreadable，绝不猜测、绝不按分值补估。"
     + "你宁可说「无法确认」，也不许编一个看起来合理的数字。";
 
-  function paperAsk(n) {
+  function paperAsk(n, labels) {
     return [
-      `请把这 ${n} 张答题卡图片提取成 JSON，只输出 JSON，不要解释、不要 markdown 代码块。`,
+      `请把下面 ${n} 张答题卡图片提取成 JSON，只输出 JSON，不要解释、不要 markdown 代码块。`,
+      labels && labels.length ? "图片顺序：" + labels.map((x, i) => (i + 1) + ". " + x).join("；") : "",
+      "注意：相邻两张可能是同一张答题卡被纵向切开的上下两段（交界处约有 9% 重叠）。"
+        + "请按卷面顺序把同一道题、同一个板块归并起来，别把重叠部分重复计一次；"
+        + "某个数字如果正好被切在两张图交界处，看两张图的重叠部分拼起来读。",
+      "先找卷首区（姓名 / 考试名 / 日期 / 满分 / 总分），再从上往下逐板块读分。",
       "结构：",
       `{"student_name":string|null,"class_name":string|null,"exam_name":string|null,`,
       ` "exam_date":"YYYY-MM-DD"|null,"full_score":number|null,"total_score":number|null,`,
@@ -9832,6 +9962,7 @@ const SYNC = (() => {
       "4. answers 只记学生实际作答（选择题记涂黑的字母）；**卡上没印 A/B/C/D 这类选项字母时，不许按第几列去猜字母**——那种情况写进 unreadable，reason 写「选项没印字母，认不出是哪个选项」；",
       "5. 板块名和题号以试卷原文为准，别自己编一套；",
       "6. 任何一页有任何地方读不出来，都要在 unreadable 里**逐条**写明（第几页、哪一项、为什么）。",
+      "7. 手写的分数容易看错（6/8、3/5、1/7），每个数字都要在图上找到笔迹再填；拿不准就把 confidence 写低，别硬填。",
     ].join("\n");
   }
 
@@ -9871,33 +10002,105 @@ const SYNC = (() => {
     const old = btn ? btn.innerHTML : null;
     if (btn) { btn.disabled = true; btn.innerHTML = '<span class="busy"></span> 识别中…'; }
     try {
-      const urls = [];
-      for (const a of cards) {
-        const blob = await FB().get(a.id);
-        if (!blob) continue;
-        if (blob.size > 20 * 1024 * 1024) continue;
-        // 用**原图**喂给识别/分析 —— 手写小字、涂改、板演细节都靠它（2026-10-16 改）
-        urls.push(await blobToDataUrl(blob));
-      }
-      if (!urls.length) throw new Error("图片读不出来（可能存储里已经没了），重新传一次");
+      const parts = await paperImageParts(cards);
+      if (!parts.length) throw new Error("图片读不出来（可能存储里已经没了），重新传一次");
+      const labels = parts.map((p) => p.label);
       const r = await dsCall(PAPER_SYS, [
-        { type: "text", text: paperAsk(urls.length) },
-        ...urls.map((u) => ({ type: "image_url", image_url: { url: u } })),
+        { type: "text", text: paperAsk(parts.length, labels) },
+        ...parts.map((p) => ({ type: "image_url", image_url: { url: p.url } })),
       ], { json: true, maxTokens: 4000 });
       let ocr = null;
       try { ocr = JSON.parse(r.text); }
       catch { throw new Error("识别结果不是合法 JSON，再点一次试试；老这样就把这张卡的清晰度提高点。"); }
+      // 第二遍复核（可在 设置 → AI 分析 关掉）：只让模型改数字字段。
+      // 复核失败**不能**把已经拿到的识别结果弄丢 —— 记个 error 就往下走。
+      let review = null;
+      if (aiCfg().verify !== false) {
+        try {
+          review = await verifyPaperNumbers(ocr, parts);
+        } catch (err2) {
+          console.warn("答题卡复核失败（不影响识别结果）", err2);
+          review = { tried: true, error: String(err2 && err2.message || err2) };
+        }
+      }
       e.paper = {
         status: "draft", at: new Date().toISOString(), model: r.model,
-        mock: false, ocr, checks: {}, usage: r.usage,
+        mock: false, ocr, checks: review ? { review } : {}, usage: r.usage,
+        seg: { orig: cards.length, sent: parts.length },
       };
       save(); paperRefresh(); openPaperReview(s.id, e.id);
-      toast("识别好了 —— 逐项核对完再确认写入");
+      toast("识别好了" + (parts.length > cards.length ? `（长图切了 ${parts.length} 段）` : "")
+        + (review && review.corrected ? `，复核修正 ${review.corrected} 处` : "")
+        + " —— 逐项核对完再确认写入", 6000);
     } catch (err) {
       console.error(err);
       toast(err.message, 7000);
       if (btn) { btn.disabled = false; btn.innerHTML = old; }
     }
+  }
+
+  /**
+   * 答题卡数字复核（第二遍）。
+   *
+   * 只复核**会影响分数/薄弱判定的数字**：总分、满分、各板块得分/满分。
+   * 模型只输出「要改的」；没有要改的就输出空数组。宁可保留第一遍，也不许
+   * 因为图上看不清就瞎改。返回 { corrected, changed[], notes }。
+   */
+  const PAPER_VERIFY_SYS = "你是答题卡识别的复核员。老师已经拿到一份机器读出的分数 JSON，"
+    + "现在请你对着同一份答题卡的图，只核对数字字段。"
+    + "只看图，不推理、不补估。看不清、或图上没有明确数字，就不改。";
+
+  function paperVerifyAsk(ocr) {
+    const secs = (ocr.sections || []).map((x) => ({ no: x.no, name: x.name, score: x.score, full: x.full }));
+    return [
+      "【上一轮读出的 JSON】",
+      JSON.stringify({
+        total_score: ocr.total_score, full_score: ocr.full_score,
+        sections: secs, confidence: ocr.confidence || {},
+      }),
+      "",
+      "请逐项对照图片复核。只输出需要修改的数字；不需要改就不要列。",
+      `输出 JSON：{"corrections":[{"field":"total_score"|"full_score"|"section_score"|"section_full",`,
+      ` "section":string|null,"value":number,"reason":string}]}，没有要改的就输出 {"corrections":[]}。`,
+      "规则：",
+      "1. 只在图上清楚看到另一个数字时才改，并写明你在哪一段/哪一块看到的；",
+      "2. 板块用 name 或 no 指认（比如「文言文」或「二」）；找不到对应板块就不改；",
+      "3. 分数不能超过该板块满分，也不能是负数；",
+      "4. 不确定就不输出这一项。不要输出任何解释性文字。",
+    ].join("\\n");
+  }
+
+  async function verifyPaperNumbers(ocr, parts) {
+    const r = await dsCall(PAPER_VERIFY_SYS, [
+      { type: "text", text: paperVerifyAsk(ocr) },
+      ...parts.map((p) => ({ type: "image_url", image_url: { url: p.url } })),
+    ], { json: true, maxTokens: 1600 });
+    let j = null;
+    try { j = JSON.parse(r.text); } catch { return { tried: true, corrected: 0, notes: ["复核返回的不是 JSON，已保留原结果"] }; }
+    const list = Array.isArray(j && j.corrections) ? j.corrections : [];
+    const changed = [];
+    for (const c of list.slice(0, 12)) {
+      const f = String(c && c.field || "");
+      const v = Number(c && c.value);
+      if (!isFinite(v) || v < 0) continue;
+      const note = String(c && c.reason || "").slice(0, 80);
+      if (f === "total_score" || f === "full_score") {
+        if (ocr[f] === v) continue;
+        changed.push({ field: f, from: ocr[f], to: v, reason: note });
+        ocr[f] = v;
+      } else if (f === "section_score" || f === "section_full") {
+        const key = String(c.section || "").trim();
+        const sec = (ocr.sections || []).find((x) => key && (String(x.name || "") === key || String(x.no || "") === key));
+        if (!sec) continue;
+        const k = f === "section_score" ? "score" : "full";
+        if (sec[k] === v) continue;
+        if (k === "score" && typeof sec.full === "number" && v > sec.full) continue;
+        changed.push({ field: f, section: key, from: sec[k], to: v, reason: note });
+        sec[k] = v;
+      }
+    }
+    if (changed.length) ocr.confidence = Object.assign({}, ocr.confidence, { _review: 0.9 });
+    return { tried: true, corrected: changed.length, changed, model: r.model };
   }
 
   /* ---- 核对页（未确认前绝不写库） ---------------------------------- */
@@ -10014,6 +10217,12 @@ const SYNC = (() => {
         填上 key（设置 → AI 分析）再点一次「重新识别」才是真的认。</div>`
       : "";
 
+    const rv = e.paper.checks && e.paper.checks.review;
+    const seg = e.paper.seg;
+    const reviewBox = rv
+      ? `<div class="pap-ok">✅ 已自动复核${rv.corrected ? "，修正 " + rv.corrected + " 处数字" : "，没发现要改的数字"}${rv.error ? "（复核那一次没跑成，结果按第一遍）" : ""}${seg && seg.sent > seg.orig ? " · 长图切了 " + seg.sent + " 段发过去" : ""}</div>`
+      : "";
+
     const html = `<div class="pap-ov" id="paperOv">
       <div class="pap-dlg">
         <div class="pap-head">
@@ -10024,6 +10233,7 @@ const SYNC = (() => {
         </div>
         <p class="pap-tip">下面是程序从图上读出来的东西。<b>核对无误再点「确认并写入」</b>——没确认之前，不会动这个学生的任何成绩，也不会生成分析。读错的、图上没有的，直接改或删。</p>
         ${mockBox}
+        ${reviewBox}
         <div class="pap-body">
           <div class="pap-left">
             <h5>原图（${cards.length} 张，点开看大图）</h5>
@@ -10154,7 +10364,15 @@ const SYNC = (() => {
 
     ex.paper = Object.assign({}, ex.paper, {
       status: "confirmed", confirmedAt: new Date().toISOString(), checks,
+      // 确认时按卡上板块分算一次分级；之后核对页改了分，重新识别/确认会重算
+      weak: paperWeakTiers(ex.paper.ocr),
     });
+    // 卡上的考试名可能跟原记录不一样，写进去以后「批次钥匙」就变了。
+    // 正在这个学生的整页里确认的，得跟着切到新批次 —— 否则确认完会被踢到一个
+    // 同名的空批次上，看着像答题卡丢了（2026-11-13 跑答题卡回归时踩到）。
+    if (view.mode === "paper" && view.paperStudent === target.id) {
+      view.paperBatch = batchKeyOf(ex);
+    }
     // 重新核对过卡，之前那份分析可能已经对不上了 —— 不删，挪进「历史版本」
     archiveAnalysis(ex);
 
@@ -10236,22 +10454,16 @@ const SYNC = (() => {
     const old = btn ? btn.innerHTML : null;
     if (btn) { btn.disabled = true; btn.innerHTML = '<span class="busy"></span> 分析中…'; }
     try {
-      const urls = [];
-      for (const a of paperCards(e)) {
-        const blob = await FB().get(a.id);
-        if (!blob || blob.size > 20 * 1024 * 1024) continue;
-        // 用**原图**喂给识别/分析 —— 手写小字、涂改、板演细节都靠它（2026-10-16 改）
-        urls.push(await blobToDataUrl(blob));
-      }
-      if (!urls.length) throw new Error("答题卡的图读不出来了，重新传一次再分析");
+      const parts = await paperImageParts(paperCards(e));
+      if (!parts.length) throw new Error("答题卡的图读不出来了，重新传一次再分析");
       const r = await dsCall(PAPER_ANA_SYS, [
         { type: "text", text: paperAnaAsk(s, e, e.paper.ocr) },
-        ...urls.map((u) => ({ type: "image_url", image_url: { url: u } })),
+        ...parts.map((p) => ({ type: "image_url", image_url: { url: p.url } })),
       ], { maxTokens: 6000 });
       archiveAnalysis(e);                                  // 旧的一版进历史，不删
       e.paper.analysis = Object.assign({}, e.paper.analysis, {
         text: r.text, at: new Date().toISOString(), model: r.model,
-        imgs: urls.length, usage: r.usage, edited: false,
+        imgs: parts.length, usage: r.usage, edited: false,
       });
       const n = (e.paper.analysis.versions || []).length;
       save(); paperRefresh();
@@ -10499,6 +10711,58 @@ const SYNC = (() => {
    * 「成绩与板块分析」整块（没生成分析就返回空串）。
    * 手工改过的版本优先，AI 不能静默盖掉老师写的东西。
    */
+  /**
+   * 答题卡的「主要薄弱 / 次要薄弱」块。
+   * 数是从核对确认时留下的 e.paper.weak 来的；卷面上没读到板块分的就整块不出现。
+   * 「写进成绩页」是老师显式点了才写 —— 不自动动成绩页的薄弱标签。
+   */
+  function paperWeakHtml(s, e) {
+    const tiers = (e.paper && e.paper.weak) || paperWeakTiers(e.paper && e.paper.ocr);
+    const main = (tiers.main || []).filter((t) => WEAK_TAGS.includes(t));
+    const sec = (tiers.secondary || []).filter((t) => WEAK_TAGS.includes(t) && !main.includes(t));
+    if (!main.length && !sec.length) return "";
+    const chip = (t, cls) => `<span class="pap-wtag ${cls}">${esc(t)}</span>`;
+    return `<div class="pap-weakbox" id="papWeakBox">
+      <b>🧩 薄弱板块</b>
+      <span class="hint-inline">按卡上各板块得分率分级：低于 60% 主要，60%~75% 次要</span>
+      <div class="pap-weakrow"><span class="pap-weakk">主要薄弱</span>${main.length ? main.map((t) => chip(t, "main")).join("") : `<span class="pap-wnone">—</span>`}</div>
+      <div class="pap-weakrow"><span class="pap-weakk">次要薄弱</span>${sec.length ? sec.map((t) => chip(t, "sec")).join("") : `<span class="pap-wnone">—</span>`}</div>
+      <div class="papareabar" style="margin-top:6px">
+        <button class="btnmini" data-papweak="${esc(e.id)}">写进成绩页的薄弱板块</button>
+        <span class="hint-inline">会把上面这些板块加到成绩页这一场的薄弱标签里（主要+次要），不会覆盖你手动标的</span>
+      </div>
+    </div>`;
+  }
+
+  /** 把答题卡的薄弱分级写进成绩页（显式动作，先问一句） */
+  function writePaperWeak(s, e) {
+    const tiers = (e.paper && e.paper.weak) || paperWeakTiers(e.paper && e.paper.ocr);
+    const main = (tiers.main || []).filter((t) => WEAK_TAGS.includes(t));
+    const sec = (tiers.secondary || []).filter((t) => WEAK_TAGS.includes(t) && !main.includes(t));
+    const all = [...new Set([...main, ...sec])];
+    if (!all.length) return toast("这张卡上没有读到可判定的板块分，写不了薄弱板块", 4200);
+    const name = String(e.name || "").trim();
+    if (!name) return toast("这场考试还没有名字 —— 先给考试起个名字，成绩页才收得下", 5000);
+    if (!window.confirm(`把这 ${all.length} 个板块写进「${name}」成绩页的薄弱标签？\\n主要：${main.join("、") || "—"}\\n次要：${sec.join("、") || "—"}`)) return;
+    const t = trackOf(name);
+    t.weak ||= {};
+    t.weakMeta ||= {};
+    const prev = t.weakMeta[s.id] || {};
+    const manual = Array.isArray(prev.manual) ? prev.manual : [];
+    const cur = weakOf(name, s.id);
+    const list = [...new Set([...cur, ...all])];
+    t.weak[s.id] = list;
+    t.weakTier ||= {};
+    t.weakTier[s.id] = { main: [...new Set([...(t.weakTier[s.id] || {}).main || [], ...main])], secondary: [...new Set([...(t.weakTier[s.id] || {}).secondary || [], ...sec])] };
+    t.weakMeta[s.id] = Object.assign({}, prev, {
+      auto: [...new Set([...(prev.auto || []), ...all])], manual,
+      removed: (prev.removed || []).filter((x) => !all.includes(x)), at: Date.now(),
+    });
+    save();
+    renderStage(); renderDetail(); renderSide();
+    toast(`已写进成绩页「${name}」：主要 ${main.length} 个、次要 ${sec.length} 个`, 5200);
+  }
+
   function paperAnaHtml(s, e) {
     const an = e.paper.analysis;
     if (!an || !an.text) return "";
@@ -10572,8 +10836,10 @@ const SYNC = (() => {
    */
   function paperSolutionHtml(s, e) {
     const intro = paperIntroHtml(s, e);
-    if (intro) return intro;
-    return paperAnaHtml(s, e) + paperTalkHtml(s, e) + paperExpHtml(s, e);
+    // 薄弱分级在「还没生成分析」时也要看得到 —— 核对确认完就有数了
+    const weak = paperWeakHtml(s, e);
+    if (intro) return weak + intro;
+    return weak + paperAnaHtml(s, e) + paperTalkHtml(s, e) + paperExpHtml(s, e);
   }
 
   /** 详情页里那块「到期中的复习计划」 */
@@ -12265,7 +12531,7 @@ const SYNC = (() => {
     let secAna;
     if (!e) secAna = `<p class="hint">还没传答题卡，出不了板块分析。点上面那个「📷 传答题卡图片」先传。</p>`;
     else if (!paperDone(e)) secAna = `<p class="hint">答题卡还没核对确认。回到上面点「📋 继续核对」或「🔍 识别答题卡」，确认之后才会生成分析 —— 没确认的内容不会写进成绩。</p>`;
-    else secAna = paperAnaHtml(s, e) || paperIntroHtml(s, e);
+    else secAna = paperWeakHtml(s, e) + (paperAnaHtml(s, e) || paperIntroHtml(s, e));
 
     const secTalk = ready ? paperTalkHtml(s, e) : "";
     const secExp = ready ? paperExpHtml(s, e) : "";
@@ -12499,6 +12765,13 @@ const SYNC = (() => {
       if (!ex || !s) return toast("找不到那场考试了");
       if (!aiKey()) return toast("还没填 API key —— 去「设置 → AI 分析」填一个", 6500);
       runPaperAnalysis(s, ex, el);
+    });
+    stage.querySelectorAll("[data-papweak]").forEach((el) => el.onclick = (ev) => {
+      ev.stopPropagation();
+      const ex = findExam(el.dataset.papweak);
+      const s = ex ? studentOfExam(ex.id) : null;
+      if (!ex || !s) return toast("找不到那场考试了");
+      writePaperWeak(s, ex);
     });
     stage.querySelectorAll("[data-papgo]").forEach((el) => el.onclick = (ev) => {
       ev.stopPropagation();
@@ -15996,6 +16269,35 @@ const SYNC = (() => {
     return arr.filter((t) => WEAK_TAGS.includes(t));
   }
 
+  /**
+   * 薄弱分级：主要 / 次要。
+   * 来源优先级：考试分析写入的 weakTier → 这场考试的分析结果（level）→ 答题卡上算的分级 → 只有手动标签。
+   * 只读不写；分级的「写入」发生在 智能分析确认 或 答题卡页点「写进成绩页」时。
+   */
+  function weakTierOf(name, sid) {
+    const t = DB.scoreTrack && DB.scoreTrack[name];
+    const st = t && t.weakTier && t.weakTier[sid];
+    if (st && (Array.isArray(st.main) || Array.isArray(st.secondary))) {
+      return {
+        main: (st.main || []).filter((x) => WEAK_TAGS.includes(x)),
+        secondary: (st.secondary || []).filter((x) => WEAK_TAGS.includes(x)),
+      };
+    }
+    const a = studentAnalysis(name, sid);
+    if (a) {
+      return {
+        main: (a.secs || []).filter((x) => x.level === "weak").map((x) => x.name),
+        secondary: (a.secs || []).filter((x) => x.level === "watch").map((x) => x.name),
+      };
+    }
+    const e = examOf(sid, name);
+    const p = e && e.paper && e.paper.weak;
+    if (p) {
+      return { main: (p.main || []).filter((x) => WEAK_TAGS.includes(x)), secondary: (p.secondary || []).filter((x) => WEAK_TAGS.includes(x)) };
+    }
+    return { main: [], secondary: [] };
+  }
+
   /** 档次/沟通/薄弱统计。分数只算「有分数」的；未录入单独计数，不进分母。 */
   function trackStats(name) {
     const L = trackLines(name);
@@ -16031,16 +16333,22 @@ const SYNC = (() => {
     const w = weakOf(name, sid);
     const meta = weakMetaOf(name, sid);
     const ana = studentAnalysis(name, sid);
-    const tags = w.length ? w.map((t) => {
-      const isAuto = meta.auto.includes(t);
-      const sec = isAuto && ana ? (ana.secs || []).find((x) => x.name === t) : null;
-      const tip = isAuto
-        ? "系统识别：" + (sec ? "得分率 " + anPct(sec.rate) + "（" + fmtScore(sec.score) + "/" + fmtScore(sec.full) + "）" : "本次考试自动分析")
-        : "手动标记";
-      return `<span class="sc-wtag${isAuto ? " auto" : ""}" title="${esc(tip)}">${esc(t)}</span>`;
-    }).join("")
-      : `<span class="sc-wnone">+ 标记</span>`;
-    return `<button class="sc-weak" data-weak="${sid}" title="点开多选薄弱板块；虚线框 = 系统按得分率自动识别">${tags}</button>`;
+    const tiers = weakTierOf(name, sid);
+    const rateOf = (t) => {
+      const sec = ana && (ana.secs || []).find((x) => x.name === t);
+      return sec ? "得分率 " + anPct(sec.rate) + "（" + fmtScore(sec.score) + "/" + fmtScore(sec.full) + "）" : "";
+    };
+    const main = w.filter((t) => !(tiers.secondary.includes(t) && !tiers.main.includes(t)));
+    const extraSec = tiers.secondary.filter((t) => !w.includes(t));
+    const tagOf = (t, isSec) => {
+      const isAuto = meta.auto.includes(t) || (isSec && !meta.manual.includes(t));
+      const tip = (isSec ? "次要薄弱（60%~75%）" : "主要薄弱（低于 60%）")
+        + " · " + (isAuto ? "系统识别" : "手动标记") + (rateOf(t) ? " · " + rateOf(t) : "");
+      return `<span class="sc-wtag${isAuto ? " auto" : ""}${isSec ? " sec" : ""}" title="${esc(tip)}">${esc(t)}</span>`;
+    };
+    const tags = (main.map((t) => tagOf(t, false)).join("")
+      + extraSec.map((t) => tagOf(t, true)).join("")) || `<span class="sc-wnone">+ 标记</span>`;
+    return `<button class="sc-weak" data-weak="${sid}" title="点开多选薄弱板块；红色 = 主要薄弱，橙色 = 次要薄弱；虚线框 = 系统识别">${tags}</button>`;
   }
 
   function trackFormHtml(name) {
@@ -16089,11 +16397,13 @@ const SYNC = (() => {
     const cur = weakOf(name, sid);
     const meta = weakMetaOf(name, sid);
     const ana = studentAnalysis(name, sid);
+    const tiers = weakTierOf(name, sid);
+    const tierOf = (t) => (tiers.secondary.includes(t) && !tiers.main.includes(t) ? "次要" : tiers.main.includes(t) ? "主要" : "");
     const secOf = (t) => (ana ? (ana.secs || []).find((x) => x.name === t) : null);
     const anaHtml = ana && (ana.secs || []).length
       ? `<div class="sc-weakpop-ana"><b>这场考试的系统分析</b><br>${(ana.secs || []).map((x) => {
           const cls = x.level === "weak" ? "w" : x.level === "watch" ? "m" : "";
-          const tail = x.level === "weak" ? " · 明显薄弱" : x.level === "watch" ? " · 需关注" : "";
+          const tail = x.level === "weak" ? " · 主要薄弱" : x.level === "watch" ? " · 次要薄弱" : "";
           return `<span class="an-rate ${cls}">${esc(x.name)} ${fmtScore(x.score)}/${fmtScore(x.full)}（${anPct(x.rate)}${tail}）</span>`;
         }).join("<br>")}${(ana.skipped || []).length ? `<br><span class="hint">跳过：${esc(ana.skipped.map((x) => x.name + "（" + x.why + "）").join("；"))}</span>` : ""}</div>`
       : (analysisOfExam(name) ? `<div class="sc-weakpop-ana">这场考试分析过，但这个学生没有可用的板块分。</div>` : "");
@@ -16102,10 +16412,11 @@ const SYNC = (() => {
       <div class="sc-weakpop-b">${WEAK_TAGS.map((t) => {
         const isAuto = meta.auto.includes(t);
         const sec = secOf(t);
-        return `<label class="${isAuto ? "auto" : ""}"><input type="checkbox" data-wtag="${esc(t)}"${cur.includes(t) ? " checked" : ""}>${esc(t)}${sec ? `<span class="rate">${anPct(sec.rate)}</span>` : ""}</label>`;
+        const tier = tierOf(t);
+        return `<label class="${isAuto ? "auto" : ""}${tier === "次要" ? " sec" : ""}"><input type="checkbox" data-wtag="${esc(t)}"${cur.includes(t) ? " checked" : ""}>${esc(t)}${sec ? `<span class="rate">${anPct(sec.rate)}</span>` : ""}${tier ? `<span class="tier">${tier}</span>` : ""}</label>`;
       }).join("")}</div>
       ${anaHtml}
-      <div class="sc-weakpop-tip">虚线 = 系统按得分率识别；取消勾选再保存，下次分析不会再自动加回来。</div>
+      <div class="sc-weakpop-tip">主要薄弱 = 得分率低于 60%；次要薄弱 = 60%~75%。虚线 = 系统识别；取消勾选再保存，下次分析不会再自动加回来。</div>
       <div class="sc-weakpop-a">
         <button class="btn primary" id="scWeakSave">保存</button>
         <button class="btn ghost" id="scWeakCancel">取消</button>
@@ -16145,6 +16456,16 @@ const SYNC = (() => {
       if (i >= 0) removed.splice(i, 1);
     }
     t.weakMeta[sid] = { auto, manual: list.slice(), removed, at: Date.now() };
+    // 分级跟手动名单走：取消掉的板块从 main/secondary 里一并剔掉；
+    // 新勾的、之前没有分级的，先按「主要」记（老师自己勾的默认算主要）。
+    t.weakTier ||= {};
+    const pt = t.weakTier[sid] || {};
+    const pmain = Array.isArray(pt.main) ? pt.main : [];
+    const psec = Array.isArray(pt.secondary) ? pt.secondary : [];
+    t.weakTier[sid] = {
+      main: list.filter((x) => !psec.includes(x) || pmain.includes(x)),
+      secondary: list.filter((x) => psec.includes(x) && !pmain.includes(x)),
+    };
     save();
   }
 
@@ -16647,12 +16968,12 @@ const SYNC = (() => {
         <h4>② 判定参数（可改，改完点「按新参数重算」）</h4>
         <div class="an-in">
           <label>得分率低于 <input type="number" id="anBelow" min="0" max="100" step="1" value="${AN.params.below}">% 记薄弱</label>
-          <label><input type="number" id="anWatch" min="0" max="100" step="1" value="${AN.params.watch}">% 以下记「需要关注」</label>
+          <label><input type="number" id="anWatch" min="0" max="100" step="1" value="${AN.params.watch}">% 以下记「次要薄弱」</label>
           <label>板块最少 <input type="number" id="anMinQ" min="0" max="50" step="1" value="${AN.params.minQ}"> 道题</label>
           <label>板块满分至少 <input type="number" id="anMinFull" min="0" max="200" step="1" value="${AN.params.minFull}"> 分</label>
           <button class="btnmini" id="anRecompute">按新参数重算</button>
         </div>
-        <p class="an-note">默认：低于 60% 明显薄弱；60%～74% 需要关注；75% 及以上不标记。低得分率只说明这份卷子上这块失分多，不代表对学生能力的永久判断。</p>
+        <p class="an-note">默认：低于 60% 主要薄弱；60%～74% 次要薄弱；75% 及以上不标记。低得分率只说明这份卷子上这块失分多，不代表对学生能力的永久判断。</p>
       </div>`;
     if (!p) {
       html += `<div class="an-box"><h4>③ 分析预览</h4><div class="an-empty">${esc(AN.msg || "选好表后，这里会显示各板块满分、每个学生的得分率和建议标记。")}</div></div>`;
@@ -16750,7 +17071,7 @@ const SYNC = (() => {
         <h4>⑤ 每个学生的板块得分率与建议（匹配到 ${s.matched} 人）</h4>
         ${p.students.length ? `<div class="an-tab"><table><thead><tr><th>姓名</th>${tags.map((t) => `<th class="num">${esc(t)}</th>`).join("")}<th>建议薄弱</th></tr></thead>
           <tbody>${stRows}</tbody></table></div>` : `<div class="an-empty">一个学生都没匹配上 —— 先看下面的未匹配清单，确认姓名列对不对。</div>`}
-        <p class="an-note">红色 = 明显薄弱（低于 ${p.params.below}%）；黄色 = 需要关注（低于 ${p.params.watch}%）；「跳过」= 缺分、单题板块或映射未确认。</p>
+        <p class="an-note">红色 = 主要薄弱（低于 ${p.params.below}%）；黄色 = 次要薄弱（低于 ${p.params.watch}%）；「跳过」= 缺分、单题板块或映射未确认。</p>
       </div>
 
       <div class="an-box">
@@ -16881,6 +17202,13 @@ const SYNC = (() => {
       for (const x of autoKept.concat(manual)) if (WEAK_TAGS.includes(x) && !final.includes(x)) final.push(x);
       if (final.length) t.weak[st.sid] = final; else delete t.weak[st.sid];
       t.weakMeta[st.sid] = { auto: autoKept, manual, removed, at: Date.now() };
+      // 分级：低于 below 的进主要，below~watch 的进次要；
+      // 老师手动加进来的标签不参与分级，显示时按「主要」算。
+      t.weakTier ||= {};
+      t.weakTier[st.sid] = {
+        main: st.weak.filter((x) => !removed.includes(x)),
+        secondary: st.watch.filter((x) => !removed.includes(x) && !st.weak.includes(x)),
+      };
       if (autoKept.length) tagged++;
     }
 
@@ -16964,8 +17292,8 @@ const SYNC = (() => {
     if (!st || !a) { toast("这个学生在这场考试下没有板块分析结果", 3200); return; }
     if (title) title.textContent = st.name + " · " + examName + " · 板块分析";
     const rows = (a.secs || []).map((x) => {
-      const lv = x.level === "weak" ? `<b style="color:var(--red)">明显薄弱</b>`
-        : x.level === "watch" ? `<b style="color:var(--amber)">需要关注</b>` : "正常";
+      const lv = x.level === "weak" ? `<b style="color:var(--red)">主要薄弱</b>`
+        : x.level === "watch" ? `<b style="color:var(--amber)">次要薄弱</b>` : "正常";
       return `<tr><td><b>${esc(x.name)}</b>${x.excel && x.excel !== x.name ? `<span class="hint" style="margin-left:4px">${esc(x.excel)}</span>` : ""}</td>
         <td class="num">${fmtScore(x.score)}</td><td class="num">${fmtScore(x.full)}</td>
         <td class="num">${anPct(x.rate)}</td><td>${lv}</td></tr>`;
@@ -16976,7 +17304,7 @@ const SYNC = (() => {
     body.innerHTML = `<div class="an-tab"><table><thead><tr><th>板块</th><th class="num">实际得分</th><th class="num">板块满分</th><th class="num">得分率</th><th>判定</th></tr></thead>
       <tbody>${rows || `<tr><td colspan="5" class="an-empty">没有可用的板块分</td></tr>`}</tbody></table></div>
       <p class="an-note">总分 ${a.total === null ? "—" : fmtScore(a.total)} / ${fmtScore((cfg && cfg.totalFull) || a.total || 0)}；
-      判定阈值：低于 ${(cfg && cfg.params && cfg.params.below) || 60}% 记薄弱，低于 ${(cfg && cfg.params && cfg.params.watch) || 75}% 记需要关注。</p>
+      判定阈值：低于 ${(cfg && cfg.params && cfg.params.below) || 60}% 记主要薄弱，低于 ${(cfg && cfg.params && cfg.params.watch) || 75}% 记次要薄弱。</p>
       ${sk}
       <p class="an-note">这是按卷面每题得分算出来的，只针对这一场考试；不会影响其他考试的历史记录。</p>`;
     $("mSecDetail").classList.add("open");
@@ -19355,6 +19683,13 @@ const SYNC = (() => {
           <input type="text" id="aiModel" value="${esc(c.ai?.model || "deepseek-flash")}" style="flex:0 0 200px">
           <span class="hint" style="margin:0">别改。官方只有 <code>deepseek-flash</code> 能看图，另一个（deepseek-v4-pro）看不懂试卷图片。</span>
         </div>
+        <div class="rowset">
+          <label style="flex:0 0 88px;font-size:12px;color:var(--ink-3)">识别复核</label>
+          <label class="hint" style="margin:0;display:flex;align-items:center;gap:6px">
+            <input type="checkbox" id="aiVerify" ${c.ai?.verify !== false ? "checked" : ""}>
+            答题卡识别后自动再核对一遍数字（多一次请求，分数更准；关掉就只发一次）
+          </label>
+        </div>
         <div class="aiwarn">
           <b>⚠️ 点「分析」之前请读一遍</b>
           <ul>
@@ -19504,6 +19839,12 @@ const SYNC = (() => {
     if (aiModelEl) aiModelEl.onchange = () => {
       aiCfg().model = aiModelEl.value.trim() || "deepseek-flash";
       save();
+    };
+    const aiVerifyEl = $("aiVerify");
+    if (aiVerifyEl) aiVerifyEl.onchange = () => {
+      aiCfg().verify = !!aiVerifyEl.checked;
+      save();
+      toast(aiCfg().verify ? "识别后会再复核一遍数字（多一次请求）" : "识别后不再复核，只发一次请求", 4200);
     };
     const aiTestBtn = $("aiTest");
     if (aiTestBtn) aiTestBtn.onclick = async () => {
