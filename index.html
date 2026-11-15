@@ -3196,6 +3196,7 @@ tr.rn-on td { background: var(--accent-soft); }
     <span id="lbName"></span>
     <span style="flex:1"></span>
     <button class="btn" id="lbPop" style="display:none">新窗口打开</button>
+    <button class="btn" id="lbCopy" style="display:none" title="复制到剪贴板，可直接粘到微信 / Word / 家长群">📋 复制图片</button>
     <a class="btn" id="lbDown" download>下载</a>
     <button class="btn" id="lbClose">关闭</button>
   </div>
@@ -8188,6 +8189,8 @@ const SYNC = (() => {
   let pickFor = null;     // 「＋ 选图」按钮点的是谁
   let pickRole = "exam";  // 这次选的文件算试卷还是答题卡
   let lbUrl = null;
+  let _lbBlob = null;    // 看图器里当前这张的原图（「复制图片」用）
+  let _lbAttId = "";
 
   async function addAttachments(files, eid, role) {
     const ex = findExam(eid);
@@ -8267,6 +8270,10 @@ const SYNC = (() => {
     $("lbName").textContent = (a.name || "附件") + (a.size ? " · " + fmtSize(a.size) : "");
     $("lbDown").href = lbUrl;
     $("lbDown").download = a.name || (attId + ".bin");
+    // 「复制图片」（2026-11-15 用户要的）：记下这张的原 blob，图片时才给按钮
+    _lbBlob = blob; _lbAttId = attId;
+    const copyBtn = $("lbCopy");
+    if (copyBtn) copyBtn.style.display = "none";
 
     const stage = $("lbStage");
     const pop = $("lbPop");
@@ -8275,6 +8282,7 @@ const SYNC = (() => {
       stage.innerHTML = `<img id="lbImg" alt="" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px">`;
       $("lbImg").src = lbUrl;
       pop.style.display = "none";
+      if (copyBtn) copyBtn.style.display = "";
     } else if (kind === "pdf") {
       // Chrome 能直接内嵌 blob 的 PDF；万一渲染不了，至少还有「新窗口打开 / 下载」
       stage.innerHTML = `<iframe id="lbFrame" src="${lbUrl}" title="${esc(a.name || "")}"></iframe>`;
@@ -8295,7 +8303,41 @@ const SYNC = (() => {
 
   function closeLightbox() {
     $("lightbox").classList.remove("open");
+    _lbBlob = null; _lbAttId = "";
     if (lbUrl) { URL.revokeObjectURL(lbUrl); lbUrl = null; }
+  }
+
+  /**
+   * 把看图器里这张图**复制到剪贴板**（2026-11-15 用户要「复制答题卡图片」）。
+   *   · Chrome/Edge 的剪贴板对 jpeg 支持不稳 → 统一转成 PNG；太大（长边 > 2400）先缩，
+   *     否则几 MB 的 PNG 写剪贴板又慢又容易失败；
+   *   · 失败绝不假装成功：给原因 + 指路「下载」。
+   */
+  async function copyLbImage() {
+    if (!_lbBlob) return toast("图片还没加载好，稍等一下再点");
+    if (!navigator.clipboard || !window.ClipboardItem) {
+      return toast("这个浏览器不让写剪贴板 —— 点右边「下载」把图存下来再发", 7000);
+    }
+    try {
+      let blob = _lbBlob;
+      const maxSide = 2400;
+      const bmp = await createImageBitmap(blob);
+      const w = bmp.width, h = bmp.height;
+      const scale = Math.min(1, maxSide / Math.max(w, h));
+      if (scale < 1 || blob.type !== "image/png") {
+        const cvs = document.createElement("canvas");
+        cvs.width = Math.max(1, Math.round(w * scale));
+        cvs.height = Math.max(1, Math.round(h * scale));
+        cvs.getContext("2d").drawImage(bmp, 0, 0, cvs.width, cvs.height);
+        blob = await new Promise((res) => cvs.toBlob(res, "image/png"));
+      }
+      bmp.close && bmp.close();
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      toast("已复制这张图 —— 到微信 / Word / 家长群直接 Ctrl+V 粘贴", 6500);
+    } catch (err) {
+      console.error(err);
+      toast("复制失败：" + (err && err.message ? err.message : "浏览器不让写剪贴板") + " —— 用右边「下载」吧", 8000);
+    }
   }
 
   /* ============================================================ 渲染 */
@@ -21311,6 +21353,8 @@ const SYNC = (() => {
       document.body.appendChild(wf);
 
       $("lbClose").onclick = closeLightbox;
+      const lbCopy = $("lbCopy");
+      if (lbCopy) lbCopy.onclick = () => copyLbImage();
       $("lightbox").onclick = (e) => {
         // 刚打开的前 400ms 不认「点背景关闭」：双击看图时第二下会落在刚铺开的遮罩上，
         // 不挡的话图闪一下就没了 —— 看着跟「双击没反应」一模一样
