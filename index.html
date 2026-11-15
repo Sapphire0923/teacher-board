@@ -1398,6 +1398,13 @@ input[type=range] { accent-color: var(--accent); }
   font-size: var(--fs-mini); color: var(--ink-3); }
 
 /* ---- 侧栏「答题卡」总览页 ---- */
+/* 本次考试的材料（题目/解析）条 —— 2026-11-15 加。颜色全部走 :root 变量 */
+.pap-mat { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  border: 1px solid var(--line-strong); border-radius: var(--radius);
+  background: var(--panel); padding: 9px 13px; margin: 0 0 10px; font-size: var(--fs-cell); }
+.pap-mat b { font-weight: 600; }
+.pap-mat .hint-inline { color: var(--ink-2); }
+
 .pap-page { padding: 2px 0 24px; }
 .pap-midbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   margin: 9px 0 12px; padding: 9px 12px; background: var(--panel);
@@ -2834,6 +2841,29 @@ tr.rn-on td { background: var(--accent-soft); }
   </div>
 </div>
 
+<!-- 本次考试的题目与解析（2026-11-15）：分析答题卡时带给 AI，免得它自己猜题意 -->
+<div class="mask" id="mMaterial">
+  <div class="modal wide">
+    <header>本次考试的题目与解析</header>
+    <div class="body">
+      <p class="hint" style="margin:0 0 10px">把这一场的题目和解析放进来，AI 分析答题卡时会<b>对着它判</b>，不再自己猜题意。<b>只存在本机、跟备份一起走、不上传。</b></p>
+      <div class="sc-tools" style="margin-bottom:8px">
+        <button class="btn" id="matPick">📎 从 Word / PDF / txt 读取</button>
+        <input type="file" id="matFile" accept=".docx,.pdf,.txt,.md" hidden>
+        <span class="hint-inline" id="matInfo">也可以从 Word 里复制文字，粘到下面</span>
+      </div>
+      <textarea id="matText" class="note" rows="14" placeholder="粘贴这一场的题目 / 答案要点 / 评分标准 / 解析…"></textarea>
+      <p class="hint" style="margin:8px 0 0">分析时只用<b>前 6000 字</b>（再多只是烧 token）。这段材料里<b>不要写学生姓名</b> —— 发给 AI 的内容仍然只有「该生」。</p>
+    </div>
+    <footer>
+      <span class="result" id="matResult"></span>
+      <button class="btn ghost" id="matClear">清空</button>
+      <button class="btn" data-close="mMaterial">取消</button>
+      <button class="btn primary" id="matSave">保存</button>
+    </footer>
+  </div>
+</div>
+
 <!-- 考试成绩智能分析（2026-10-29）：导入带每题得分明细的表 → 识别板块/满分 → 预览 → 写入薄弱板块 -->
 <div class="mask" id="mAnalyze">
   <div class="modal wide">
@@ -4251,6 +4281,45 @@ var __PPDF_WORKER_SRC__ = "/**\n * @licstart The following is the entire license
     return Promise.resolve().then(walk);
   }
 
+  /* ---------------- 对外：extractText（2026-11-15 加） ----------------
+   * 把 PDF 里的**文字层**抽出来 —— 给「导入本次考试题目/解析」用（src/material.js）。
+   * 扫描件抽不出文字，返回空串；调用方要据此给「请粘贴」的提示，不许假装成功。
+   */
+  function extractText(file) {
+    return Promise.resolve().then(function () {
+      if (!isPdf(file)) throw new Error("这不是 PDF 文件。");
+      return loadDocument(file);
+    }).then(function (doc) {
+      var pdf = doc.pdf;
+      var own = doc.ownWorker;
+      var pages = Math.max(1, Number(doc.total) || Number(pdf.numPages) || 0);
+      var out = [];
+      var i = 1;
+      var step = function () {
+        if (i > pages) { closeDoc(pdf, own); return out; }
+        var n = i;
+        return pdf.getPage(n).then(function (page) {
+          return page.getTextContent().then(function (tc) {
+            var line = (tc && tc.items ? tc.items : []).map(function (it) {
+              return String((it && it.str) || "");
+            }).join(" ");
+            out.push(line);
+            try { page.cleanup(); } catch (e) { noop(e); }
+            i++;
+            return yieldToMain().then(step);
+          });
+        });
+      };
+      return step().then(function (arr) {
+        var text = arr.join("\n").replace(/[ \t]{2,}/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+        return { text: text, pages: pages };
+      }, function (err) {
+        closeDoc(pdf, own);
+        throw new Error(toChineseError(err));
+      });
+    });
+  }
+
   /* ---------------- 挂到 window ---------------- */
 
   var PPDF = {
@@ -4270,6 +4339,14 @@ var __PPDF_WORKER_SRC__ = "/**\n * @licstart The following is the entire license
     expand: function (files, opts) {
       try {
         return expand(files, opts);
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    },
+    // 抽文字层（导入「本次考试题目/解析」用，见 src/material.js）
+    extractText: function (file) {
+      try {
+        return extractText(file);
       } catch (e) {
         return Promise.reject(e);
       }
@@ -4303,6 +4380,140 @@ var __PPDF_WORKER_SRC__ = "/**\n * @licstart The following is the entire license
   if (typeof module !== "undefined" && module.exports) module.exports = PPDF;
 })();
 
+</script>
+<script>/* ============================================================
+ * 考试材料抽取（2026-11-15 加）—— 挂在 window.MATKIT
+ *
+ * 老师手上的「这一场的题目与解析」通常是 Word / PDF / txt。
+ * 这里在**本机**把文字抽出来（不上传、不联网），存进看板的
+ * config.examMaterial[考试名]，分析答题卡时带给 AI ——
+ * 这样 AI 不用再凭经验猜题目内容（2026-11-15 用户提的）。
+ *
+ * 只做「取文字」这一件事；存哪、怎么喂模型在 app.js 里。
+ * ============================================================ */
+(function () {
+  "use strict";
+
+  var MAX_CHARS = 200000;   // 存进看板的上限（localStorage 不能被一份材料撑爆）
+  var CLIP_CHARS = 6000;    // 喂给 AI 的上限（再多只是烧 token）
+
+  function unesc(s) {
+    return String(s || "")
+      .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+      .replace(/&#(\d+);/g, function (_, d) { return String.fromCodePoint(+d); })
+      .replace(/&#x([0-9a-f]+);/gi, function (_, h) { return String.fromCodePoint(parseInt(h, 16)); })
+      .replace(/&amp;/g, "&");
+  }
+
+  /** docx 正文 XML → 纯文本。段落换行、表格单元格用空格隔开。 */
+  function docxXmlToText(xml) {
+    var s = String(xml || "");
+    s = s.replace(/<w:instrText[^>]*>[\s\S]*?<\/w:instrText>/g, "");   // 域代码不要
+    s = s.replace(/<w:tab\b[^>]*\/?>/g, "\t");
+    s = s.replace(/<w:br\b[^>]*\/?>/g, "\n");
+    s = s.replace(/<w:cr\b[^>]*\/?>/g, "\n");
+    s = s.replace(/<\/w:p>/g, "\n");                                    // 段落
+    s = s.replace(/<w:t\b[^>]*>([\s\S]*?)<\/w:t>/g, function (_, t) { return t; });
+    s = s.replace(/<\/w:tc>/g, " ");                                    // 表格单元格
+    s = s.replace(/<[^>]+>/g, "");                                      // 其余标签全去
+    s = unesc(s);
+    s = s.replace(/\r\n?/g, "\n")
+      .replace(/[ \t]+\n/g, "\n")
+      .replace(/[ \t]{2,}/g, " ")
+      .replace(/\n{3,}/g, "\n\n");
+    return s.trim();
+  }
+
+  /** 从 .docx 抽文字：docx 本质是 zip，正文在 word/document.xml */
+  function fromDocx(file) {
+    var lib = typeof window !== "undefined" ? window.XlsxLite : null;
+    if (!lib || typeof lib.unzip !== "function") {
+      return Promise.reject(new Error("这个浏览器解不开 Word 文件 —— 直接把内容粘贴进来吧。"));
+    }
+    return file.arrayBuffer().then(function (buf) {
+      return lib.unzip(buf);
+    }).then(function (files) {
+      var xml = files["word/document.xml"];
+      if (!xml) throw new Error("这个 .docx 里没找到正文 —— 换一份文件，或直接把文字粘贴进来。");
+      var text = docxXmlToText(new TextDecoder("utf-8").decode(xml));
+      if (!text) throw new Error("这份 Word 里没读出文字（可能全是图片）—— 直接把内容粘贴进来吧。");
+      return text;
+    });
+  }
+
+  /** 从 .pdf 抽文字（有文字层的才抽得出；扫描件会明确报错） */
+  function fromPdf(file) {
+    var api = typeof window !== "undefined" ? window.PPDF : null;
+    if (!api || typeof api.extractText !== "function") {
+      return Promise.reject(new Error("这个浏览器读不了 PDF 的文字 —— 直接把内容粘贴进来吧。"));
+    }
+    return api.extractText(file).then(function (r) {
+      var text = String((r && r.text) || "").trim();
+      if (!text) {
+        throw new Error("这份 PDF 里没有文字（多半是扫描件）—— 请直接把题目粘贴进来，或者把 PDF 转成 Word 再读。");
+      }
+      return text;
+    });
+  }
+
+  function extOf(name) {
+    var m = String(name || "").match(/\.([a-z0-9]+)$/i);
+    return m ? m[1].toLowerCase() : "";
+  }
+
+  /**
+   * 从文件抽文字。返回 { text, name, src, note }
+   *   src  = 来源类型（DOCX / PDF / TXT）
+   *   note = 给人看的说明（比如「PDF 3 页」）
+   * 任何读不出来的情况都抛中文 Error，绝不静默返回空串。
+   */
+  function fromFile(file) {
+    if (!file) return Promise.reject(new Error("没有收到文件。"));
+    var name = file.name || "文件";
+    var type = String(file.type || "").toLowerCase();
+    var ext = extOf(name);
+    var p;
+    if (ext === "docx" || /officedocument\.wordprocessingml/.test(type)) {
+      p = fromDocx(file).then(function (t) { return { text: t, src: "DOCX", note: "Word" }; });
+    } else if (ext === "pdf" || /^application\/pdf/.test(type)) {
+      p = fromPdf(file).then(function (t) { return { text: t, src: "PDF", note: "PDF" }; });
+    } else if (ext === "txt" || ext === "md" || /^text\//.test(type)) {
+      p = file.text().then(function (t) { return { text: String(t || ""), src: ext.toUpperCase() || "TXT", note: "文本" }; });
+    } else {
+      return Promise.reject(new Error("只支持 .docx / .pdf / .txt / .md —— 从 Word 里复制文字粘贴也可以。"));
+    }
+    return p.then(function (r) {
+      var text = String(r.text || "").replace(/\r\n?/g, "\n").trim();
+      if (!text) throw new Error("这个文件里没有读出文字 —— 换一份，或直接把内容粘贴进来。");
+      if (text.length > MAX_CHARS) {
+        r.text = text.slice(0, MAX_CHARS);
+        r.note += "（太长，只保留前 " + MAX_CHARS + " 字）";
+      } else {
+        r.text = text;
+      }
+      r.name = name;
+      return r;
+    });
+  }
+
+  /** 喂给 AI 时按上限裁一下（超了明确加一句，别让模型以为材料就这么多） */
+  function clip(text, n) {
+    var t = String(text || "");
+    var lim = n || CLIP_CHARS;
+    if (t.length <= lim) return t;
+    return t.slice(0, lim) + "\n…（材料总长 " + t.length + " 字，这里只给了前 " + lim + " 字）";
+  }
+
+  window.MATKIT = {
+    version: "1.0.0",
+    MAX_CHARS: MAX_CHARS,
+    CLIP_CHARS: CLIP_CHARS,
+    fromFile: fromFile,
+    clip: clip,
+    docxXmlToText: docxXmlToText,   // 单测/排查用
+  };
+})();
 </script>
 <script>/* ==========================================================================
  * FileBox —— 附件存储
@@ -7831,6 +8042,10 @@ const SYNC = (() => {
     for (const s of DB.students) for (const e of s.exams || []) {
       if ((e.name || "").trim() === oldName) e.name = nn;
     }
+    // 这一场的题目/解析材料跟着考试名搬走（键是归一化后的考试名）
+    const bag = DB.config.examMaterial || {};
+    const mk = matKeyOf(oldName), nk2 = matKeyOf(nn);
+    if (bag[mk] && !bag[nk2]) { bag[nk2] = bag[mk]; delete bag[mk]; }
     if (view.scoreExam === oldName) view.scoreExam = nn;
     save();
   }
@@ -7838,6 +8053,8 @@ const SYNC = (() => {
   /** 删考试：从清单移除，并删掉学生身上该场考试的全部成绩（含附件） */
   function deleteExam(name) {
     DB.config.examNames = (DB.config.examNames || []).filter((x) => x !== name);
+    // 这一场的材料一起删（不然换个同名考试会捡到旧材料）
+    if (DB.config.examMaterial) delete DB.config.examMaterial[matKeyOf(name)];
     for (const s of DB.students) {
       const del = (s.exams || []).filter((e) => (e.name || "").trim() === name);
       for (const e of del) {
@@ -10964,6 +11181,8 @@ const SYNC = (() => {
   const PAPER_ANA_SYS = "你是一位有经验的初中语文老师，正在帮同事分析一个学生这次考试的答题卡。"
     + "铁律：只依据图片和给出的数据说话。"
     + "必须把「图上能直接确认的事实」「根据作答表现作出的推测」「材料不足、无法判断的」三类严格分开写，不许混着说。"
+    + "如果下面给了「本次考试的题目与解析」，它是**权威材料**：涉及题目原文、答案要点、评分标准，一律以它为准，"
+    + "不许再凭经验猜题意，也不许编造材料里没有的题目内容。"
     + "系统里没有标准答案、也没有评分细则，所以你只能从「哪块丢分多、作答里出现了什么表现」去推，"
     + "不许把推测写成诊断，不许编造这个学生为什么做错。"
     + "禁止「不答全」「答不深」「基础不扎实」这类没有出处的空形容词 —— 每句话都要能指到题号或板块。";
@@ -10972,6 +11191,7 @@ const SYNC = (() => {
     const secs = (ocr.sections || []).map((x) =>
       `- ${x.no || ""} ${x.name || "未命名板块"}：${x.score === null || x.score === undefined ? "未读到" : x.score}${x.full === null || x.full === undefined ? "" : "/" + x.full}`).join("\n");
     const ans = (ocr.answers || []).map((x) => `${x.no || "?"}.${x.answer || "?"}`).join("  ");
+    const mat = matPromptBlock(e.name);
     return [
       aiContext(s),
       "",
@@ -10981,9 +11201,13 @@ const SYNC = (() => {
       secs ? "【卷面板块得分（老师已核对）】\n" + secs : "【板块得分】卷面上没读到",
       ans ? "【作答】" + ans : "【作答】没读到",
       "",
+      mat || "【本次考试的材料】老师还没导入题目/解析 —— 题目原文和答案要点都看不到，"
+        + "所以涉及具体题目内容时只能写进「材料不足」，不许自己编题目。",
+      "",
       "请严格按下面四段输出，哪段没材料就写「材料不足」，不要凑字数：",
       "1. 【图上能直接确认的事实】只写图里看得见的：哪块扣了多少、哪几题是什么情况，带上题号。",
-      "2. 【据作答表现的推测】每条都必须写出「依据是什么」，并明确用「推测」这个词；推不出来就别写。",
+      "2. 【据作答表现的推测】每条都必须写出「依据是什么」，并明确用「推测」这个词；推不出来就别写。"
+        + "（有题目/解析材料时，依据要跟材料对得上，引到材料里的哪一问/哪个评分点。）",
       "3. 【材料不足、无法判断的】逐条写明缺什么材料（比如缺标准答案、缺主观题作答内容），以及缺了它就没法判断什么。",
       "4. 【分析局限 + 下一步最该补的三件事】先说清这份分析只能到什么程度，再给最多三条下周就能动手的具体动作，每条带可验收的标准。",
     ].join("\n");
@@ -11963,6 +12187,146 @@ const SYNC = (() => {
       || (order.indexOf(a.name) - order.indexOf(b.name)));
     return out;
   }
+
+  /* ============================================ 考试材料（题目 / 解析）
+   * 2026-11-15 用户要求：「给 AI 发这次考试的题目和解析，它会不会聪明一点」。
+   * 会 —— 分析答题卡时模型看不到题目原文，只能按常见考法猜，于是出现「张冠李戴」。
+   *
+   * 存哪儿：DB.config.examMaterial[归一化考试名] = { text, chars, cut, src, at }
+   *   · 按考试名（批次）存，一次导入全班共用；跟着备份一起走；
+   *   · 只存文字、不上传；喂给 AI 时截到 6000 字；
+   *   · 改名/删考试时材料跟着走（见 renameExam / deleteExam）。
+   * 三条底线：材料只进 prompt，**不改成绩、不改分析文本**；清空立刻恢复原行为。
+   */
+  const MAT_CLIP_CHARS = (typeof window !== "undefined" && window.MATKIT && window.MATKIT.CLIP_CHARS) || 6000;
+  const MAT_MAX_CHARS = (typeof window !== "undefined" && window.MATKIT && window.MATKIT.MAX_CHARS) || 200000;
+
+  function matKeyOf(name) { return examKeyOf({ name: String(name || "") }); }
+
+  function materialOf(name) {
+    const bag = DB.config.examMaterial || {};
+    const m = bag[matKeyOf(name)];
+    return (m && typeof m.text === "string" && m.text.trim()) ? m : null;
+  }
+  function materialText(name) { const m = materialOf(name); return m ? m.text : ""; }
+
+  function setMaterial(name, text, src) {
+    const k = matKeyOf(name);
+    if (!k) return false;
+    const t = String(text || "").replace(/\r\n?/g, "\n").trim();
+    DB.config.examMaterial = DB.config.examMaterial || {};
+    if (!t) { delete DB.config.examMaterial[k]; save(); return true; }
+    const cut = t.length > MAT_MAX_CHARS;
+    const t2 = cut ? t.slice(0, MAT_MAX_CHARS) : t;
+    DB.config.examMaterial[k] = {
+      text: t2, chars: t2.length, cut: cut, src: String(src || ""),
+      at: new Date().toISOString(),
+    };
+    save();
+    return true;
+  }
+
+  /** 材料 → prompt 段（没材料返回空串，调用方据此保持原来的行为） */
+  function matPromptBlock(name) {
+    const m = materialOf(name);
+    if (!m) return "";
+    const text = String(m.text || "");
+    const body = text.length > MAT_CLIP_CHARS
+      ? text.slice(0, MAT_CLIP_CHARS) + "\n…（材料总长 " + text.length + " 字，这里只给了前 " + MAT_CLIP_CHARS + " 字）"
+      : text;
+    return [
+      "【本次考试的题目与解析（老师提供的权威材料 —— 一切以它为准）】",
+      body,
+      "※ 材料里有明确题目原文 / 答案要点 / 评分标准的，一律按它判，不许再凭经验猜题意；材料里没涉及的题，仍按「材料不足」处理。",
+      "※ 材料里如果出现学生姓名，一律忽略，不要写进回答。",
+    ].join("\n");
+  }
+
+  /* ---- 材料弹窗 ---- */
+  let _matBatch = "";
+  let _matSrc = "";
+
+  function updateMatCount() {
+    const t = $("matText"), r = $("matResult");
+    if (!t || !r) return;
+    const n = String(t.value || "").length;
+    r.textContent = n
+      ? n + " 字" + (n > MAT_CLIP_CHARS ? `（分析时只用前 ${MAT_CLIP_CHARS} 字）` : "")
+      : "还没写内容";
+  }
+
+  function openMaterial(batchName) {
+    if (!batchName) return toast("先选一个考试批次，再导入这一场的题目/解析", 5000);
+    _matBatch = batchName;
+    const m = materialOf(batchName);
+    _matSrc = m && m.src ? m.src : "";
+    $("matText").value = m ? m.text : "";
+    $("matInfo").textContent = m
+      ? "已导入 " + m.text.length + " 字" + (m.at ? " · " + String(m.at).slice(0, 10) : "") + (m.cut ? "（超长已截断）" : "")
+      : "也可以从 Word 里复制文字，粘到下面";
+    updateMatCount();
+    $("mMaterial").classList.add("open");
+    setTimeout(() => { const t = $("matText"); if (t) t.focus(); }, 60);
+  }
+
+  function bindMaterial() {
+    const box = $("mMaterial");
+    if (!box || box.dataset.bound) return;
+    box.dataset.bound = "1";
+    $("matText").addEventListener("input", updateMatCount);
+    $("matPick").onclick = () => { $("matFile").value = ""; $("matFile").click(); };
+    $("matFile").onchange = async () => {
+      const f = ($("matFile").files || [])[0];
+      $("matFile").value = "";
+      if (!f) return;
+      $("matInfo").textContent = "正在读 " + f.name + "…";
+      try {
+        const r = await window.MATKIT.fromFile(f);
+        const t = $("matText");
+        if (t.value.trim() && !confirm(`下面已经有内容了。用「${f.name}」读出来的文字【替换】掉吗？\n\n（点取消会保留原来的）`)) {
+          $("matInfo").textContent = "已取消，原来的内容没动";
+          return;
+        }
+        t.value = r.text;
+        _matSrc = r.src;
+        updateMatCount();
+        $("matInfo").textContent = `从「${f.name}」读到 ${r.text.length} 字（${r.note}）—— 检查一下有没有乱码再保存`;
+        toast(`读出来了：${f.name} · ${r.text.length} 字`, 5000);
+      } catch (err) {
+        $("matInfo").textContent = "读不出来：" + err.message;
+        toast(err.message, 8000);
+      }
+    };
+    $("matClear").onclick = () => {
+      if (!$("matText").value.trim()) return toast("本来就是空的", 3000);
+      if (!confirm("清空这一场的题目/解析？清空后分析又只能猜题意了。")) return;
+      $("matText").value = "";
+      updateMatCount();
+      if (setMaterial(_matBatch, "")) {
+        $("mMaterial").classList.remove("open");
+        renderStage();
+        toast("已清空这一场的材料", 4000);
+      }
+    };
+    $("matSave").onclick = () => {
+      const t = String($("matText").value || "");
+      if (!t.trim()) return toast("还没写内容 —— 先粘贴，或点上面「从 Word / PDF / txt 读取」", 5000);
+      if (setMaterial(_matBatch, t, _matSrc)) {
+        $("mMaterial").classList.remove("open");
+        renderStage();
+        toast(`已存好「${_matBatch}」的题目/解析（${t.trim().length} 字）—— 分析答题卡时会带给 AI`, 6500);
+      }
+    };
+  }
+
+  // 只给 e2e / 排查用：不参与任何业务逻辑
+  try {
+    window.__matDebug = {
+      has: (n) => !!materialOf(n),
+      text: (n) => materialText(n),
+      block: (n) => matPromptBlock(n),
+    };
+  } catch (e) { /* 忽略 */ }
 
   /* ============================================ 工作台（首页）
    * 2026-10-18 用户要求：「先更新工作台」。以前看板是个「按数据类型分的档案柜」——
@@ -13282,7 +13646,19 @@ const SYNC = (() => {
         title="这一批所有已核对学生的方案，一人一页">⬇ 导出这一批（Word）</button>
         <button class="btn ghost" id="papBack">← 全部批次</button></span></div>`;
 
+    // 本次考试的材料（题目/解析）：一次导入全班共用，分析答题卡时带给 AI（2026-11-15 加）
+    const mat = materialOf(b.name);
+    const matBar = `<div class="pap-mat" id="papMat">
+      <b>📎 本次考试的材料</b>
+      <span class="hint-inline" id="papMatS">${mat
+        ? `已导入 ${mat.text.length} 字${mat.src ? "（" + esc(mat.src) + "）" : ""} —— 分析答题卡时会带给 AI`
+        : "还没导入 —— 导入这一场的题目与解析后，AI 分析时不用再猜题意"}</span>
+      <span style="flex:1"></span>
+      <button class="btn ghost" id="papMatBtn">${mat ? "编辑题目 / 解析" : "导入题目 / 解析"}</button>
+    </div>`;
+
     stage.innerHTML = `<div class="pap-page">${head}
+      ${matBar}
       <div class="sc-tools stick">
         <input class="sc-q" id="papQ" placeholder="搜姓名…" autocomplete="off" value="${esc(pq)}">
         <span class="hint-inline">${pq ? `筛出 ${show.length} 人` : "边打边联想，选中就筛到他"}</span>
@@ -13337,6 +13713,9 @@ const SYNC = (() => {
   function bindPaperPage() {
     const stage = $("stage");
     if (!stage) return;
+    // 本次考试的材料（题目/解析）入口（2026-11-15 加）
+    const matBtn = $("papMatBtn");
+    if (matBtn) matBtn.onclick = () => openMaterial(view.paperBatch);
     const midEl = $("papMid");
     if (midEl) midEl.onchange = () => {
       DB.config.examTarget = DB.config.examTarget || { midterm: "" };
@@ -20736,6 +21115,7 @@ const SYNC = (() => {
     $("impNext").onclick = wizardNext;
     $("impBack").onclick = () => { if (W.step > 0) { W.step--; drawWizard(); } };
     $("chatGo").onclick = importChat;
+    bindMaterial();   // 本次考试的题目/解析弹窗（2026-11-15 加）
 
     // 附件：隐藏的文件选择器 + 看图器 + 全局粘贴（只注册一次）
     if (!$("attFile")) {
