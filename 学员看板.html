@@ -5687,6 +5687,12 @@ const SYNC = (() => {
 
     // 组字中的半截拼音不是名字，别拿去联想（见 renderStage 上面那段「输入法保护」）
     el.addEventListener("input", (e) => { if (e.isComposing || imeBusy()) return; active = -1; show(); });
+    // 2026-11-15 用户报「打字不弹联想，得点一下空白才出来」：
+    // 有些输入法（Edge + 微软拼音实测）上屏时只发 compositionend、**不一定再补一个 input**，
+    // 于是 show() 永远等不到，只能等下一次聚焦/重画才弹。这里在组字结束时补一次。
+    el.addEventListener("compositionend", () => {
+      setTimeout(() => { if (el.isConnected && !imeBusy()) { active = -1; show(); } }, 0);
+    }, true);
     el.addEventListener("focus", show);
     el.addEventListener("blur", () => setTimeout(close, 150));
     el.addEventListener("keydown", (e) => {
@@ -5821,6 +5827,12 @@ const SYNC = (() => {
     // 同上：输入法组字期间不联想。否则刚敲一个 y 就跳出「没有叫「y」的学生」，
     // 看着像搜索坏了 —— 其实那串拼音还没上屏，根本不该拿去筛名字。
     el.addEventListener("input", (e) => { if (e.isComposing || imeBusy()) return; active = -1; show(); });
+    // 2026-11-15 用户报「打字不弹联想，得点一下空白才出来」：
+    // 有些输入法（Edge + 微软拼音实测）上屏时只发 compositionend、**不一定再补一个 input**，
+    // 于是 show() 永远等不到，只能等下一次聚焦/重画才弹。这里在组字结束时补一次。
+    el.addEventListener("compositionend", () => {
+      setTimeout(() => { if (el.isConnected && !imeBusy()) { active = -1; show(); } }, 0);
+    }, true);
     el.addEventListener("focus", () => { _nsFocusId = myId; show(); });
     el.addEventListener("blur", () => setTimeout(close, 180));
     window.addEventListener("resize", place);
