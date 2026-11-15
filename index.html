@@ -1405,6 +1405,19 @@ input[type=range] { accent-color: var(--accent); }
 .pap-mat b { font-weight: 600; }
 .pap-mat .hint-inline { color: var(--ink-2); }
 
+/* 追问 / 纠错对话（2026-11-15 第二批）—— 颜色走 :root 变量 */
+.pap-qa { margin-top: 10px; border-top: 1px dashed var(--line-strong); padding-top: 9px; }
+.pap-qa-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: var(--fs-cell); margin-bottom: 6px; }
+.pap-qa-list { display: flex; flex-direction: column; gap: 7px; max-height: 340px; overflow: auto;
+  padding: 2px 2px 6px; margin-bottom: 6px; }
+.pap-qa-msg { border: 1px solid var(--line-strong); border-radius: 10px; padding: 7px 10px;
+  background: var(--panel); font-size: var(--fs-cell); line-height: 1.7; max-width: 92%; }
+.pap-qa-msg.me { align-self: flex-end; background: var(--panel-2, var(--panel)); border-style: dashed; }
+.pap-qa-msg.ai { align-self: flex-start; }
+.pap-qa-t { white-space: pre-wrap; }
+.pap-qa-meta { margin-top: 4px; font-size: 12px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pap-qa-in { flex: 1; min-width: 200px; }
+
 .pap-page { padding: 2px 0 24px; }
 .pap-midbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   margin: 9px 0 12px; padding: 9px 12px; background: var(--panel);
@@ -11248,6 +11261,85 @@ const SYNC = (() => {
     }
   }
 
+  /* ---- 追问对话（2026-11-15 第二批）-------------------------------
+   * 老师对分析不满意时，就地追问 / 纠错 —— 比重新分析整份快很多。
+   * 设计取舍：
+   *   · 上下文 = 学生数据 + 这次考试 + 材料（题目/解析）+ 现有分析 + 最近几条问答；
+   *   · 默认**不带图**（有题目解析就够，省 token）；勾了「带答题卡图」才发前 2 张；
+   *   · 回复只进 e.paper.qa，**不改分析**；要改必须老师点「用这条替换分析」（旧版进历史版本）；
+   *   · 发给 AI 的仍然只有昵称：老师自己打的字里若有全名，也换成昵称再发。
+   */
+  const PAPER_QA_SYS = "你是一位有经验的初中语文老师，刚给同事写完一份答题卡分析，现在同事对其中某些话有疑问，要跟你逐句核对。"
+    + "铁律：只依据给的材料（本次考试的题目/解析、识别出的作答与板块得分、你之前写的那份分析）回答。"
+    + "材料里没有的就直说「材料里没有」，不许编题目内容、不许编学生为什么做错。"
+    + "同事指出你写错的地方：先承认哪一句错了，再给出改正后的说法，带上题号或板块。"
+    + "回答要短（一般 3~6 句）；需要重写某一段时，直接给出可以整段替换的文字。"
+    + "不要提「AI」「模型」「提示词」；不要写学生全名，只按给的昵称称呼。";
+
+  async function askPaperQA(s, e, question, useImg) {
+    if (!paperDone(e)) return toast("先把答题卡核对完、点过「确认并写入」，再追问", 5000);
+    const nick = nickOf(s.name) || "该生";
+    const q0 = String(question || "");
+    const q = (s.name ? q0.split(String(s.name)).join(nick) : q0).trim();
+    if (!q) return toast("先写一句要问的 —— 比如「第 20 题判错了」", 4500);
+    if (!aiKey()) return toast("还没填 API key —— 去「设置 → AI 分析」填一个", 6500);
+    const ocr = e.paper.ocr || {};
+    const secs = (ocr.sections || []).map((x) =>
+      `- ${x.no || ""} ${x.name || "未命名板块"}：${x.score === null || x.score === undefined ? "未读到" : x.score}${x.full === null || x.full === undefined ? "" : "/" + x.full}`).join("\n");
+    const ans = (ocr.answers || []).map((x) => `${x.no || "?"}.${x.answer || "?"}`).join("  ");
+    const hist = (e.paper.qa || []).slice(-6)
+      .map((m) => (m.role === "user" ? "老师：" : "你：") + String(m.text || "").slice(0, 1200)).join("\n");
+    const prompt = [
+      aiContext(s),
+      "",
+      "【这次考试】",
+      `名称：${anonymize(String(e.name || ""), s.name) || "未命名"}　日期：${e.date || "未记"}　`
+        + (hasScore(e) ? `总分 ${e.score}${typeof e.full === "number" ? "/" + e.full : ""}` : "总分未记"),
+      secs ? "【卷面板块得分（老师已核对）】\n" + secs : "【板块得分】卷面上没读到",
+      ans ? "【作答】" + ans : "【作答】没读到",
+      matPromptBlock(e.name)
+        || "【本次考试的材料】老师还没导入题目/解析 —— 题目原文看不到，涉及题目的判断只写「材料里没有」。",
+      "",
+      "【你之前写的那份分析（老师看过，可能不满意）】",
+      String((e.paper.analysis && e.paper.analysis.text) || "").slice(0, 4000),
+      hist ? "\n【刚才的问答】\n" + hist : "",
+      "",
+      "【老师这次说】" + q,
+      "",
+      `（称呼这个孩子用「${nick}」，不要写全名。）`,
+      "请直接回答这一次的问题，不要重复整份分析。",
+    ].join("\n");
+    const imgs = useImg ? await paperImageParts(paperCards(e).slice(0, 2)) : [];
+    const r = await dsCall(PAPER_QA_SYS, [
+      { type: "text", text: prompt },
+      ...imgs.map((p) => ({ type: "image_url", image_url: { url: p.url } })),
+    ], { maxTokens: 1600 });
+    const at = new Date().toISOString();
+    e.paper.qa = (e.paper.qa || []).concat([
+      { role: "user", text: q, at: at },
+      { role: "ai", text: r.text, at: at, model: r.model, usage: r.usage },
+    ]).slice(-30);   // 只留最近 30 条，别把 localStorage 撑爆
+    save();
+    paperRefresh();
+    toast("它回了 —— 不满意可以接着说；满意就点那条下面的「用这条替换分析」", 5200);
+    return true;
+  }
+
+  /** 把某条 AI 回复替换成正式分析（旧版进历史版本，不丢老师改过的内容） */
+  function useQaAsAna(s, e, idx) {
+    const m = (e.paper.qa || [])[Number(idx)];
+    if (!m || m.role !== "ai" || !String(m.text || "").trim()) return toast("这条回复找不到了");
+    if (!confirm("用这条回复替换现在的分析？\n\n原来那版会进「历史版本」，不会丢。")) return;
+    archiveAnalysis(e);
+    e.paper.analysis = Object.assign({}, e.paper.analysis, {
+      text: String(m.text || "").trim(), at: new Date().toISOString(),
+      model: m.model || e.paper.analysis.model, edited: false, fromQa: true,
+    });
+    save();
+    paperRefresh();
+    toast("已经换成这条了 —— 旧版在「历史版本」里，随时能恢复", 6000);
+  }
+
   /* ---- 给学生和家长的话术 ------------------------------------------ */
 
   const PAPER_TALK_SYS = "你是一位初中语文老师，刚看完一个学生的答题卡，现在要给这个孩子和孩子的家长各说一段话。"
@@ -11535,6 +11627,33 @@ const SYNC = (() => {
     toast(`已写进成绩页「${name}」：主要 ${main.length} 个、次要 ${sec.length} 个`, 5200);
   }
 
+  /** 追问对话块（2026-11-15 第二批）：对这份分析不满意就直接问 / 纠正，回复可一键替换分析 */
+  function paperQaHtml(s, e) {
+    const qa = e.paper.qa || [];
+    const list = qa.length
+      ? `<div class="pap-qa-list">${qa.map((m, i) => `
+          <div class="pap-qa-msg ${m.role === "user" ? "me" : "ai"}">
+            <div class="pap-qa-t">${m.role === "user" ? esc(m.text || "") : mdLite(m.text || "")}</div>
+            <div class="pap-qa-meta">${m.role === "user" ? "你" : "AI"} · ${esc(tsTxt(m.at))}
+              ${m.role === "ai" ? `<button class="btnmini" data-paqause="${esc(e.id)}" data-qa="${i}"
+                title="把这条回复变成正式的分析（旧版进历史版本）">用这条替换分析</button>` : ""}</div>
+          </div>`).join("")}</div>`
+      : `<p class="hint" style="margin:2px 0 0">比如：「第 20 题判错了，原文是……」「这条依据在哪看到的？」「把第 2 段重写一下」。材料（题目/解析）会自动带上。</p>`;
+    return `<div class="pap-qa" id="papQa">
+      <div class="pap-qa-h"><b>💬 追问 / 纠错</b>
+        <span class="hint-inline">它答得不对就接着说 —— 比重新分析整份快；满意的那条可以一键替换成新分析</span>
+        <span style="flex:1"></span>
+        <label class="hint-inline" title="带上答题卡图会让它多花约 2000 token，但能核对具体题面">
+          <input type="checkbox" id="papQaImg"> 带答题卡图</label>
+      </div>
+      ${list}
+      <div class="papareabar">
+        <input class="sc-q pap-qa-in" id="papQaIn" placeholder="接着问 / 纠正它（回车发送）" autocomplete="off">
+        <button class="btn primary" id="papQaGo" data-paqa="${esc(e.id)}">发送</button>
+      </div>
+    </div>`;
+  }
+
   function paperAnaHtml(s, e) {
     const an = e.paper.analysis;
     if (!an || !an.text) return "";
@@ -11562,6 +11681,7 @@ const SYNC = (() => {
              <button class="btn ghost" id="papAnCancel">取消</button>
              <span class="hint-inline">导出的 Word 和复制的文字都用你改过的这版</span></div>`
         : `<div class="aitext">${mdLite(an.text)}</div>`}
+      ${editingAna ? "" : paperQaHtml(s, e)}
       ${verBlock}
       <div class="aifoot">分析是 AI 给的，只能当参考 —— 它对不对你比我清楚，不合适就点「✎ 改」直接改。</div></div>`;
   }
@@ -13922,6 +14042,38 @@ const SYNC = (() => {
       if (!aiKey()) return toast("还没填 API key —— 去「设置 → AI 分析」填一个", 6500);
       runPaperAnalysis(s, ex, el);
     });
+    /* ---- 追问对话（2026-11-15 第二批）：对分析不满意就地追问 / 纠错 ---- */
+    const qaGo = $("papQaGo");
+    const qaIn = $("papQaIn");
+    if (qaGo && qaIn) {
+      const sendQa = async () => {
+        const ex = findExam(qaGo.dataset.paqa);
+        if (!ex) return toast("找不到那场考试了");
+        if (!String(qaIn.value || "").trim()) { qaIn.focus(); return toast("先写一句要问的", 4000); }
+        const imgEl = $("papQaImg");
+        const oldTxt = qaGo.textContent;
+        qaGo.disabled = true;
+        qaGo.textContent = "问…";
+        try {
+          await askPaperQA(s, ex, qaIn.value, !!(imgEl && imgEl.checked));
+        } catch (err) {
+          console.error(err);
+          toast(err.message, 7000);
+        } finally {
+          qaGo.disabled = false;
+          qaGo.textContent = oldTxt || "发送";
+        }
+      };
+      qaGo.onclick = sendQa;
+      qaIn.onkeydown = (ev) => {
+        if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); sendQa(); }
+      };
+    }
+    d.querySelectorAll("[data-paqause]").forEach((el) => el.onclick = () => {
+      const ex = findExam(el.dataset.paqause);
+      if (!ex) return toast("找不到那场考试了");
+      useQaAsAna(s, ex, el.dataset.qa);
+    });
     d.querySelectorAll("[data-papanadel]").forEach((el) => el.onclick = () => {
       const ex = findExam(el.dataset.papanadel);
       if (!ex || !ex.paper) return;
@@ -14099,7 +14251,9 @@ const SYNC = (() => {
    * 在卡片页（抽屉模式）里就重画抽屉。
    */
   function paperRefresh() {
-    if (view.paperStudent) { renderStage(); return; }
+    // 答题卡页（名单 / 完整分析页）都要重画 stage：分析生成后名单上那行要立刻变成
+    // 「看方案」，否则老师以为没生成（2026-11-15 实测：只 renderDetail 时名单不刷新）
+    if (view.mode === "paper" || view.paperStudent) { renderStage(); return; }
     renderDetail();
   }
 
