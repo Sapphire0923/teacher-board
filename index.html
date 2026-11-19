@@ -11792,6 +11792,50 @@ async function verifyPaperNumbers(ocr, parts) {
   }
 
   /** 「给学生和家长的话术」整块 */
+  /* ---- 作文分析（2026-11-19 加，用户要求：细品考场作文，按初中阅卷标准出报告） ---- */
+  const PAPER_COMPO_SYS = "你是一位有二十年经验的初中语文阅卷老师，正在细品一篇学生的考场作文。"
+    + "铁律："
+    + "1. 只依据图片上看到的作文原文，不许编造学生没写过的话；"
+    + "2. 引用学生原文时**原样照录**（错别字、病句都照抄），要指出错字就单独列出来，别替他改；"
+    + "3. 按初中作文阅卷标准评：内容立意、语言表达、结构条理三个维度分别给分，再给总分和档位；"
+    + "4. 满分按卷面标注（没标就按 50 分制）；每个分数都要说清依据，别写空泛评价；"
+    + "5. 输出必须是规范现代汉语，不得出现错别字；"
+    + "6. 报告固定按【题目对照】【得分】【逐段细品】【修改建议】【总评一句话】五个部分写。";
+
+  function paperCompoAsk(s, e) {
+    const mat = materialOf(e.name);
+    const mtxt = (mat && mat.text ? String(mat.text) : "").trim();
+    return [
+      "【老师导入的本次考试材料（含作文题目/要求）】",
+      mtxt ? mtxt.slice(0, 1800) : "（老师没导入材料 —— 作文题目只能从卷面上的题干看，看不到就明说）",
+      "",
+      "【这个学生】" + (nickOf(s.name) || "该生") + "，本次考试「" + (e.name || "") + "」。",
+      "",
+      "【你要做的】",
+      "1. 先在答题卡图片里找到作文（一般在最后，可能占 1～2 页）；",
+      "2. 把学生写的作文完整读一遍，别只看开头结尾；",
+      "3. 对照上面材料里的作文题目/要求，判断他跑没跑题、扣没扣题；",
+      "4. 按初中作文阅卷标准逐项评：内容立意、语言表达、结构条理；",
+      "5. 输出纯文本报告（不要代码块），按规定的五个部分分段。",
+    ].join("\n");
+  }
+
+  function paperCompoHtml(s, e) {
+    const c = e.paper && e.paper.compo;
+    const has = !!(c && c.text);
+    return `<div class="aibox" style="border-top:none;padding-top:0;margin-top:4px">
+      <div class="aihead"><b>✍️ 作文分析</b>
+        <span class="hint-inline">${has
+          ? esc(c.model || "") + " · " + esc(tsTxt(c.at)) + (c.imgs ? " · " + c.imgs + " 张图" : "")
+          : "对照你导入的作文题目，按初中阅卷标准细评"}</span>
+        <span style="flex:1"></span>
+        <button class="btnmini" data-papcompo="${e.id}">${has ? "重新生成" : "生成作文分析"}</button>
+        ${has ? `<button class="btnmini" data-papcompocopy="${e.id}">复制</button>` : ""}
+      </div>
+      ${has ? `<div style="white-space:pre-wrap;line-height:1.8;font-size:var(--fs-body);color:var(--ink-2);padding:6px 2px 2px">${esc(c.text)}</div>` : ""}
+    </div>`;
+  }
+
   function paperTalkHtml(s, e) {
     const talk = e.paper.talk;
     const editingTalk = view.paperEdit && view.paperEdit.eid === e.id && view.paperEdit.part === "talk";
@@ -11820,6 +11864,36 @@ async function verifyPaperNumbers(ocr, parts) {
   }
 
   /** 导出 / 复制那一行 */
+  /**
+   * 生成作文分析（2026-11-19 加）。
+   * 发的是整份答题卡的图，模型自己找作文；报告存在 e.paper.compo，可重新生成。
+   */
+  async function analyzeCompo(s, e, btn) {
+    if (!aiKey()) return toast("还没填 API key —— 去「设置 → AI 分析」填一个", 6500);
+    const parts = await paperImageParts(paperCards(e));
+    if (!parts.length) return toast("答题卡的图读不出来 —— 重新传一次再分析", 6500);
+    const old = btn ? btn.innerHTML : null;
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="busy"></span> 细品中…'; }
+    try {
+      const r = await dsCall(PAPER_COMPO_SYS, [
+        { type: "text", text: paperCompoAsk(s, e) },
+        ...parts.map((p) => ({ type: "image_url", image_url: { url: p.url } })),
+      ], { maxTokens: 6000 });
+      e.paper.compo = {
+        text: r.text, at: new Date().toISOString(),
+        model: r.model, imgs: parts.length, usage: r.usage,
+      };
+      save(); paperRefresh();
+      toast("作文分析生成好了");
+    } catch (err) {
+      console.error(err);
+      toast("作文分析失败：" + (err.message || err), 7000);
+    } finally {
+      const b = document.querySelector(`[data-papcompo="${e.id}"]`);
+      if (b && old) { b.disabled = false; b.innerHTML = old; }
+    }
+  }
+
   function paperExpHtml(s, e) {
     return `<div class="papareabar" style="margin-top:6px">
       <button class="btn" data-papexp="${e.id}">📄 导出 Word</button>
@@ -11836,7 +11910,7 @@ async function verifyPaperNumbers(ocr, parts) {
     // 薄弱分级在「还没生成分析」时也要看得到 —— 核对确认完就有数了
     const weak = paperWeakHtml(s, e);
     if (intro) return weak + intro;
-    return weak + paperAnaHtml(s, e) + paperTalkHtml(s, e) + paperExpHtml(s, e);
+    return weak + paperAnaHtml(s, e) + paperCompoHtml(s, e) + paperTalkHtml(s, e) + paperExpHtml(s, e);
   }
 
   /** 详情页里那块「到期中的复习计划」 */
@@ -14092,6 +14166,24 @@ async function verifyPaperNumbers(ocr, parts) {
       const ex = findExam(el.dataset.paprev);
       const s = ex ? studentOfExam(ex.id) : null;
       if (ex && s && paperHas(ex)) openPaperReview(s.id, ex.id);
+    });
+    stage.querySelectorAll("[data-papcompo]").forEach((el) => el.onclick = (ev) => {
+      ev.stopPropagation();
+      const ex = findExam(el.dataset.papcompo);
+      const st = ex ? studentOfExam(ex.id) : null;
+      if (!ex || !st) return toast("找不到那场考试了");
+      analyzeCompo(st, ex, el);
+    });
+    stage.querySelectorAll("[data-papcompocopy]").forEach((el) => el.onclick = (ev) => {
+      ev.stopPropagation();
+      const ex = findExam(el.dataset.papcompocopy);
+      if (!ex || !ex.paper || !ex.paper.compo) return;
+      const t = String(ex.paper.compo.text || "");
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(t).then(
+          () => toast("作文分析已复制"),
+          () => toast("复制失败，手动选一下文字复制", 5000));
+      } else toast("这个浏览器不给自动复制，手动选一下文字", 5000);
     });
     stage.querySelectorAll("[data-papana]").forEach((el) => el.onclick = (ev) => {
       ev.stopPropagation();
