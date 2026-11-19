@@ -8358,6 +8358,8 @@ const SYNC = (() => {
   const view = {
     filter: { kind: "all" }, query: "", mode: "cards",
     selected: null, sort: { key: "total", dir: 1 }, followTop: 5,
+    // 答题卡批次：是否正在编辑考试信息（2026-11-19 加）
+    papEditInfo: false,
     // 批量选择（2026-10-16 加）：选中的学生 id 列表 + 批量操作面板开不开
     selIds: [], batchOpen: false,
     // 语文打卡：选中的任务 id 与当前展示的状态筛选
@@ -13841,11 +13843,25 @@ const SYNC = (() => {
 
     const head = `<div class="sc-detail-h">
       <b>答题卡</b>
-      <span class="hint-inline">${esc(b.name)} · ${esc(b.date || "没写日期")}${typeof b.full === "number" ? " · 满分 " + b.full : ""}
-        · 已核对 ${b.done} / ${DB.students.length} 人</span>
-      <span class="sc-actions"><button class="btn" id="papExport"
-        title="这一批所有已核对学生的方案，一人一页">⬇ 导出这一批（Word）</button>
-        <button class="btn ghost" id="papBack">← 全部批次</button></span></div>`;
+      ${view.papEditInfo ? `
+        <span class="hint-inline" style="display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <input id="papEName" type="text" value="${esc(b.name)}" placeholder="考试名称" style="width:190px;padding:5px 8px;border:1px solid var(--line);border-radius:7px">
+          <input id="papEDate" type="date" value="${esc(b.date || "")}" style="padding:5px 8px;border:1px solid var(--line);border-radius:7px">
+          <span>满分</span>
+          <input id="papEFull" type="number" value="${typeof b.full === "number" ? b.full : 150}" style="width:72px;padding:5px 8px;border:1px solid var(--line);border-radius:7px">
+        </span>
+        <span class="sc-actions">
+          <button class="btn primary" id="papESave">保存</button>
+          <button class="btn ghost" id="papECancel">取消</button>
+        </span>` : `
+        <span class="hint-inline">${esc(b.name)} · ${esc(b.date || "没写日期")}${typeof b.full === "number" ? " · 满分 " + b.full : ""}
+          · 已核对 ${b.done} / ${DB.students.length} 人</span>
+        <span class="sc-actions">
+          <button class="btn ghost" id="papEEdit" title="改考试名称 / 日期 / 满分">✎ 编辑考试信息</button>
+          <button class="btn" id="papExport"
+          title="这一批所有已核对学生的方案，一人一页">⬇ 导出这一批（Word）</button>
+          <button class="btn ghost" id="papBack">← 全部批次</button></span>`}
+        </div>`;
 
     // 本次考试的材料（题目/解析）：一次导入全班共用，分析答题卡时带给 AI（2026-11-15 加）
     const mat = materialOf(b.name);
@@ -13932,6 +13948,30 @@ const SYNC = (() => {
       view.paperStudent = null;
       renderStage();
     });
+    // 编辑考试信息（2026-11-19）：改考试名 / 日期 / 满分
+    { const ed = $("papEEdit"); if (ed) ed.onclick = () => { view.papEditInfo = true; renderStage(); }; }
+    { const ec = $("papECancel"); if (ec) ec.onclick = () => { view.papEditInfo = false; renderStage(); }; }
+    { const es = $("papESave"); if (es) es.onclick = () => {
+        const oldName = view.paperBatch;
+        const newName = ($("papEName").value || "").trim();
+        const newDate = $("papEDate").value || "";
+        const newFull = Number($("papEFull").value) || null;
+        if (!newName) { toast("考试名称不能空"); $("papEName").focus(); return; }
+        if (newName !== oldName) {
+          const others = examNameList().filter((x) => x !== oldName);
+          if (others.includes(newName) && !window.confirm(`已经有一场叫「${newName}」了，要把这一批并进去吗？`)) return;
+          renameExam(oldName, newName);
+        }
+        for (const st of DB.students) for (const e of (st.exams || [])) {
+          if ((e.name || "").trim() !== newName) continue;
+          if (newDate) e.date = newDate;
+          if (newFull) e.full = newFull;
+        }
+        if (view.paperBatch === oldName) view.paperBatch = newName;
+        view.papEditInfo = false;
+        save(); renderStage();
+        toast("考试信息已更新");
+      }; }
     const back = $("papBack");
     if (back) back.onclick = () => {
       view.paperBatch = null; view.paperFilter = "all"; view.paperStudent = null; renderStage();
