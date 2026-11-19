@@ -12929,7 +12929,9 @@ const SYNC = (() => {
    * 三条底线一个字都不动：拆页只产出普通 File，**不写库、不覆盖、不改归属**；
    * 认不准的页名（IMG_2301.pdf 这类）照样进待确认区。
    */
-  const PP_PDF_OPTS = { maxPages: 30, longEdge: 1600, quality: 0.85 };
+  // 2026-11-19 调高：长边 1600→1900、质量 0.85→0.92。
+  // 用户主力是 PDF 识别，拆页这一步是清晰度上限，留点余量少压一次。
+  const PP_PDF_OPTS = { maxPages: 30, longEdge: 1900, quality: 0.92 };
 
   /** 拿浏览器端的 PDF 拆页内核；没就位（或接口不对）一律当「拆不了」处理 */
   function ppPdfApi() {
