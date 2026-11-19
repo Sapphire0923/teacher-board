@@ -2764,6 +2764,89 @@ tr.rn-on td { background: var(--accent-soft); }
   .pf-ev-main::before { display: none; }
   .pf-subhead { margin-left: 0; }
 }
+
+/* ==========================================================================
+ * 多班级（2026-11-19）
+ *  - .ctag：名字后面那枚「秋 / 寒 / 春 / 夏」季节徽标（只在跨班同名时出现）
+ *  - .bswitch：顶栏班名，点开班级面板
+ *  - .cllist / .clrow：班级面板里的班级列表
+ *  - .clform / .clopt：新建班级表单
+ *  - .imptarget：导入向导顶部「这次导进哪个班」
+ * ========================================================================== */
+
+.ctag { display: inline-flex; align-items: center; justify-content: center;
+  margin-left: 5px; padding: 0 5px; height: 17px; border-radius: 5px;
+  font-size: 11px; font-weight: 700; line-height: 17px; letter-spacing: .2px;
+  vertical-align: 1px; white-space: nowrap;
+  color: var(--ctc, var(--ink-3));
+  background: color-mix(in srgb, var(--ctc, var(--ink-3)) 13%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--ctc, var(--ink-3)) 42%, transparent); }
+.grid .ctag, .ck-list .ctag { height: 16px; line-height: 16px; font-size: 10.5px; padding: 0 4px; }
+.det-head .ctag { height: 19px; line-height: 19px; font-size: 12px; margin-left: 8px; padding: 0 6px; }
+
+.brand.bswitch { display: inline-flex; align-items: center; gap: 9px; padding: 2px 8px 2px 9px;
+  margin-left: -9px; border: 1px solid transparent; border-radius: 9px;
+  background: none; color: var(--ink); font: inherit; font-size: var(--fs-title);
+  font-weight: 650; letter-spacing: .3px; white-space: nowrap; cursor: pointer; text-align: left; }
+.brand.bswitch:hover { border-color: var(--line); background: var(--panel); }
+.brand.bswitch:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.brand.bswitch .bname { font-size: var(--fs-title); }
+.brand.bswitch .bcaret { font-size: var(--fs-mini); font-weight: 600; color: var(--ink-3);
+  padding: 1px 6px; border-radius: 5px; background: var(--panel-3); letter-spacing: 0; }
+.brand.bswitch:hover .bcaret { color: var(--accent); background: var(--accent-soft); }
+.brand.bswitch small { font-weight: 400; color: var(--ink-3); margin-left: 0; font-size: var(--fs-aux); letter-spacing: 0; }
+
+.cllist { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.clrow { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
+  padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--panel); cursor: pointer; font: inherit; color: var(--ink); }
+.clrow:hover { border-color: var(--accent); background: var(--accent-soft); }
+.clrow.on { border-color: var(--accent); background: var(--accent-soft); cursor: default; }
+.clrow:disabled { opacity: 1; }
+.clrow .cl-season { flex: 0 0 32px; height: 32px; border-radius: 8px; display: inline-flex;
+  align-items: center; justify-content: center; font-size: 15px; font-weight: 700;
+  color: var(--ctc, var(--ink-3));
+  background: color-mix(in srgb, var(--ctc, var(--ink-3)) 13%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--ctc, var(--ink-3)) 40%, transparent); }
+.clrow .cl-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.clrow .cl-name { font-size: 14.5px; font-weight: 650; display: flex; align-items: center; gap: 7px; }
+.clrow .cl-meta { font-size: var(--fs-mini); color: var(--ink-3); }
+.clrow .cl-note { font-size: var(--fs-mini); color: var(--ink-2); }
+.clrow .cl-go { flex: 0 0 auto; font-size: var(--fs-mini); color: var(--ink-3); }
+.clrow.on .cl-go { color: var(--accent-2); font-weight: 650; }
+.clcur { display: inline-flex; align-items: center; height: 18px; padding: 0 6px;
+  border-radius: 5px; font-size: 10.5px; font-weight: 700; letter-spacing: .3px;
+  color: var(--accent-2); background: var(--accent-soft); border: 1px solid var(--accent-2-line); }
+
+.clform .cll { flex: 0 0 52px; font-size: var(--fs-mini); color: var(--ink-3); text-align: right; }
+.clform .sect { margin: 16px 0 0; }
+.clrs h4 { margin-bottom: 8px; }
+.clopt { display: flex; gap: 9px; align-items: flex-start; padding: 9px 11px; margin-bottom: 7px;
+  border: 1px solid var(--line); border-radius: 9px; background: var(--panel-2); cursor: pointer; }
+.clopt:hover { border-color: var(--line-strong); }
+.clopt:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.clopt.off { opacity: .45; cursor: not-allowed; }
+.clopt input { margin-top: 3px; accent-color: var(--accent); }
+.clopt > span { display: flex; flex-direction: column; gap: 2px; font-size: 13.5px; }
+.clopt b { font-weight: 650; }
+.clopt i { font-style: normal; font-size: var(--fs-mini); color: var(--ink-3); line-height: 1.55; }
+.clopt i b { color: var(--ink-2); }
+
+.cls-row { padding: 4px 6px; border-radius: 8px; }
+.cls-row.on { background: var(--accent-soft); }
+.cls-row .clcount { flex: 0 0 auto; font-size: var(--fs-mini); color: var(--ink-3); white-space: nowrap; }
+.cls-row .clsw { padding: 3px 8px; font-size: 12px; white-space: nowrap; }
+
+.imptarget { display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
+  font-size: 13px; color: var(--ink-2); padding: 9px 12px; margin: 0 0 12px;
+  border: 1px solid var(--accent-2-line); border-radius: 9px; background: var(--accent-soft); }
+.imptarget b { color: var(--ink); }
+.imptarget .hint-inline { color: var(--ink-3); }
+
+/* 设置页的班级行：两行排（第一行班名/校区/科目/季节/人数/操作，第二行备注） */
+.cls-row { flex-wrap: wrap; row-gap: 5px; }
+.cls-row .clend { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+.cls-row .clnote { flex: 1 1 100%; min-width: 0; }
 </style>
 </head>
 <body>
@@ -2830,9 +2913,16 @@ tr.rn-on td { background: var(--accent-soft); }
       <div class="sect" style="margin-top:12px">
         <h4>写到哪次考试</h4>
         <div class="rowset">
-          <label class="hint" style="margin:0">考试名称
+          <label class="hint" style="margin:0">选已有考试
+            <select id="scoreExamPick" style="margin-left:6px;padding:5px 8px;border:1px solid var(--line);border-radius:7px;max-width:190px">
+              <option value="">— 选一场已有考试 —</option>
+            </select>
+          </label>
+          <label class="hint" style="margin:0">或新考试名称
             <input type="text" id="scoreExamName" list="tplExams" placeholder="第一次月考" style="width:150px;margin-left:6px;padding:5px 8px;border:1px solid var(--line);border-radius:7px">
           </label>
+        </div>
+        <div class="rowset">
           <label class="hint" style="margin:0">日期
             <input type="date" id="scoreDate" style="margin-left:6px;padding:5px 8px;border:1px solid var(--line);border-radius:7px">
           </label>
@@ -3089,6 +3179,19 @@ tr.rn-on td { background: var(--accent-soft); }
     <footer>
       <button class="btn danger" id="setReset" style="margin-right:auto">清空所有数据</button>
       <button class="btn primary" data-close="mSet">完成</button>
+    </footer>
+  </div>
+</div>
+
+<!-- 班级：切换 / 新建（2026-11-19 多班级） -->
+<div class="mask" id="mClass">
+  <div class="modal">
+    <header><span id="clsTitle">班级</span><span class="spacer"></span>
+      <button class="btn ghost" data-close="mClass">关闭</button></header>
+    <div class="body" id="clsBody"></div>
+    <footer>
+      <button class="btn" id="clsNew" style="margin-right:auto">+ 新建班级</button>
+      <button class="btn primary" data-close="mClass">完成</button>
     </footer>
   </div>
 </div>
@@ -5417,12 +5520,51 @@ const SYNC = (() => {
   const DONE_WORDS = ["1", "是", "有", "✓", "√", "已", "完成", "done", "y", "yes", "true", "ok"];
   const NONE_WORDS = ["0", "否", "无", "×", "x", "-", "—", "no", "n", "false"];
 
+  /* ------------------------------------------------------- 多班级（2026-11-19 加）
+   * 一个看板里可以放好几个班（秋季班 / 寒假班 / 春季班 …），每个班的数据**完全独立**：
+   * 名单、等级、成绩、答题卡、聊天、电联、打卡、续班都是自己那一份。
+   * 换班之后成绩/答题卡/续班都是新的，不会串到上一个班。
+   *
+   * 存储方式（这块最要紧，改之前先看懂）：
+   *   当前班的实时数据仍然放在 DB 顶层（DB.students / DB.calls / …）——
+   *   全应用有 160 多处直接读 DB.students，不改它们才不会有漏网之鱼；
+   *   非当前班的数据整包存在 DB.classes[i].data 里；
+   *   **当前班的 data 永远是 null**（它的数据在顶层），切班那一刻才把顶层打包回旧的班。
+   *   load() 里还会再强制一次「当前班 data=null」，保证顶层数据永远权威 ——
+   *   这样即使切班途中页面被关掉，也不会出现「两份数据打架」。
+   *
+   * 所以「多班级」对其余功能是透明的：任何页面读到的 DB.students 都是当前班的人。
+   */
+  const CLASS_DATA_KEYS = ["students", "unmatched", "daily", "checkin", "calls", "analyze", "renewal", "scoreTrack"];
+
+  /** 季节：跨班同名学生名字后面那枚小标签就是它。颜色按季节走，一眼认出「这人在哪个班待过」。 */
+  const SEASONS = [
+    { key: "秋", color: "#b5731c", label: "秋" },
+    { key: "寒", color: "#3f6fa8", label: "寒" },
+    { key: "春", color: "#3c7a5a", label: "春" },
+    { key: "夏", color: "#b3543c", label: "夏" },
+  ];
+  const seasonColor = (k) => ((SEASONS.find((s) => s.key === k) || {}).color || "");
+  /** 从班级名猜季节（「秋季班」→ 秋）；猜不出来返回空串，不硬编。 */
+  function guessSeason(name) {
+    const n = String(name || "");
+    if (/秋/.test(n)) return "秋";
+    if (/寒|冬/.test(n)) return "寒";
+    if (/春/.test(n)) return "春";
+    if (/夏|暑/.test(n)) return "夏";
+    return "";
+  }
+
   /* ------------------------------------------------------------ 配置 */
 
   function defaultConfig() {
     return {
       title: "学员看板",
       className: "",
+      /* ⚠ 2026-11-19 起班级信息搬到了 DB.classes（带 data），这里只是为了兼容老库残留：
+         老库的 config.classes 会在 load() 的 migrateClasses() 里搬过去并清空，
+         新代码**不要再读写这个字段**。 */
+      classes: [],
       /* ---- 外观：主题 / 主色 / 背景图（都不影响数据） ---- */
       theme: "light",
       /* 主色默认改成温和的墨绿/灰绿（2026-10-16 混搭方案）。
@@ -5559,6 +5701,7 @@ const SYNC = (() => {
           r.start = String(r.start || "");
           r.end = String(r.end || "");
         }
+        migrateClasses(d);      // 老库 → 多班级结构（只跑一次，详见 migrateClasses）
         migrateAttRoles(d);
         return d;
       }
@@ -5570,7 +5713,306 @@ const SYNC = (() => {
       calls: { batches: [], status: {} },
       analyze: { map: {}, params: {} },
       renewal: { rounds: [], marks: {}, reasons: RENEW_REASONS_DEFAULT.slice() },
+      classes: [], activeClassId: "",
     };
+  }
+
+  /* ------------------------------------------------------ 多班级：数据的进出 */
+
+  function emptyClassData() {
+    return {
+      students: [], unmatched: [],
+      daily: { date: "", ids: [], done: [] },
+      checkin: { importedAt: "", tasks: [], status: {} },
+      calls: { batches: [], status: {} },
+      analyze: { map: {}, params: {} },
+      renewal: { rounds: [], marks: {}, reasons: RENEW_REASONS_DEFAULT.slice() },
+      scoreTrack: {},
+    };
+  }
+
+  /** 把当前班（顶层）的数据深拷贝一份，准备存进旧班。深拷贝是为了切走之后两边互不影响。 */
+  function captureLiveData(db) {
+    const d = emptyClassData();
+    for (const k of CLASS_DATA_KEYS) {
+      const v = db[k];
+      d[k] = (v === undefined || v === null) ? d[k] : JSON.parse(JSON.stringify(v));
+    }
+    return d;
+  }
+
+  /** 把某班的数据装回顶层。装的是引用：这份 data 之后归顶层所有，班里的槽位会被清成 null。 */
+  function applyClassData(db, data) {
+    const d = data || emptyClassData();
+    for (const k of CLASS_DATA_KEYS) {
+      const v = d[k];
+      db[k] = (v === undefined || v === null) ? emptyClassData()[k] : v;
+    }
+  }
+
+  /** 整份库里所有班的学生（当前班在顶层，其余在 classes[i].data）。备份、统计用。 */
+  function allStudentsOf(db) {
+    const d = db || DB;
+    const out = Array.isArray(d.students) ? d.students.slice() : [];
+    for (const c of d.classes || []) {
+      if (!c || c.id === d.activeClassId) continue;
+      if (c.data && Array.isArray(c.data.students)) out.push(...c.data.students);
+    }
+    return out;
+  }
+
+  /**
+   * 老库 → 多班级结构的迁移。只跑一次（跑过之后 DB.classes 里已经有 data）。
+   *
+   * 原则（和全项目一致）：**不丢老师手填的任何东西**。
+   *   - 老的 config.classes（只有名字/校区/科目/备注）原样搬进 DB.classes；
+   *   - 现有名单和所有过程数据整体归给**第一个班**（建班先后顺序，秋季班在最前）；
+   *   - 一个班信息都没有、但有名单 → 自动建一个班，名字沿用看板名；
+   *   - 什么都没有 → 保持空，引导页照旧。
+   * 已经迁移过的库只做字段修补：**绝不重排、绝不合并、绝不动 data**。
+   */
+  function migrateClasses(d) {
+    if (!Array.isArray(d.classes)) {
+      const infos = Array.isArray(d.config && d.config.classes) ? d.config.classes : [];
+      const hasStudents = (d.students || []).length > 0;
+      if (!infos.length && !hasStudents) { d.classes = []; d.activeClassId = ""; return; }
+      const now = new Date().toISOString();
+      const bookName = (d.config && d.config.className) || "";
+      const src = infos.length ? infos : [{ name: bookName || "我的班级" }];
+      d.classes = src.map((c, i) => ({
+        id: (c && c.id) || ("cls" + uid() + i),
+        name: String((c && c.name) || "").trim() || (i === 0 ? (bookName || "我的班级") : "班级" + (i + 1)),
+        campus: String((c && c.campus) || "").trim(),
+        subject: String((c && c.subject) || "").trim(),
+        note: String((c && c.note) || "").trim(),
+        season: (c && c.season) || guessSeason((c && c.name) || ""),
+        createdAt: (c && c.createdAt) || now,
+        updatedAt: now,
+        data: null,
+      }));
+      d.activeClassId = d.classes[0].id;
+      // 现有数据全部归第一个班 —— 其余班先空着，老师切过去自己导名单
+      d.classes.slice(1).forEach((c) => { c.data = emptyClassData(); });
+      // 老字段清掉，避免两份班级信息各改各的
+      if (d.config) d.config.classes = [];
+      d._justMigrated = 1;   // 交给第一次 render 提示「名单归到哪个班了」，提示完就删
+      return;
+    }
+
+    d.classes = d.classes.filter((c) => c && typeof c === "object");
+    const now = new Date().toISOString();
+    for (const c of d.classes) {
+      if (!c.id) c.id = "cls" + uid();
+      c.name = String(c.name || "").trim() || "未命名班级";
+      c.campus = String(c.campus || "").trim();
+      c.subject = String(c.subject || "").trim();
+      c.note = String(c.note || "").trim();
+      if (c.season === undefined) c.season = guessSeason(c.name);
+      c.season = String(c.season || "").trim();
+      c.createdAt = c.createdAt || now;
+    }
+    // 库里有名单却一个班都没有（备份恢复异常之类）→ 兜底建一个，别让人卡在无班状态
+    if (!d.classes.length && (d.students || []).length) {
+      d.classes.push({
+        id: "cls" + uid(), name: (d.config && d.config.className) || "我的班级",
+        campus: "", subject: "", note: "", season: "", createdAt: now, data: null,
+      });
+    }
+    if (!d.classes.some((c) => c.id === d.activeClassId)) {
+      d.activeClassId = d.classes.length ? d.classes[0].id : "";
+    }
+    // 当前班的数据永远在顶层：把它的 data 清空（顶层才是权威）
+    for (const c of d.classes) if (c.id === d.activeClassId) c.data = null;
+    // 当前班的名字同步到看板名（窗口标题、备份文件名、导出文件名都用它）
+    const ac = d.classes.find((c) => c.id === d.activeClassId);
+    if (ac && d.config) d.config.className = ac.name;
+  }
+
+  /** 兜底：有学生却没有班（点过「看示例」、或老数据异常）→ 补一个班。
+   *  没有班的话，班级面板是空的、季节标签也算不出来，功能像坏了一样。 */
+  function ensureClassForData() {
+    if ((DB.classes || []).length || !(DB.students || []).length) return false;
+    const nm = String(DB.config.className || "").trim() || "我的班级";
+    DB.classes = [{
+      id: "cls" + uid() + String(Date.now()).slice(-4), name: nm, campus: "", subject: "", note: "",
+      season: guessSeason(nm), createdAt: new Date().toISOString(), data: null,
+    }];
+    DB.activeClassId = DB.classes[0].id;
+    DB.config.className = nm;
+    return true;
+  }
+
+  function activeClass() {
+    const list = DB.classes || [];
+    return list.find((c) => c.id === DB.activeClassId) || list[0] || null;
+  }
+  function classOfId(id) { return (DB.classes || []).find((c) => c.id === id) || null; }
+  /** 某班的学员名单（当前班的数据在顶层，别班在 data 里） */
+  function classStudents(c) {
+    if (!c) return [];
+    if (c.id === DB.activeClassId) return DB.students || [];
+    return (c.data && c.data.students) || [];
+  }
+  const classCount = (c) => classStudents(c).length;
+  /** 班级称呼：有季节优先显示季节，方便「秋 / 寒 / 春」这套叫法 */
+  const classLabel = (c) => (c ? (c.name || "未命名班级") : "");
+
+  /** 当前班数据打包存回班级对象（切班 / 新建班 / 导出前都走它） */
+  function stashActiveClass() {
+    const c = activeClass();
+    if (!c) return;
+    c.data = captureLiveData(DB);
+    c.updatedAt = new Date().toISOString();
+  }
+
+  /** 切班之后，所有页面级的临时状态（筛选、勾选、详情、答题卡…）都得清干净 ——
+   *  它们存的都是上一个班的学生 id，留着只会指向空气。 */
+  function resetViewForClass() {
+    Object.assign(view, {
+      filter: { kind: "all" }, query: "", selected: null,
+      selIds: [], batchOpen: false,
+      checkinTask: null, checkinStatus: "未打卡",
+      ckTask: null, ckQuery: "", ckGrade: "all", ckLevel: "all", ckSel: [], ckPend: null, ckResult: null, ckAcIdx: -1,
+      scoreExam: null, scQ: "", scSort: "", scDir: 1, scPage: 1,
+      scBand: "all", scComm: "all", scWeak: "all", scSel: [], scTrackOpen: false, scWeakFor: null,
+      callBatch: null, callStatus: "未联系", callQ: "",
+      paperOpen: null, paperBatch: null, papQ: "", paperFilter: "all", paperStudent: null,
+      paperEdit: null, planEdit: null, papEditInfo: false,
+      profileSid: null, profileFrom: null, profileTab: "score", profileTimelineType: "all",
+      renewRound: null, rnQ: "", rnStatus: "all", rnReason: "all", rnCls: "all", rnLevel: "all", rnSel: [],
+      headCompact: false,
+    });
+    _detScroll = 0; _detId = null; _editOwner = null;
+    // 撤销栈里存的是上一份**整库快照**，切班后留着会把班也一起倒回去 —— 清掉
+    try { UNDO_STACK = []; } catch (e) {}
+  }
+
+  /** 切到另一个班：当前班先打包落袋，再把目标班的数据装回顶层，最后整页重画。 */
+  function switchClass(id) {
+    const to = classOfId(id);
+    if (!to) return toast("找不到这个班级");
+    if (to.id === DB.activeClassId) return;
+    stashActiveClass();
+    applyClassData(DB, to.data);
+    to.data = null;
+    to.updatedAt = new Date().toISOString();
+    DB.activeClassId = to.id;
+    if (DB.config) DB.config.className = to.name;
+    resetViewForClass();
+    try { const dt = $("detail"); if (dt) dt.innerHTML = ""; } catch (e) {}
+    save(); render();
+    toast(`已切到「${to.name}」${to.season ? " · " + to.season : ""}`, 2400);
+  }
+
+  /**
+   * 复制一份学员档案（新建班「沿用当前班名单」时用）。
+   * 只带**学生本身的信息**：姓名、家长类型、等级、评分、备注、优点、问题。
+   * **不带**过程数据：成绩/答题卡(chats 之外的 exams)、聊天记录、打卡状态、电联、
+   * 续班标记、跟进状态 —— 新班这些从头开始，这正是用户要的「独立的」。
+   */
+  function copyStudentArchive(s) {
+    return {
+      id: uid(),
+      name: s.name,
+      level: s.level || "", levelManual: !!s.levelManual,
+      dims: Object.assign({}, s.dims || {}),
+      flags: {},
+      pros: s.pros || "", cons: s.cons || "", note: s.note || "",
+      followUp: { done: false, at: null },
+      chats: [], exams: [], parentTags: parentTagsOf(s).slice(),
+    };
+  }
+
+  /**
+   * 新建一个班并切过去。
+   * roster：
+   *   "blank"  = 空白班，之后自己导名单；
+   *   "copy"   = 沿用当前班的学员档案（见 copyStudentArchive），过程数据不带；
+   *   "upload" = 建完立刻打开「换名单」导入新名单。
+   * 返回新建的班级对象（名字空 = 不建，返回 null）。
+   */
+  function createClass(opts) {
+    const o = opts || {};
+    const name = String(o.name || "").trim();
+    if (!name) { toast("先给班级起个名字"); return null; }
+    stashActiveClass();     // 当前班先落袋，别丢
+    const now = new Date().toISOString();
+    const c = {
+      id: "cls" + uid() + String(Date.now()).slice(-4),
+      name,
+      campus: String(o.campus || "").trim(),
+      subject: String(o.subject || "").trim(),
+      note: String(o.note || "").trim(),
+      season: String(o.season || "").trim() || guessSeason(name),
+      createdAt: now, updatedAt: now,
+      data: emptyClassData(),
+    };
+    if (o.roster === "copy") c.data.students = (DB.students || []).map(copyStudentArchive);
+    DB.classes ||= [];
+    DB.classes.push(c);
+    DB.activeClassId = c.id;
+    applyClassData(DB, c.data);
+    c.data = null;
+    if (DB.config) DB.config.className = c.name;
+    resetViewForClass();
+    save(); render();
+    const n = (DB.students || []).length;
+    toast(o.roster === "copy" ? `已建好「${name}」，沿用 ${n} 人的档案（成绩/答题卡从零开始）` : `已建好「${name}」`, 3200);
+    if (o.roster === "upload") setTimeout(() => openImport(), 60);
+    return c;
+  }
+
+  /** 改班级信息；改的是当前班就把看板名一起同步（标题/导出文件名跟着走）。 */
+  function patchClass(id, patch) {
+    const c = classOfId(id);
+    if (!c) return;
+    Object.assign(c, patch || {});
+    c.updatedAt = new Date().toISOString();
+    if (c.season === "") c.season = guessSeason(c.name);
+    if (c.id === DB.activeClassId && DB.config) DB.config.className = c.name;
+    save();
+  }
+
+  /** 删班：连它的数据一起删。**当前班不让删**（先切走），免得手一抖删掉正在用的班。 */
+  function deleteClass(id) {
+    const c = classOfId(id);
+    if (!c) return;
+    if (c.id === DB.activeClassId) return toast("这是正在用的班，先切到别的班再删");
+    const n = classCount(c);
+    if (!window.confirm(`删除「${c.name}」？\n\n这个班的 ${n} 人名单、成绩、答题卡、电联、续班记录都会一起删掉，不能恢复。\n要留底请先「备份」。\n\n确定删除？`)) return;
+    DB.classes = (DB.classes || []).filter((x) => x.id !== id);
+    save(); render();
+    toast(`已删除「${c.name}」`);
+  }
+
+  /**
+   * 跨班同名学生的那枚季节标签。
+   * 例：秋季班的同学续到了寒假班，在寒假班名单里名字后面就有一枚「秋」。
+   * 匹配用 coreName（姓名尾巴上的「同学」「家长」之类不算不同），只看**别的班**。
+   */
+  function crossClassSeasons(s) {
+    const out = [];
+    const list = DB.classes || [];
+    const name = String((s && s.name) || "").trim();
+    if (list.length < 2 || !name) return out;
+    const nm = coreName(name) || name;
+    for (const c of list) {
+      if (c.id === DB.activeClassId) continue;
+      const others = classStudents(c);
+      if (!others.length) continue;
+      if (!others.some((x) => (coreName(x.name) || String(x.name || "").trim()) === nm)) continue;
+      const key = c.season || "";
+      const label = key || String(c.name || "").replace(/班$/, "").slice(0, 2);
+      if (!label || out.some((x) => x.label === label && x.name === c.name)) continue;
+      out.push({ key, label, color: seasonColor(key), name: c.name });
+    }
+    return out;
+  }
+
+  /** 名字后面那枚季节徽标（只读跨班结果，不写任何数据） */
+  function classBadges(s) {
+    return crossClassSeasons(s).map((t) =>
+      `<span class="ctag" style="--ctc:${t.color || "var(--ink-3)"}" title="也在这个班：${esc(t.name)}${t.label && t.key ? "（" + esc(t.key) + "）" : ""}">${esc(t.label)}</span>`).join("");
   }
 
   let saveTimer;
@@ -5657,7 +6099,7 @@ const SYNC = (() => {
         box.addEventListener("mousedown", (e) => e.preventDefault()); // 别抢输入框焦点
       }
       list.innerHTML = hits.map((s, i) =>
-        `<div class="ac-item ${i === active ? "on" : ""}" data-i="${i}">${esc(s.name)}${ntBadges(s)}</div>`).join("");
+        `<div class="ac-item ${i === active ? "on" : ""}" data-i="${i}">${esc(s.name)}${classBadges(s)}${ntBadges(s)}</div>`).join("");
       list.querySelectorAll(".ac-item").forEach((it) => it.onclick = () => {
         accept(hits[+it.dataset.i].name);
       });
@@ -5798,7 +6240,7 @@ const SYNC = (() => {
         ? hits.map((s, i) => {
           const many = dup[s.name] > 1;
           return `<div class="ac-item ${i === active ? "on" : ""}" data-i="${i}">`
-            + `<b>${esc(s.name)}</b>${ntBadges(s)}`
+            + `<b>${esc(s.name)}</b>${classBadges(s)}${ntBadges(s)}`
             + (many ? `<span class="ac-sub">${esc(stuTag(s))}</span>` : "")
             + (many ? `<span class="ac-dup">重名 ${dup[s.name]} 个</span>` : "")
             + `</div>`;
@@ -5918,7 +6360,7 @@ const SYNC = (() => {
       `<span class="ntag nt-${t === "住校" ? "board" : "walk"}" title="${esc(t)}">${esc(t)}</span>`).join("");
   }
   /** 表格里的一格：姓名 + 小徽标 */
-  const ntName = (s, html) => `${html}${ntBadges(s)}`;
+  const ntName = (s, html) => `${html}${classBadges(s)}${ntBadges(s)}`;
 
   /** 详情面板里的家长类型选择器：按组铺开，点一下就切换；最后一行留给自己加 */
   function ptagPickerHtml(s) {
@@ -6682,7 +7124,7 @@ const SYNC = (() => {
     const recN = all.filter((x) => x.L.rec).length;
     const trN = all.filter((x) => x.L.tr).length;
     const st = callStatusOf(bid, sid);
-    box.innerHTML = `<header><span>📋 ${esc(s.name)} · 电联记录</span>${ntBadges(s)}
+    box.innerHTML = `<header><span>📋 ${esc(s.name)} · 电联记录</span>${classBadges(s)}${ntBadges(s)}
         <span class="spacer"></span>
         <span class="result">${esc(b ? b.name + " · " + shortDate(b.date) : "全部轮次")}</span>
         <button class="btnmini" data-clhclose="1" title="关掉">✕</button></header>
@@ -6920,7 +7362,7 @@ const SYNC = (() => {
     const canRec = recCanRecord();
     const on = !!REC.mr;
 
-    return `<header><span id="clgWho">${esc(s.name)}</span>${ntBadges(s)}
+    return `<header><span id="clgWho">${esc(s.name)}</span>${classBadges(s)}${ntBadges(s)}
         <span class="hint-inline" style="margin-left:8px">${esc(b ? b.name + " · " + shortDate(b.date) : "（没有轮次）")}</span>
         <span class="spacer"></span>
         <span class="hint-inline" id="clgSrhint"></span>
@@ -8117,9 +8559,11 @@ const SYNC = (() => {
     return (n / 1048576).toFixed(1) + " MB";
   };
 
+  // 所有班的附件都要收进来：备份只备当前班的话，切到别的班再导出就会把上一个班的
+  // 答题卡图片漏掉（那些图片还在 IndexedDB 里，只是没人引用就被当成残留跳过了）。
   const allAttachments = () => {
     const out = [];
-    for (const s of DB.students) for (const e of s.exams || []) for (const a of e.attachments || []) out.push(a);
+    for (const s of allStudentsOf(DB)) for (const e of s.exams || []) for (const a of e.attachments || []) out.push(a);
     return out;
   };
 
@@ -8188,6 +8632,10 @@ const SYNC = (() => {
   let armedExam = null;   // 当前"接管粘贴"的那次考试
   let pickFor = null;     // 「＋ 选图」按钮点的是谁
   let pickRole = "exam";  // 这次选的文件算试卷还是答题卡
+  // 完整分析页（学生整页）当前这场考试的 id —— 在那一页按 Ctrl+V 直接粘答题卡用。
+  // 每次 renderPaperPage 开头清空，只有 renderPaperStudent 才赋值，离开整页就自动失效，
+  // 避免「在别的页面粘贴却塞进上一个学生的答题卡」。
+  let _papCtx = null;
   let lbUrl = null;
   let _lbBlob = null;    // 看图器里当前这张的原图（「复制图片」用）
   let _lbAttId = "";
@@ -8345,6 +8793,8 @@ const SYNC = (() => {
   const view = {
     filter: { kind: "all" }, query: "", mode: "cards",
     selected: null, sort: { key: "total", dir: 1 }, followTop: 5,
+    // 答题卡批次：是否正在编辑考试信息（2026-11-19 加）
+    papEditInfo: false,
     // 批量选择（2026-10-16 加）：选中的学生 id 列表 + 批量操作面板开不开
     selIds: [], batchOpen: false,
     // 语文打卡：选中的任务 id 与当前展示的状态筛选
@@ -8700,11 +9150,23 @@ const SYNC = (() => {
 
   function render() {
     fillLevelMins();   // 每次渲染前补齐等级门槛，新增/导入的等级才不会永远评不上
+    if (ensureClassForData()) save();     // 有学生没班 → 补一个（示例数据 / 异常老库）
+    if (DB._justMigrated) {
+      // 老库第一次升级到多班级：告诉老师名单归到哪个班了，不然一刷新顶栏多个「▾ 班级」会发懵
+      const c = activeClass();
+      delete DB._justMigrated;
+      save();
+      setTimeout(() => toast(c
+        ? `已把现有名单归到「${c.name}」。以后点左上角班名可以新建寒假班 / 切换班级`
+        : "已启用多班级：点左上角班名可以新建班级", 7000), 700);
+    }
     if (migrateAccentToGreen()) save();   // 混搭改版的配色迁移，只换从没自己挑过色的库
     applyTheme();
     document.title = (DB.config.className ? DB.config.className + " · " : "") + DB.config.title;
-    // 没名单就强制回引导页 —— 除非用户自己点了「暂无名单，直接使用」（见 defaultConfig 的 noRoster）
-    if (!DB.students.length && !DB.config.noRoster) return renderOnboard();
+    // 没名单就强制回引导页 —— 除非用户自己点了「暂无名单，直接使用」（见 defaultConfig 的 noRoster），
+    // 或者已经有班级体系：切到一个刚建的空班时**不能**把人拽回引导页，
+    // 否则顶栏没了、连「切回秋季班」的入口都看不见（多班级 2026-11-19）。
+    if (!DB.students.length && !DB.config.noRoster && !(DB.classes || []).length) return renderOnboard();
     renderApp();
   }
 
@@ -9003,6 +9465,15 @@ const SYNC = (() => {
     return roles;
   }
 
+  /** 导入向导顶部那句「这次导进哪个班」—— 导错班是最难发现的错，所以先说清楚。 */
+  function importTargetHint() {
+    const c = activeClass();
+    if (!c) return `<div class="imptarget">还没有班级：导入后会建一个班（名字取看板名）并把名单放进去。</div>`;
+    return `<div class="imptarget">这次导入到：<b>${esc(c.name)}</b>${
+      c.season ? `<span class="ctag" style="--ctc:${seasonColor(c.season)}">${esc(c.season)}</span>` : ""}
+      <span class="hint-inline">这个班现在 ${DB.students.length} 人；想导到别的班，先切过去再点「换名单」。</span></div>`;
+  }
+
   function openWizard(sheets, sourceName) {
     W.sheets = sheets; W.idx = 0; W.step = 0; W.source = sourceName;
     W.header = guessHeader(sheets[0].rows);
@@ -9043,6 +9514,7 @@ const SYNC = (() => {
 
     if (W.step === 0) {
       $("impBody").innerHTML = `
+        ${importTargetHint()}
         <div class="rowset"><label style="font-size:13px;color:var(--ink-2)">工作表</label>
           <select id="wSheet" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fafbfc">
             ${W.sheets.map((x, i) => `<option value="${i}" ${i === W.idx ? "selected" : ""}>${esc(x.name)}（${x.rows.length} 行）</option>`).join("")}
@@ -9083,6 +9555,7 @@ const SYNC = (() => {
     for (const st of built.students) dupNames[st.name] = (dupNames[st.name] || 0) + 1;
     const dups = Object.entries(dupNames).filter(([, n]) => n > 1);
     $("impBody").innerHTML = `
+      ${importTargetHint()}
       <p class="hint" style="margin-top:0">
         识别到 <b>${built.students.length}</b> 名学生${built.skipped ? `，跳过 ${built.skipped} 行空行/无关行` : ""}。
       </p>
@@ -9287,6 +9760,18 @@ const SYNC = (() => {
     const built = buildStudents();
     if (!built.students.length) return toast("没有识别到任何学生");
 
+    // 第一次导入、还没有班级体系 → 先建一个班再把名单放进去。
+    // 不建的话，导完仍然「没有班」，切班/季节标签这些功能都没得用。
+    if (!(DB.classes || []).length) {
+      const nm = String(DB.config.className || "").trim() || "我的班级";
+      DB.classes = [{
+        id: "cls" + uid(), name: nm, campus: "", subject: "", note: "",
+        season: guessSeason(nm), createdAt: new Date().toISOString(), data: null,
+      }];
+      DB.activeClassId = DB.classes[0].id;
+      DB.config.className = nm;
+    }
+
     // 覆盖导入时整体替换 DB.students，所以必须先把「按姓名能对上的人」身上
     // 老师手贴的标签（住校/家长类型…）抠出来，导完再按姓名贴回去。
     // 不按 id 贴：覆盖模式的 id 全是新生成的。同名多人时谁的标签给谁 —— 按出现顺序一一配对。
@@ -9352,8 +9837,12 @@ const SYNC = (() => {
       <div class="app">
         <header class="top">
           <div class="top-main">
-            <div class="brand">${esc(cfg.className || cfg.title)}
-              <small>数据在本地</small></div>
+            <button class="brand bswitch" id="btnCls" type="button" title="切换班级 / 新建班级（每个班的名单、成绩、答题卡、续班各自独立）">
+              <span class="bname">${esc(cfg.className || cfg.title)}</span>
+              ${(activeClass() || {}).season ? `<span class="ctag" style="--ctc:${seasonColor(activeClass().season)}">${esc(activeClass().season)}</span>` : ""}
+              <span class="bcaret">${(DB.classes || []).length > 1 ? `▾ ${(DB.classes || []).length} 个班 · 切换` : "▾ 班级"}</span>
+              <small>数据在本地</small>
+            </button>
             <div class="stats" id="stats"></div>
             <div class="spacer"></div>
             <input class="search" id="search" type="search" placeholder="搜索姓名 / 备注 / 聊天…" value="${esc(view.query)}">
@@ -9394,6 +9883,7 @@ const SYNC = (() => {
     bindCommon();
 
     $("search").oninput = (e) => { view.query = e.target.value.trim(); renderStage(); renderSide(); };
+    $("btnCls").onclick = () => openClassPanel();
     // 顶栏搜索：既能搜姓名，也搜备注 / 聊天 —— 所以搜不到人名时不用弹提示
     nameSearchBox($("search"), { noHit: false });
     $("seg").querySelectorAll("button").forEach((b) => b.onclick = () => {
@@ -9767,7 +10257,7 @@ const SYNC = (() => {
         <input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${on ? "checked" : ""}
           title="勾上可以批量操作（打卡、加标签、派任务…）">
         <button class="nm pf-link" type="button" data-profile="${esc(s.id)}" title="打开 ${esc(s.name)} 的学生档案">${esc(s.name)}</button>
-        <span class="cd-nt">${ntBadges(s)}</span>
+        <span class="cd-nt">${classBadges(s)}${ntBadges(s)}</span>
         <span class="cd-lv">${levelBadge(s)}</span>
       </header>
       <div class="cd-tags">${ck.tagHtml}</div>
@@ -9855,6 +10345,17 @@ const SYNC = (() => {
     // 上屏之后紧跟的那次 input 会自己重画；万一没有（输入法直接吞掉），这里补一次
     setTimeout(() => { if (!imeBusy() && _imePend) renderStage(); }, 0);
   }, true);
+
+  /**
+   * 重画但保持页面滚动位置（2026-11-19 用户反馈：勾选名单里的人，
+   * 页面会跳回最上面，还得重新往下拉）。勾选、全选、反选、清除都走这里。
+   */
+  function renderKeepScroll() {
+    const y = window.scrollY;
+    renderStage();
+    window.scrollTo(0, y);
+    requestAnimationFrame(() => window.scrollTo(0, y));
+  }
 
   function renderStage(keepDetail) {
     // 输入法正在组字：这一画先攒着，等上屏（compositionend）再补 —— 理由见上面那段
@@ -10017,7 +10518,7 @@ const SYNC = (() => {
           k === "name" ? `<input type="checkbox" class="cbsel cball" data-cball="1" ${allOn ? "checked" : ""} title="全选/取消这 ${list.length} 人"> ` : ""
         }${esc(l)}${view.sort.key === k ? (view.sort.dir > 0 ? " ↑" : " ↓") : ""}</th>`).join("")
       }</tr></thead><tbody>${list.map((s) => `<tr data-id="${s.id}"${selSet.has(s.id) ? ' class="rowsel"' : ""}>
-        <td class="sticky-l"><input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${selSet.has(s.id) ? "checked" : ""} title="勾上可以批量操作"> <button class="pf-link" type="button" data-profile="${esc(s.id)}" title="打开 ${esc(s.name)} 的学生档案"><b>${esc(s.name)}</b></button>${ntBadges(s)}</td>
+        <td class="sticky-l"><input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${selSet.has(s.id) ? "checked" : ""} title="勾上可以批量操作"> <button class="pf-link" type="button" data-profile="${esc(s.id)}" title="打开 ${esc(s.name)} 的学生档案"><b>${esc(s.name)}</b></button>${classBadges(s)}${ntBadges(s)}</td>
         ${hasLevels() ? `<td class="sticky-l sticky-2">${esc(levelOf(s))}${DB.config.levelAuto && !s.levelManual ? `<i class="lva" title="按评分自动算出">ⓐ</i>` : ""}</td>` : ""}
         ${DB.config.dims.map((d) => scoreCell(s, d)).join("")}
         ${hasDims() ? `<td class="num">${scoreTotal(s)}</td>` : ""}
@@ -10077,7 +10578,7 @@ const SYNC = (() => {
         return `<div class="card${on ? " checked" : ""}" data-id="${s.id}" style="border-left-color:${levelOf(s) ? levelColor(levelOf(s)) : "var(--line)"}">
           <div class="row1">
             <input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${on ? "checked" : ""} title="勾上可以批量操作">
-            <button class="nm pf-link" type="button" data-profile="${esc(s.id)}" title="打开 ${esc(s.name)} 的学生档案">${esc(s.name)}</button>${ntBadges(s)}${levelBadge(s)}
+            <button class="nm pf-link" type="button" data-profile="${esc(s.id)}" title="打开 ${esc(s.name)} 的学生档案">${esc(s.name)}</button>${classBadges(s)}${ntBadges(s)}${levelBadge(s)}
             <span style="flex:1"></span>
             <span class="chip ${s.followUp?.done ? "ok" : "no"}">${s.followUp?.done ? "已跟进" : "待跟进"}</span></div>
           ${scoreBox(s)}
@@ -10795,6 +11296,7 @@ const SYNC = (() => {
       "5. 板块名和题号以试卷原文为准，别自己编一套；",
       "6. 任何一页有任何地方读不出来，都要在 unreadable 里**逐条**写明（第几页、哪一项、为什么）。",
       "7. 手写的分数容易看错（6/8、3/5、1/7），每个数字都要在图上找到笔迹再填；拿不准就把 confidence 写低，别硬填。",
+      "8. 先把整卷从上到下扫一遍、把 sections 的板块和顺序定下来（含得 0 分 / 空着的板块），再逐个填分 —— 漏一个板块会让后面的分数整体错位。",
     ].join("\n");
   }
 
@@ -10884,6 +11386,12 @@ const SYNC = (() => {
 
   function paperVerifyAsk(ocr) {
     const secs = (ocr.sections || []).map((x) => ({ no: x.no, name: x.name, score: x.score, full: x.full }));
+    // 上一轮「把握不大」的字段 + 没读出来的项：让复核优先看第二眼，别平均用力
+    const low = Object.entries(ocr.confidence || {})
+      .filter(([k, v]) => typeof v === "number" && v < 0.75 && !k.startsWith("_"))
+      .map(([k, v]) => `${k}（上一轮把握 ${Math.round(v * 100)}%）`)
+      .slice(0, 10);
+    const miss = (ocr.unreadable || []).map((u) => `${u.field_or_no || "某项"}：${u.reason || "没读出"}`).slice(0, 8);
     return [
       "【上一轮读出的 JSON】",
       JSON.stringify({
@@ -10891,18 +11399,25 @@ const SYNC = (() => {
         sections: secs, confidence: ocr.confidence || {},
       }),
       "",
-      "请逐项对照图片复核。只输出需要修改的数字；不需要改就不要列。",
-      `输出 JSON：{"corrections":[{"field":"total_score"|"full_score"|"section_score"|"section_full",`,
-      ` "section":string|null,"value":number,"reason":string}]}，没有要改的就输出 {"corrections":[]}。`,
+      (low.length || miss.length)
+        ? "【上一轮把握不大、请重点看第二眼的地方】\n"
+          + (low.length ? "· 分数：" + low.join("；") + "\n" : "")
+          + (miss.length ? "· 没读出来：" + miss.join("；") + "\n" : "")
+          + "复核时优先核对上面这些，其余按原值即可。"
+        : "",
+      "请逐项对照图片复核。只输出需要修改的项；不需要改就不要列。",
+      `输出 JSON：{"corrections":[{"field":"total_score"|"full_score"|"section_score"|"section_full"|"section_name",`,
+      ` "section":string|null,"value":number|string,"reason":string}]}，没有要改的就输出 {"corrections":[]}。`,
       "规则：",
-      "1. 只在图上清楚看到另一个数字时才改，并写明你在哪一段/哪一块看到的；",
+      "1. 只在图上清楚看到另一个值时才改，并写明你在哪一段/哪一块看到的；",
       "2. 板块用 name 或 no 指认（比如「文言文」或「二」）；找不到对应板块就不改；",
       "3. 分数不能超过该板块满分，也不能是负数；",
-      "4. 不确定就不输出这一项。不要输出任何解释性文字。",
-    ].join("\\n");
+      "4. section_name 用来修板块名（卷面原文跟上一轮不一样时），value 写卷面上的名字；",
+      "5. 不确定就不输出这一项。不要输出任何解释性文字。",
+    ].join("\n");
   }
 
-  async function verifyPaperNumbers(ocr, parts) {
+async function verifyPaperNumbers(ocr, parts) {
     const r = await dsCall(PAPER_VERIFY_SYS, [
       { type: "text", text: paperVerifyAsk(ocr) },
       ...parts.map((p) => ({ type: "image_url", image_url: { url: p.url } })),
@@ -10913,9 +11428,19 @@ const SYNC = (() => {
     const changed = [];
     for (const c of list.slice(0, 12)) {
       const f = String(c && c.field || "");
+      const note = String(c && c.reason || "").slice(0, 80);
+      // 板块名修正（2026-11-19 加）：复核现在也能改名字，不只是改数字
+      if (f === "section_name") {
+        const key = String(c.section || "").trim();
+        const sec = (ocr.sections || []).find((x) => key && (String(x.name || "") === key || String(x.no || "") === key));
+        const nv = String(c.value == null ? "" : c.value).trim();
+        if (!sec || !nv || nv === sec.name) continue;
+        changed.push({ field: f, section: key, from: sec.name, to: nv, reason: note });
+        sec.name = nv;
+        continue;
+      }
       const v = Number(c && c.value);
       if (!isFinite(v) || v < 0) continue;
-      const note = String(c && c.reason || "").slice(0, 80);
       if (f === "total_score" || f === "full_score") {
         if (ocr[f] === v) continue;
         changed.push({ field: f, from: ocr[f], to: v, reason: note });
@@ -11594,6 +12119,7 @@ const SYNC = (() => {
         <span class="chip ex">答题卡未上传</span>
         ${st.k === "none" ? `<span class="chip ex">成绩未填写</span>` : ""}
         <span class="hint-inline">没传答题卡就出不了板块分析 —— 传图片或 PDF（可以多张，PDF 自动拆成每页一张图）先给你核对，确认了才写进去</span>
+        ${quick ? `<span class="hint-inline">也可以直接 <b>Ctrl+V</b> 把截图粘进来</span>` : ""}
         ${examImgCount(e) ? `<span class="hint-inline">上面那条附件是<b>试卷</b> —— 答题卡得用左边这个按钮单独传</span>` : ""}`;
     }
     const cardStrip = cards.length
@@ -11741,6 +12267,50 @@ const SYNC = (() => {
   }
 
   /** 「给学生和家长的话术」整块 */
+  /* ---- 作文分析（2026-11-19 加，用户要求：细品考场作文，按初中阅卷标准出报告） ---- */
+  const PAPER_COMPO_SYS = "你是一位有二十年经验的初中语文阅卷老师，正在细品一篇学生的考场作文。"
+    + "铁律："
+    + "1. 只依据图片上看到的作文原文，不许编造学生没写过的话；"
+    + "2. 引用学生原文时**原样照录**（错别字、病句都照抄），要指出错字就单独列出来，别替他改；"
+    + "3. 按初中作文阅卷标准评：内容立意、语言表达、结构条理三个维度分别给分，再给总分和档位；"
+    + "4. 满分按卷面标注（没标就按 50 分制）；每个分数都要说清依据，别写空泛评价；"
+    + "5. 输出必须是规范现代汉语，不得出现错别字；"
+    + "6. 报告固定按【题目对照】【得分】【逐段细品】【修改建议】【总评一句话】五个部分写。";
+
+  function paperCompoAsk(s, e) {
+    const mat = materialOf(e.name);
+    const mtxt = (mat && mat.text ? String(mat.text) : "").trim();
+    return [
+      "【老师导入的本次考试材料（含作文题目/要求）】",
+      mtxt ? mtxt.slice(0, 1800) : "（老师没导入材料 —— 作文题目只能从卷面上的题干看，看不到就明说）",
+      "",
+      "【这个学生】" + (nickOf(s.name) || "该生") + "，本次考试「" + (e.name || "") + "」。",
+      "",
+      "【你要做的】",
+      "1. 先在答题卡图片里找到作文（一般在最后，可能占 1～2 页）；",
+      "2. 把学生写的作文完整读一遍，别只看开头结尾；",
+      "3. 对照上面材料里的作文题目/要求，判断他跑没跑题、扣没扣题；",
+      "4. 按初中作文阅卷标准逐项评：内容立意、语言表达、结构条理；",
+      "5. 输出纯文本报告（不要代码块），按规定的五个部分分段。",
+    ].join("\n");
+  }
+
+  function paperCompoHtml(s, e) {
+    const c = e.paper && e.paper.compo;
+    const has = !!(c && c.text);
+    return `<div class="aibox" style="border-top:none;padding-top:0;margin-top:4px">
+      <div class="aihead"><b>✍️ 作文分析</b>
+        <span class="hint-inline">${has
+          ? esc(c.model || "") + " · " + esc(tsTxt(c.at)) + (c.imgs ? " · " + c.imgs + " 张图" : "")
+          : "对照你导入的作文题目，按初中阅卷标准细评"}</span>
+        <span style="flex:1"></span>
+        <button class="btnmini" data-papcompo="${e.id}">${has ? "重新生成" : "生成作文分析"}</button>
+        ${has ? `<button class="btnmini" data-papcompocopy="${e.id}">复制</button>` : ""}
+      </div>
+      ${has ? `<div style="white-space:pre-wrap;line-height:1.8;font-size:var(--fs-body);color:var(--ink-2);padding:6px 2px 2px">${esc(c.text)}</div>` : ""}
+    </div>`;
+  }
+
   function paperTalkHtml(s, e) {
     const talk = e.paper.talk;
     const editingTalk = view.paperEdit && view.paperEdit.eid === e.id && view.paperEdit.part === "talk";
@@ -11769,6 +12339,36 @@ const SYNC = (() => {
   }
 
   /** 导出 / 复制那一行 */
+  /**
+   * 生成作文分析（2026-11-19 加）。
+   * 发的是整份答题卡的图，模型自己找作文；报告存在 e.paper.compo，可重新生成。
+   */
+  async function analyzeCompo(s, e, btn) {
+    if (!aiKey()) return toast("还没填 API key —— 去「设置 → AI 分析」填一个", 6500);
+    const parts = await paperImageParts(paperCards(e));
+    if (!parts.length) return toast("答题卡的图读不出来 —— 重新传一次再分析", 6500);
+    const old = btn ? btn.innerHTML : null;
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="busy"></span> 细品中…'; }
+    try {
+      const r = await dsCall(PAPER_COMPO_SYS, [
+        { type: "text", text: paperCompoAsk(s, e) },
+        ...parts.map((p) => ({ type: "image_url", image_url: { url: p.url } })),
+      ], { maxTokens: 6000 });
+      e.paper.compo = {
+        text: r.text, at: new Date().toISOString(),
+        model: r.model, imgs: parts.length, usage: r.usage,
+      };
+      save(); paperRefresh();
+      toast("作文分析生成好了");
+    } catch (err) {
+      console.error(err);
+      toast("作文分析失败：" + (err.message || err), 7000);
+    } finally {
+      const b = document.querySelector(`[data-papcompo="${e.id}"]`);
+      if (b && old) { b.disabled = false; b.innerHTML = old; }
+    }
+  }
+
   function paperExpHtml(s, e) {
     return `<div class="papareabar" style="margin-top:6px">
       <button class="btn" data-papexp="${e.id}">📄 导出 Word</button>
@@ -11785,7 +12385,7 @@ const SYNC = (() => {
     // 薄弱分级在「还没生成分析」时也要看得到 —— 核对确认完就有数了
     const weak = paperWeakHtml(s, e);
     if (intro) return weak + intro;
-    return weak + paperAnaHtml(s, e) + paperTalkHtml(s, e) + paperExpHtml(s, e);
+    return weak + paperAnaHtml(s, e) + paperCompoHtml(s, e) + paperTalkHtml(s, e) + paperExpHtml(s, e);
   }
 
   /** 详情页里那块「到期中的复习计划」 */
@@ -12902,7 +13502,9 @@ const SYNC = (() => {
    * 三条底线一个字都不动：拆页只产出普通 File，**不写库、不覆盖、不改归属**；
    * 认不准的页名（IMG_2301.pdf 这类）照样进待确认区。
    */
-  const PP_PDF_OPTS = { maxPages: 30, longEdge: 1600, quality: 0.85 };
+  // 2026-11-19 调高：长边 1600→1900、质量 0.85→0.92。
+  // 用户主力是 PDF 识别，拆页这一步是清晰度上限，留点余量少压一次。
+  const PP_PDF_OPTS = { maxPages: 30, longEdge: 1900, quality: 0.92 };
 
   /** 拿浏览器端的 PDF 拆页内核；没就位（或接口不对）一律当「拆不了」处理 */
   function ppPdfApi() {
@@ -13657,6 +14259,7 @@ const SYNC = (() => {
   function renderPaperPage() {
     const stage = $("stage");
     if (!stage) return;
+    _papCtx = null;   // 每次重画先失效，只有渲染学生整页时才重新赋上
     const batches = examBatches();
     let cur = view.paperBatch ? batches.find((b) => b.name === view.paperBatch) : null;
     // 批次名对不上了：最常见的成因是**核对确认时把这场考试的考试名改了**
@@ -13737,6 +14340,7 @@ const SYNC = (() => {
     const stage = $("stage");
     if (!stage) return;
     const e = batchExamOf(s, b.name);
+    _papCtx = e ? e.id : "";   // 这页按 Ctrl+V 就直接当这个学生的答题卡（2026-11-19 补）
     if (_editOwner !== s.id) { _editOwner = s.id; view.paperEdit = null; view.planEdit = null; }
 
     const st = e ? paperState(e) : "none";
@@ -13773,7 +14377,7 @@ const SYNC = (() => {
 
     stage.innerHTML = `<div class="pap-page papsheet">
       <div class="sc-detail-h">
-        <b>${esc(s.name)}</b>${ntBadges(s)}
+        <b>${esc(s.name)}</b>${classBadges(s)}${ntBadges(s)}
         <span class="hint-inline">${esc(b.name)} · ${esc(b.date || "没写日期")}${typeof b.full === "number" ? " · 满分 " + b.full : ""}</span>
         <span class="chip ${st === "analyzed" || st === "confirmed" ? "ok" : st === "none" ? "ex" : "warn"}">${esc(stT)}</span>
         ${sc ? `<span class="chip">${esc(sc)}</span>` : ""}
@@ -13814,11 +14418,25 @@ const SYNC = (() => {
 
     const head = `<div class="sc-detail-h">
       <b>答题卡</b>
-      <span class="hint-inline">${esc(b.name)} · ${esc(b.date || "没写日期")}${typeof b.full === "number" ? " · 满分 " + b.full : ""}
-        · 已核对 ${b.done} / ${DB.students.length} 人</span>
-      <span class="sc-actions"><button class="btn" id="papExport"
-        title="这一批所有已核对学生的方案，一人一页">⬇ 导出这一批（Word）</button>
-        <button class="btn ghost" id="papBack">← 全部批次</button></span></div>`;
+      ${view.papEditInfo ? `
+        <span class="hint-inline" style="display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <input id="papEName" type="text" value="${esc(b.name)}" placeholder="考试名称" style="width:190px;padding:5px 8px;border:1px solid var(--line);border-radius:7px">
+          <input id="papEDate" type="date" value="${esc(b.date || "")}" style="padding:5px 8px;border:1px solid var(--line);border-radius:7px">
+          <span>满分</span>
+          <input id="papEFull" type="number" value="${typeof b.full === "number" ? b.full : 150}" style="width:72px;padding:5px 8px;border:1px solid var(--line);border-radius:7px">
+        </span>
+        <span class="sc-actions">
+          <button class="btn primary" id="papESave">保存</button>
+          <button class="btn ghost" id="papECancel">取消</button>
+        </span>` : `
+        <span class="hint-inline">${esc(b.name)} · ${esc(b.date || "没写日期")}${typeof b.full === "number" ? " · 满分 " + b.full : ""}
+          · 已核对 ${b.done} / ${DB.students.length} 人</span>
+        <span class="sc-actions">
+          <button class="btn ghost" id="papEEdit" title="改考试名称 / 日期 / 满分">✎ 编辑考试信息</button>
+          <button class="btn" id="papExport"
+          title="这一批所有已核对学生的方案，一人一页">⬇ 导出这一批（Word）</button>
+          <button class="btn ghost" id="papBack">← 全部批次</button></span>`}
+        </div>`;
 
     // 本次考试的材料（题目/解析）：一次导入全班共用，分析答题卡时带给 AI（2026-11-15 加）
     const mat = materialOf(b.name);
@@ -13866,7 +14484,7 @@ const SYNC = (() => {
           const extra = (e && !paperDone(e) && paperHas(e)) || (e && paperDone(e) && !an)
             ? "" : (e && n ? `<button class="btn ghost" data-paprec="${esc(e.id)}">🔍 重新识别</button>` : "");
           return `<tr data-prow="${esc(s.id)}" data-papex="${e ? esc(e.id) : ""}" title="点开这个学生的详情">
-            <td class="sticky-l">${esc(s.name)}${ntBadges(s)}</td>
+            <td class="sticky-l">${esc(s.name)}${classBadges(s)}${ntBadges(s)}</td>
             <td><span class="chip ${PAPER_ST[st].c}">${PAPER_ST[st].t}</span></td>
             <td class="num">${sc}</td>
             <td class="num">${cardCell}</td>
@@ -13905,6 +14523,30 @@ const SYNC = (() => {
       view.paperStudent = null;
       renderStage();
     });
+    // 编辑考试信息（2026-11-19）：改考试名 / 日期 / 满分
+    { const ed = $("papEEdit"); if (ed) ed.onclick = () => { view.papEditInfo = true; renderStage(); }; }
+    { const ec = $("papECancel"); if (ec) ec.onclick = () => { view.papEditInfo = false; renderStage(); }; }
+    { const es = $("papESave"); if (es) es.onclick = () => {
+        const oldName = view.paperBatch;
+        const newName = ($("papEName").value || "").trim();
+        const newDate = $("papEDate").value || "";
+        const newFull = Number($("papEFull").value) || null;
+        if (!newName) { toast("考试名称不能空"); $("papEName").focus(); return; }
+        if (newName !== oldName) {
+          const others = examNameList().filter((x) => x !== oldName);
+          if (others.includes(newName) && !window.confirm(`已经有一场叫「${newName}」了，要把这一批并进去吗？`)) return;
+          renameExam(oldName, newName);
+        }
+        for (const st of DB.students) for (const e of (st.exams || [])) {
+          if ((e.name || "").trim() !== newName) continue;
+          if (newDate) e.date = newDate;
+          if (newFull) e.full = newFull;
+        }
+        if (view.paperBatch === oldName) view.paperBatch = newName;
+        view.papEditInfo = false;
+        save(); renderStage();
+        toast("考试信息已更新");
+      }; }
     const back = $("papBack");
     if (back) back.onclick = () => {
       view.paperBatch = null; view.paperFilter = "all"; view.paperStudent = null; renderStage();
@@ -13999,6 +14641,24 @@ const SYNC = (() => {
       const ex = findExam(el.dataset.paprev);
       const s = ex ? studentOfExam(ex.id) : null;
       if (ex && s && paperHas(ex)) openPaperReview(s.id, ex.id);
+    });
+    stage.querySelectorAll("[data-papcompo]").forEach((el) => el.onclick = (ev) => {
+      ev.stopPropagation();
+      const ex = findExam(el.dataset.papcompo);
+      const st = ex ? studentOfExam(ex.id) : null;
+      if (!ex || !st) return toast("找不到那场考试了");
+      analyzeCompo(st, ex, el);
+    });
+    stage.querySelectorAll("[data-papcompocopy]").forEach((el) => el.onclick = (ev) => {
+      ev.stopPropagation();
+      const ex = findExam(el.dataset.papcompocopy);
+      if (!ex || !ex.paper || !ex.paper.compo) return;
+      const t = String(ex.paper.compo.text || "");
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(t).then(
+          () => toast("作文分析已复制"),
+          () => toast("复制失败，手动选一下文字复制", 5000));
+      } else toast("这个浏览器不给自动复制，手动选一下文字", 5000);
     });
     stage.querySelectorAll("[data-papana]").forEach((el) => el.onclick = (ev) => {
       ev.stopPropagation();
@@ -14359,7 +15019,7 @@ const SYNC = (() => {
     d.innerHTML = `
       <div class="det-head">
         <input class="nameinput" id="dName" value="${esc(s.name)}" title="改名字">
-        ${ntBadges(s)}
+        ${classBadges(s)}${ntBadges(s)}
         ${lvCtl}
         <button class="btn ghost" id="dProfile" title="打开这个学生的完整档案（成绩、日常、沟通、打卡、时间线）">📁 档案</button>
         <button class="btn ghost" id="dClose">关闭</button>
@@ -15225,7 +15885,7 @@ const SYNC = (() => {
 
     const hero = `<div class="pf-hero">
       <div class="pf-hero-main">
-        <div class="pf-title"><h2>${esc(s.name)}</h2>${ntBadges(s)} ${levelBadge(s) || ""}</div>
+        <div class="pf-title"><h2>${esc(s.name)}</h2>${classBadges(s)}${ntBadges(s)} ${levelBadge(s) || ""}</div>
         <div class="pf-sub">${DB.config.className ? "班级：" + esc(DB.config.className) : "班级：未设置"}${total !== null ? ` · 评分合计 ${total} 分` : ""}${(s.chats || []).length ? ` · 聊天 ${(s.chats || []).length} 条` : ""}</div>
         <div class="pf-chips">${ptagHtml}</div>
       </div>
@@ -16045,6 +16705,31 @@ const SYNC = (() => {
           .map((x) => `<option value="${esc(x.name)}">${x.full ? "上次满分 " + x.full : ""}</option>`).join("");
       } catch { dl.innerHTML = ""; }
     }
+    // 「选已有考试」下拉（2026-11-19）：datalist 在 Edge 里点不动 = 根本选不了，
+    // 换成一个真 select；选中后把这场考试的日期、满分带过来
+    const pick = $("scoreExamPick");
+    if (pick) {
+      const nms = examNameList();
+      pick.innerHTML = `<option value="">— 选一场已有考试 —</option>` +
+        nms.map((nm) => `<option value="${esc(nm)}">${esc(nm)}</option>`).join("");
+      pick.value = "";
+      pick.onchange = () => {
+        const nm = pick.value;
+        if (!nm) return;
+        $("scoreExamName").value = nm;
+        let best = null;
+        for (const st of DB.students) {
+          for (const e of (st.exams || [])) {
+            if ((e.name || "").trim() !== nm) continue;
+            if (!best || String(e.date || "") > String(best.date || "")) best = e;
+          }
+        }
+        if (best) {
+          if (best.date) $("scoreDate").value = best.date;
+          if (typeof best.full === "number") $("scoreFull").value = best.full;
+        }
+      };
+    }
     $("mScore").classList.add("open");
     $("scoreText").focus();
   }
@@ -16839,7 +17524,7 @@ const SYNC = (() => {
     const picked = view.ckSel.includes(s.id);
     return `<div class="ck-student${picked ? " on" : ""}" data-sid="${esc(s.id)}">
       <label class="ck-pick" title="勾选 ${esc(s.name)}"><input type="checkbox" data-ckpick="${esc(s.id)}"${picked ? " checked" : ""} aria-label="勾选 ${esc(s.name)}"></label>
-      <button class="ck-st-name pf-link" type="button" data-profile="${esc(s.id)}" title="打开 ${esc(s.name)} 的学生档案">${esc(s.name)}</button>${ntBadges(s)}
+      <button class="ck-st-name pf-link" type="button" data-profile="${esc(s.id)}" title="打开 ${esc(s.name)} 的学生档案">${esc(s.name)}</button>${classBadges(s)}${ntBadges(s)}
       <span class="ck-st-lvl" title="等级">${esc(levelOf(s) || "—")}</span>
       ${ckBadgeHtml(cur)}
       <span class="ck-st-meta">${s.cons ? "⚠ " + esc(s.cons) : (s.note ? esc(s.note) : "")}</span>
@@ -16925,7 +17610,7 @@ const SYNC = (() => {
     }
     box.innerHTML = hits.map((s, i) =>
       `<div class="ck-ac-i${view.ckAcIdx === i ? " on" : ""}" data-ac="${esc(s.id)}" role="option">
-        <span class="ck-ac-name">${esc(s.name)}</span>${ntBadges(s)}
+        <span class="ck-ac-name">${esc(s.name)}</span>${classBadges(s)}${ntBadges(s)}
         <span class="ck-ac-lvl">${esc(levelOf(s) || "—")}</span>
         ${ckBadgeHtml(checkinStatusOf(view.checkinTask, s.id))}
       </div>`).join("");
@@ -18886,7 +19571,7 @@ const SYNC = (() => {
             const got = vals.filter(Boolean).map((v) => v.e.score);
             const mineAvg = got.length ? got.reduce((a, b) => a + b, 0) / got.length : null;
             return `<tr data-id="${s.id}">
-            <td class="sticky-l nm-col"><b>${esc(s.name)}</b>${ntBadges(s)}</td>
+            <td class="sticky-l nm-col"><b>${esc(s.name)}</b>${classBadges(s)}${ntBadges(s)}</td>
             ${vals.map((v) => v
               ? `<td class="sc-r"><b>${v.e.score}</b>${typeof v.e.full === "number" ? "/" + v.e.full : ""}</td>`
               : `<td class="sc-r none">—</td>`).join("")}
@@ -19261,7 +19946,7 @@ const SYNC = (() => {
         else view.scSel = view.scSel.filter((x) => x !== sid);
         view.scLastPick = sid;
         view.scShift = false;
-        renderStage();
+        renderKeepScroll();
       };
     });
     { const all = $("scPickAll"); toPickAll(all);
@@ -19270,19 +19955,19 @@ const SYNC = (() => {
         view.scSel ||= [];
         if (all.checked) ids.forEach((id) => { if (!view.scSel.includes(id)) view.scSel.push(id); });
         else view.scSel = view.scSel.filter((id) => !ids.includes(id));
-        renderStage();
+        renderKeepScroll();
       }; }
     const by = $("scBYes"); if (by) by.onclick = () => batchComm(cur, 1);
     const bn = $("scBNo"); if (bn) bn.onclick = () => batchComm(cur, 0);
     const bw = $("scBWeak"); if (bw) bw.onclick = () => batchWeak(cur);
     const bc = $("scBClear"); if (bc) bc.onclick = () => batchClearWeak(cur);
-    const bnone = $("scBNone"); if (bnone) bnone.onclick = () => { view.scSel = []; renderStage(); };
+    const bnone = $("scBNone"); if (bnone) bnone.onclick = () => { view.scSel = []; renderKeepScroll(); };
     const binv = $("scBInv"); if (binv) binv.onclick = () => {
       const ids = [...stage.querySelectorAll("[data-pick]")].map((x) => x.dataset.pick);
       const got = new Set(view.scSel || []);
       ids.forEach((id) => { if (got.has(id)) got.delete(id); else got.add(id); });
       view.scSel = [...got];
-      renderStage();
+      renderKeepScroll();
     };
 
     const ex1 = $("scExportX"); if (ex1) ex1.onclick = () => exportScoreXlsx(cur);
@@ -19448,7 +20133,7 @@ const SYNC = (() => {
           <tbody>${anyone.length ? anyone.map((s) => {
             const cc = callCountOf(s.id);
             return `<tr data-id="${s.id}">
-            <td class="sticky-l"><b>${esc(s.name)}</b>${ntBadges(s)}</td>
+            <td class="sticky-l"><b>${esc(s.name)}</b>${classBadges(s)}${ntBadges(s)}</td>
             ${batches.map((b) => {
               const st = callStatusOf(callBatchId(b), s.id);
               // 没打过的人写「—」：低调但看得懂。「—」满屏的时候比真实数据还亮就没法扫读了
@@ -19524,7 +20209,7 @@ const SYNC = (() => {
             const cc = callCountOf(s.id);
             // 「未联系」是筛出来的结果，不是这个人真被打成了「未联系」（那是懒存：没记过就是它）
             return `<div class="ck-student">
-              <span class="ck-st-name"><span class="ck-st-link" data-clhist="1" data-sid="${s.id}" title="看这个学生这一轮的全部电联记录（含录音、转写）">${esc(s.name)}</span>${ntBadges(s)}</span>
+              <span class="ck-st-name"><span class="ck-st-link" data-clhist="1" data-sid="${s.id}" title="看这个学生这一轮的全部电联记录（含录音、转写）">${esc(s.name)}</span>${classBadges(s)}${ntBadges(s)}</span>
               ${callBadgeHtml(view.callStatus)}
               <span class="ck-st-meta">${cc.n > 1 ? `已聊 ${cc.n} 次 · ` : ""}${(() => { const k = callLogList(curId, s.id).length; return k ? `逐次 ${k} 条 · ` : ""; })()}${s.cons ? "⚠ " + esc(s.cons) : ""}</span>
               <span class="ck-st-last">${callLastCellHtml(s)}</span>
@@ -20275,7 +20960,7 @@ const SYNC = (() => {
         const why = m && m.st === "未续" && m.reason ? `<span class="rn-mini">${esc(m.reason)}</span>` : "";
         return `<td class="${stt === RENEW_UNMARKED ? "none" : ""}">${renewBadge(stt)}${why}</td>`;
       }).join("");
-      return `<tr data-id="${s.id}"><td class="sticky-l"><b>${esc(s.name)}</b>${ntBadges(s)}</td>
+      return `<tr data-id="${s.id}"><td class="sticky-l"><b>${esc(s.name)}</b>${classBadges(s)}${ntBadges(s)}</td>
         <td>${esc(clsOf(s) || "—")}</td>${cells}</tr>`;
     }).join("");
     stage.innerHTML = `
@@ -20382,7 +21067,7 @@ const SYNC = (() => {
         : `<span class="none">—</span>`;
       return `<tr data-id="${s.id}" class="${view.rnSel.includes(s.id) ? "rn-on" : ""}">
         <td class="rn-pick"><input type="checkbox" data-rnpick="${s.id}"${view.rnSel.includes(s.id) ? " checked" : ""} aria-label="勾选 ${esc(s.name)}"></td>
-        <td class="sticky-l"><span class="rn-name" data-rnopen="${s.id}" title="打开这个学员的详情">${esc(s.name)}</span>${ntBadges(s)}</td>
+        <td class="sticky-l"><span class="rn-name" data-rnopen="${s.id}" title="打开这个学员的详情">${esc(s.name)}</span>${classBadges(s)}${ntBadges(s)}</td>
         <td><span class="rn-cls${clsOf(s) ? "" : " rn-cls-add"}" data-rncls="${s.id}" title="点一下给他填班级（按班级筛选要用）">${esc(clsOf(s) || "填班级")}</span></td>
         <td>${levelBadge(s) || `<span class="none">—</span>`}</td>
         <td><span class="rn-acts">${stt === RENEW_UNMARKED ? renewBadge(stt) : ""}${chips}</span></td>
@@ -20644,6 +21329,15 @@ const SYNC = (() => {
       <div class="asrstat ok">
         ✅ <b>同步已开启</b> —— ${esc(c.email || "")} · 上次同步：${esc(lastTxt)}
       </div>
+      ${syncBlockedByClasses() ? `
+      <div class="aiwarn" style="margin-top:10px">
+        <b>⚠️ 你现在有 ${(DB.classes || []).length} 个班，同步已自动暂停</b>
+        <ul>
+          <li>同步是一次装一整套数据，装不下多个班；多班时还硬推，切到哪个班就会把云端覆盖成哪个班。</li>
+          <li>所以多班期间不推也不拉，数据仍然只在本机，不会丢。</li>
+          <li>要用同步：先把其他班导出备份、只留一个班（或者用只有单个班的那个看板）。</li>
+        </ul>
+      </div>` : ""}
       <div class="rowset" style="margin-top:10px">
         <button class="btn primary" id="syncNow">立即同步</button>
         <button class="btn" id="syncOut">退出登录</button>
@@ -20723,8 +21417,17 @@ const SYNC = (() => {
    * 先拉一次把两边对齐，推上去的才是合并后的完整状态。
    */
   let syncBusy = false;
+  /** 多班级（2026-11-19）：同步协议是按「当前这一份数据」整包走的，装不下多个班。
+   *  多班时**直接停掉同步**：否则切到哪个班就把云端覆盖成哪个班，另一台设备再一拉，
+   *  别的班的改动就没了 —— 这比「不同步」糟得多。单班（和从没用过多班级的老库）照旧同步。 */
+  const syncBlockedByClasses = () => (DB.classes || []).length > 1;
+
   async function syncOnce(manual) {
     if (!SYNC.ready() || syncBusy) return null;
+    if (syncBlockedByClasses()) {
+      if (manual) toast("现在有多个班：同步一次只装得下一个班，已暂停同步。\n要同步请先把看板缩回一个班。", 9000);
+      return null;
+    }
     syncBusy = true;
     try {
       const pulled = await SYNC.pull();
@@ -20748,15 +21451,156 @@ const SYNC = (() => {
   /** 自动同步：改了数据后 6 秒推一次；另外每 5 分钟拉一次 */
   let syncPushTimer;
   function scheduleSyncPush() {
-    if (!SYNC.ready()) return;
+    if (!SYNC.ready() || syncBlockedByClasses()) return;
     clearTimeout(syncPushTimer);
     syncPushTimer = setTimeout(() => {
       syncOnce(false).catch(() => {});
     }, 6000);
   }
   setInterval(() => {
-    if (SYNC.ready() && !document.hidden) syncOnce(false).catch(() => {});
+    if (SYNC.ready() && !syncBlockedByClasses() && !document.hidden) syncOnce(false).catch(() => {});
   }, 5 * 60 * 1000);
+
+  /* ---------------------------------------------- 班级面板：切换 / 新建（2026-11-19） */
+
+  let clsPanelMode = "list";   // "list" | "new"
+  let clsDraft = null;
+  let _clsBound = false;
+
+  /** 打开隐藏的 Excel 选择器（「换名单」/ 建班后马上导名单共用） */
+  function openImport() { const inp = $("fileXlsx2"); if (inp) inp.click(); }
+
+  function openClassPanel(mode) {
+    clsPanelMode = mode === "new" ? "new" : "list";
+    if (clsPanelMode === "new") {
+      const cur = activeClass();
+      clsDraft = {
+        name: "", campus: (cur && cur.campus) || "", subject: (cur && cur.subject) || "",
+        season: "", note: "", roster: (DB.students || []).length ? "copy" : "blank",
+      };
+    }
+    const m = $("mClass");
+    if (m) m.classList.add("open");
+    drawClassPanel();
+  }
+
+  /** 设置页里的班级列表（可就地改名字 / 校区 / 科目 / 季节 / 备注）。
+   *  两行排：上面是名字/校区/科目/季节/人数/操作，下面一整行备注 ——
+   *  挤成一行时「当前 / 切过去 / ✕」会被顶到第二行，看着像错位。 */
+  function classSettingRows() {
+    const list = DB.classes || [];
+    if (!list.length) return `<p class="hint" style="margin:2px 0 8px">还没有班级。建一个班，名单和成绩才有归处。</p>`;
+    return list.map((c) => `
+      <div class="rowset cls-row ${c.id === DB.activeClassId ? "on" : ""}">
+        <input type="text" value="${esc(c.name)}" data-clf="name" data-cid="${esc(c.id)}" placeholder="班级名（如 秋季班）" style="flex:0 0 132px">
+        <input type="text" value="${esc(c.campus)}" data-clf="campus" data-cid="${esc(c.id)}" placeholder="校区" style="flex:0 0 62px">
+        <input type="text" value="${esc(c.subject)}" data-clf="subject" data-cid="${esc(c.id)}" placeholder="科目" style="flex:0 0 54px">
+        <select data-clf="season" data-cid="${esc(c.id)}" style="flex:0 0 86px" title="季节：跨班同名学生名字后面就靠它标「秋」「寒」">
+          <option value="" ${c.season ? "" : "selected"}>不标季节</option>
+          ${SEASONS.map((s) => `<option value="${s.key}" ${c.season === s.key ? "selected" : ""}>${s.key}季</option>`).join("")}
+        </select>
+        <span class="clcount" title="这个班的人数">${classCount(c)} 人</span>
+        <span class="clend">
+          ${c.id === DB.activeClassId
+            ? `<span class="clcur" title="看板现在显示的就是这个班">当前</span>`
+            : `<button class="btn ghost clsw" data-clsswitch="${esc(c.id)}">切过去</button>`}
+          <span class="x" data-delclass="${esc(c.id)}" title="${c.id === DB.activeClassId ? "正在用的班不能直接删：先切到别的班" : "删掉这个班连同它的数据"}">✕</span>
+        </span>
+        <input type="text" value="${esc(c.note)}" data-clf="note" data-cid="${esc(c.id)}" placeholder="备注（可不填）" class="clnote">
+      </div>`).join("");
+  }
+
+  function drawClassPanel() {
+    if (!_clsBound) {
+      _clsBound = true;
+      const nb = $("clsNew");
+      if (nb) nb.onclick = () => openClassPanel("new");
+    }
+    if (clsPanelMode === "list") {
+      $("clsTitle").textContent = "班级";
+      $("clsNew").style.display = "";
+      const list = DB.classes || [];
+      $("clsBody").innerHTML = `
+        <p class="hint" style="margin-top:0">每个班的<b>名单、成绩、答题卡、聊天、电联、续班都是自己一份</b>，互相不串。
+          切到哪个班，看板就只显示哪个班。同一个人续到新班，名字后面会自动标上原来那个班的季节（如「秋」）。</p>
+        <div class="cllist">
+          ${list.map((c) => {
+            const on = c.id === DB.activeClassId;
+            return `
+            <button class="clrow${on ? " on" : ""}" data-clsswitch="${esc(c.id)}" ${on ? "disabled" : ""} type="button">
+              <span class="cl-season" style="--ctc:${seasonColor(c.season) || "var(--ink-3)"}">${esc(c.season || "·")}</span>
+              <span class="cl-main">
+                <span class="cl-name">${esc(c.name)}${on ? `<span class="cl-cur">当前</span>` : ""}</span>
+                <span class="cl-meta">${([c.campus, c.subject].filter(Boolean).map(esc).join(" · ") || "没填校区 / 科目")} · ${classCount(c)} 人</span>
+                ${c.note ? `<span class="cl-note">${esc(c.note)}</span>` : ""}
+              </span>
+              <span class="cl-go">${on ? "正在使用" : "切到这个班"}</span>
+            </button>`; }).join("") || `<div class="empty-hint">还没有班级。<br>点下面「+ 新建班级」建第一个。</div>`}
+        </div>`;
+      $("clsBody").querySelectorAll("[data-clsswitch]").forEach((el) => el.onclick = () => {
+        switchClass(el.dataset.clsswitch);
+        drawClassPanel();
+      });
+      return;
+    }
+
+    // ---- 新建 ----
+    const d = clsDraft || { name: "", campus: "", subject: "", season: "", note: "", roster: "blank" };
+    const hasCur = (DB.students || []).length > 0;
+    const curName = (activeClass() || {}).name || "当前班";
+    $("clsTitle").textContent = "新建班级";
+    $("clsNew").style.display = "none";
+    $("clsBody").innerHTML = `
+      <div class="clform">
+        <div class="rowset"><label class="cll">班级名</label>
+          <input type="text" id="clNewName" value="${esc(d.name)}" placeholder="如 寒假班" style="flex:0 0 180px" autocomplete="off">
+          <span class="hint-inline">名字里带「秋 / 寒 / 春 / 夏」会自动认季节</span></div>
+        <div class="rowset"><label class="cll">校区</label>
+          <input type="text" id="clNewCampus" value="${esc(d.campus)}" placeholder="如 章丘" style="flex:0 0 118px">
+          <label class="cll">科目</label>
+          <input type="text" id="clNewSubject" value="${esc(d.subject)}" placeholder="如 语文" style="flex:0 0 96px">
+          <label class="cll">季节</label>
+          <select id="clNewSeason">
+            <option value="">自动</option>
+            ${SEASONS.map((s) => `<option value="${s.key}" ${d.season === s.key ? "selected" : ""}>${s.key}</option>`).join("")}
+          </select></div>
+        <div class="rowset"><label class="cll">备注</label>
+          <input type="text" id="clNewNote" value="${esc(d.note)}" placeholder="可不填" style="flex:1"></div>
+
+        <div class="sect clrs">
+          <h4>学员名单怎么来？</h4>
+          <label class="clopt"><input type="radio" name="clRoster" value="blank" ${d.roster === "blank" ? "checked" : ""}>
+            <span><b>空白班</b><i>先建好，之后自己导名单</i></span></label>
+          <label class="clopt${hasCur ? "" : " off"}"><input type="radio" name="clRoster" value="copy" ${d.roster === "copy" ? "checked" : ""}${hasCur ? "" : " disabled"}>
+            <span><b>沿用「${esc(curName)}」的 ${(DB.students || []).length} 人</b>
+              <i>只复制<b>学员档案</b>：姓名、家长类型、等级、评分、备注、优点问题。
+              <b>成绩、答题卡、聊天、电联、续班都不带</b> —— 新班从零开始，这正是「独立」的意思。</i></span></label>
+          <label class="clopt"><input type="radio" name="clRoster" value="upload" ${d.roster === "upload" ? "checked" : ""}>
+            <span><b>现在上传新名单</b><i>建完立刻打开导入（Excel 拖进来 / 粘贴表格 / CSV 都行）</i></span></label>
+        </div>
+        <p class="hint" style="margin:10px 0 0">建好会自动切到新班；名字后面带「秋」「寒」的标签来自别的班，不用自己标。</p>
+      </div>
+      <div class="rowset" style="justify-content:flex-end;margin-top:14px">
+        <button class="btn" id="clCancel">取消</button>
+        <button class="btn primary" id="clCreate">建好并切过去</button>
+      </div>`;
+
+    const val = (id) => { const el = $(id); return el ? el.value.trim() : ""; };
+    const syncDraft = () => { Object.assign(d, { name: val("clNewName"), campus: val("clNewCampus"), subject: val("clNewSubject"), note: val("clNewNote") }); };
+    ["clNewName", "clNewCampus", "clNewSubject", "clNewNote"].forEach((id) => { const el = $(id); if (el) el.oninput = syncDraft; });
+    if ($("clNewSeason")) $("clNewSeason").onchange = () => { d.season = $("clNewSeason").value; };
+    $("clsBody").querySelectorAll('input[name="clRoster"]').forEach((r) => r.onchange = () => { d.roster = r.value; });
+    $("clCancel").onclick = () => openClassPanel("list");
+    $("clCreate").onclick = () => {
+      syncDraft();
+      const nm = String(d.name || "").trim();
+      if (!nm) return toast("先给班级起个名字");
+      if ((DB.classes || []).some((x) => x.name === nm)) return toast(`已经有一个叫「${nm}」的班了，换个名字`);
+      createClass({ name: nm, campus: d.campus, subject: d.subject, note: d.note, season: d.season || guessSeason(nm), roster: d.roster });
+      openClassPanel("list");
+      if ($("mSet") && $("mSet").classList.contains("open")) drawSettings();
+    };
+  }
 
   function openSettings() {
     $("mSet").classList.add("open");
@@ -20817,6 +21661,16 @@ const SYNC = (() => {
     const wsrc = wallpaperSrc(wp);
 
     $("setBody").innerHTML = `
+      <div class="sect">
+        <h4>班级信息</h4>
+        <p class="desc">一个看板可以带好几个班。每个班有<b>自己独立的名单、成绩、答题卡、聊天、电联、续班</b>，互相不串；
+          看板左上角点班名就能切换。同一个人续到新班时，名字后面会自动标上原来那个班的季节（如「秋」）。</p>
+        ${classSettingRows()}
+        <div class="rowset" style="margin-top:8px">
+          <button class="btn" data-addclass="1">+ 加一个班级</button>
+          <button class="btn ghost" data-opencls="1">打开班级列表 / 切换</button>
+        </div>
+      </div>
       <div class="sect">
         <h4>外观</h4>
         <p class="desc">只影响长相，不动任何数据。</p>
@@ -20986,6 +21840,7 @@ const SYNC = (() => {
         <p class="desc">
           手机、平板、另一台电脑能看到同一份数据。<b>不开也能正常用</b>；开了以后本地数据仍是老大，
           断网照常操作，联网了自动把改动推上去。
+          ${syncBlockedByClasses() ? `<br><b style="color:var(--amber)">⚠ 你现在有多个班：同步会自动暂停，原因见下面。</b>` : ""}
         </p>
         ${syncSettingsHtml()}
       </div>
@@ -21176,6 +22031,40 @@ const SYNC = (() => {
       toast(r.msg, r.ok ? 8000 : 12000);
     };
 
+    /* ---- 班级信息（2026-11-19：多班级，信息存在 DB.classes，带独立数据）---- */
+    $("setBody").querySelectorAll("[data-clf]").forEach((inp) => inp.onchange = () => {
+      const cl = classOfId(inp.dataset.cid);
+      if (!cl) return;
+      const k = inp.dataset.clf;
+      const v = String(inp.value || "").trim();
+      if (k === "name") {
+        if (!v) { toast("班级名不能空着"); inp.value = cl.name || ""; return; }
+        const dup = (DB.classes || []).some((x) => x.id !== cl.id && x.name === v);
+        if (dup && !window.confirm(`已经有一个叫「${v}」的班了，两个班同名容易看混。还要改吗？`)) {
+          inp.value = cl.name || ""; return;
+        }
+      }
+      const patch = {}; patch[k] = v;
+      patchClass(cl.id, patch);
+      drawSettings();
+      if (k === "name" || k === "season") render();
+    });
+    $("setBody").querySelectorAll("[data-clsswitch]").forEach((el) => el.onclick = () => {
+      switchClass(el.dataset.clsswitch);
+      if ($("mSet") && $("mSet").classList.contains("open")) drawSettings();
+    });
+    $("setBody").querySelectorAll("[data-delclass]").forEach((el) => el.onclick = () => {
+      const cl = classOfId(el.dataset.delclass);
+      if (!cl) return;
+      if (cl.id === DB.activeClassId) return toast("这是正在用的班，先切到别的班再删");
+      deleteClass(cl.id);
+      drawSettings();
+    });
+    { const addCls = $("setBody").querySelector("[data-addclass]");
+      if (addCls) addCls.onclick = () => openClassPanel("new"); }
+    { const openCls = $("setBody").querySelector("[data-opencls]");
+      if (openCls) openCls.onclick = () => openClassPanel("list"); }
+
     /* ---- 多设备同步 ---- */
     bindSyncSettings();
     $("setBody").querySelectorAll("[data-cfg]").forEach((el) => el.onchange = () => {
@@ -21256,7 +22145,8 @@ const SYNC = (() => {
       toast("已从候选列表里去掉「" + t.label + "」");
     });
     $("setReset").onclick = () => {
-      if (!confirm("清空所有学生数据、备注和聊天记录？\n\n这个操作不可撤销。建议先导出备份。")) return;
+      const nCls = (DB.classes || []).length;
+      if (!confirm(`清空所有班级的学生数据、备注和聊天记录？${nCls > 1 ? `\n\n注意：${nCls} 个班的数据都会一起清掉。` : ""}\n\n这个操作不可撤销。建议先导出备份。`)) return;
       localStorage.removeItem(KEY);
       DB = load();
       $("mSet").classList.remove("open");
@@ -21382,6 +22272,24 @@ const SYNC = (() => {
           }
           ev.preventDefault();
           toast("剪贴板里没有图片。截图/复制的图片才行；也可以点「选择文件」或把图片 / PDF 拖进来", 7000);
+          return;
+        }
+
+        // ② 完整分析页（某个学生的整页）：粘进来直接当这个学生的答题卡（2026-11-19 补）
+        //    用户原话「我指的是粘贴图片上传答题卡」—— 之前这一页只有「选文件」，没接粘贴。
+        if (view.mode === "paper" && _papCtx) {
+          const imgs = await ppFromClipboard(ev);
+          if (imgs.length) { ev.preventDefault(); addAttachments(imgs, _papCtx, "paper"); return; }
+          const items = [...((ev.clipboardData && ev.clipboardData.items) || [])];
+          const files = items.filter((i) => i.kind === "file").map((i) => i.getAsFile()).filter(Boolean);
+          if (files.some(ppIsPdfFile)) { ev.preventDefault(); addAttachments(files, _papCtx, "paper"); return; }
+          if (files.length) {
+            ev.preventDefault();
+            toast("剪贴板里这个不是图片或 PDF —— 答题卡收图片或 PDF（PDF 会自动拆成每页一张图），文字不会被当成答题卡", 7000);
+            return;
+          }
+          ev.preventDefault();
+          toast("剪贴板里没有图片。先截一张答题卡的图（或复制图片），再按 Ctrl+V", 7000);
           return;
         }
 
@@ -21572,20 +22480,36 @@ const SYNC = (() => {
    */
   function boardSections(board, isFile) {
     const B = board || {};
+    /* 多班级（2026-11-19）：统计必须把**每一个班**都算进来 ——
+       当前班在顶层，其余在 classes[i].data 里。只数顶层的话，
+       「恢复后变成几个班/多少人」会少算，老师会以为备份不完整。 */
+    const S = allStudentsOf(B);
+    const eachData = (key) => {
+      const out = [B[key]];
+      for (const c of B.classes || []) if (c && c.id !== B.activeClassId && c.data) out.push(c.data[key]);
+      return out.filter(Boolean);
+    };
+    const scoreTrackKeys = () => {
+      const seen = new Set();
+      for (const d of eachData("scoreTrack")) for (const k of Object.keys(d || {})) {
+        if (d[k] && d[k].analysis) seen.add(k);
+      }
+      return seen.size;
+    };
     return [
-      { key: "students", label: "学生名单（等级、总分、各维度分数）", size: (B.students || []).length, unit: "人" },
-      { key: "exams", label: "考试记录与成绩", size: (B.students || []).reduce((a, s) => a + ((s.exams || []).length), 0), unit: "场" },
-      { key: "chats", label: "家长聊天记录", size: (B.students || []).reduce((a, s) => a + ((s.chats || []).length), 0), unit: "条" },
-      { key: "notes", label: "备注（优点 / 问题 / 家长类型 / 跟进）", size: (B.students || []).reduce((a, s) => a + (s.note ? 1 : 0), 0), unit: "人" },
-      { key: "calls", label: "电联批次与状态", size: ((B.calls && B.calls.batches) || []).length, unit: "批" },
+      { key: "classes", label: "班级", size: (B.classes || []).length, unit: "个" },
+      { key: "students", label: "学生名单（等级、总分、各维度分数）", size: S.length, unit: "人" },
+      { key: "exams", label: "考试记录与成绩", size: S.reduce((a, s) => a + ((s.exams || []).length), 0), unit: "场" },
+      { key: "chats", label: "家长聊天记录", size: S.reduce((a, s) => a + ((s.chats || []).length), 0), unit: "条" },
+      { key: "notes", label: "备注（优点 / 问题 / 家长类型 / 跟进）", size: S.reduce((a, s) => a + (s.note ? 1 : 0), 0), unit: "人" },
+      { key: "calls", label: "电联批次与状态", size: eachData("calls").reduce((a, x) => a + ((x.batches || []).length), 0), unit: "批" },
       { key: "renewal", label: "续班轮次与学员记录",
-        size: ((B.renewal && B.renewal.rounds) || []).length,
+        size: eachData("renewal").reduce((a, x) => a + ((x.rounds || []).length), 0),
         unit: "轮" },
-      { key: "checkin", label: "语文打卡任务与状态", size: ((B.checkin && B.checkin.tasks) || []).length, unit: "项" },
-      { key: "daily", label: "每日名单", size: ((B.daily && B.daily.ids) || []).length, unit: "人" },
-      { key: "unmatched", label: "未匹配名单", size: (B.unmatched || []).length, unit: "条" },
-      { key: "analysis", label: "考试成绩智能分析（板块得分率 / 薄弱判定）",
-        size: Object.keys(B.scoreTrack || {}).filter((k) => B.scoreTrack[k] && B.scoreTrack[k].analysis).length, unit: "场" },
+      { key: "checkin", label: "语文打卡任务与状态", size: eachData("checkin").reduce((a, x) => a + ((x.tasks || []).length), 0), unit: "项" },
+      { key: "daily", label: "每日名单", size: eachData("daily").reduce((a, x) => a + ((x.ids || []).length), 0), unit: "人" },
+      { key: "unmatched", label: "未匹配名单", size: eachData("unmatched").reduce((a, x) => a + ((x || []).length), 0), unit: "条" },
+      { key: "analysis", label: "考试成绩智能分析（板块得分率 / 薄弱判定）", size: scoreTrackKeys(), unit: "场" },
       { key: "config", label: "看板设置（名称、维度、标签）", size: (B.config && B.config.dims) ? B.config.dims.length : 0, unit: "项" },
     ].concat(isFile ? [
       { key: "attachments", label: "附件（答题卡、试卷照片等）", size: (B._attCount || 0), unit: "个" },
@@ -21708,7 +22632,8 @@ const SYNC = (() => {
     // 备份是要发给别人/传网盘的，key 绝不能跟着出门 —— 打包前先抹掉。
     const snapshot = JSON.parse(JSON.stringify(board));
     if (snapshot.config && snapshot.config.ai) delete snapshot.config.ai.key;
-    for (const st of snapshot.students || []) {
+    // 所有班都要清 —— 只清当前班的话，别的班里的 AI 用量会跟着备份出门
+    for (const st of allStudentsOf(snapshot)) {
       for (const ex of st.exams || []) if (ex.ai) delete ex.ai.usage;
     }
     const entries = [{
@@ -21743,7 +22668,12 @@ const SYNC = (() => {
     try {
       const now = new Date();
       const res = await packBackup(DB);
-      const cls = safePart(DB.config.className || "学员看板");
+      // 备份是**整库**（所有班都在里面），文件名要让人一眼看出这是全量：
+      // 只写当前班名的话，切到寒假班导出的包看起来像只备了寒假班。
+      const nCls = (DB.classes || []).length;
+      const cls = safePart(nCls > 1
+        ? `${DB.config.className || "学员看板"}-全部${nCls}个班`
+        : (DB.config.className || "学员看板"));
       const name = `${cls}_备份_${stampForName(now)}.zip`;
       downloadBlob(name, res.blob);
       const tip = res.missing
@@ -21943,7 +22873,8 @@ const SYNC = (() => {
       refreshAttStat();
       // 刚恢复完允许自动快照再拍一张，好让「今天的动作」有追溯
       snapBooting = false;
-      toast(`已恢复 ${(merged.students || []).length} 名学生` +
+      toast(`已恢复 ${allStudentsOf(merged).length} 名学生` +
+        ((merged.classes || []).length > 1 ? `（${merged.classes.length} 个班）` : "") +
         (attList && attList.length ? `、${attList.length} 个附件` : "") + "；当前版本已留底，可在备份面板里撤回", 6000);
     } catch (e) {
       console.error(e);
@@ -22031,7 +22962,7 @@ const SYNC = (() => {
     if (!el) return;
     const list = allAttachments();
     const bytes = list.reduce((a, x) => a + (x.size || 0), 0);
-    el.textContent = `${DB.students.length} 名学生 · ${list.length} 个附件 · 共 ${fmtSize(bytes)}`;
+    el.textContent = `${allStudentsOf(DB).length} 名学生 · ${list.length} 个附件 · 共 ${fmtSize(bytes)}`;
     try {
       const e = await FB().estimate();
       if (e) el.textContent += `　（浏览器已用 ${fmtSize(e.usage)}，可用约 ${(e.quota / 1073741824).toFixed(1)} GB）`;
