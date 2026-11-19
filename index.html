@@ -2830,9 +2830,16 @@ tr.rn-on td { background: var(--accent-soft); }
       <div class="sect" style="margin-top:12px">
         <h4>写到哪次考试</h4>
         <div class="rowset">
-          <label class="hint" style="margin:0">考试名称
+          <label class="hint" style="margin:0">选已有考试
+            <select id="scoreExamPick" style="margin-left:6px;padding:5px 8px;border:1px solid var(--line);border-radius:7px;max-width:190px">
+              <option value="">— 选一场已有考试 —</option>
+            </select>
+          </label>
+          <label class="hint" style="margin:0">或新考试名称
             <input type="text" id="scoreExamName" list="tplExams" placeholder="第一次月考" style="width:150px;margin-left:6px;padding:5px 8px;border:1px solid var(--line);border-radius:7px">
           </label>
+        </div>
+        <div class="rowset">
           <label class="hint" style="margin:0">日期
             <input type="date" id="scoreDate" style="margin-left:6px;padding:5px 8px;border:1px solid var(--line);border-radius:7px">
           </label>
@@ -8188,6 +8195,10 @@ const SYNC = (() => {
   let armedExam = null;   // 当前"接管粘贴"的那次考试
   let pickFor = null;     // 「＋ 选图」按钮点的是谁
   let pickRole = "exam";  // 这次选的文件算试卷还是答题卡
+  // 完整分析页（学生整页）当前这场考试的 id —— 在那一页按 Ctrl+V 直接粘答题卡用。
+  // 每次 renderPaperPage 开头清空，只有 renderPaperStudent 才赋值，离开整页就自动失效，
+  // 避免「在别的页面粘贴却塞进上一个学生的答题卡」。
+  let _papCtx = null;
   let lbUrl = null;
   let _lbBlob = null;    // 看图器里当前这张的原图（「复制图片」用）
   let _lbAttId = "";
@@ -11594,6 +11605,7 @@ const SYNC = (() => {
         <span class="chip ex">答题卡未上传</span>
         ${st.k === "none" ? `<span class="chip ex">成绩未填写</span>` : ""}
         <span class="hint-inline">没传答题卡就出不了板块分析 —— 传图片或 PDF（可以多张，PDF 自动拆成每页一张图）先给你核对，确认了才写进去</span>
+        ${quick ? `<span class="hint-inline">也可以直接 <b>Ctrl+V</b> 把截图粘进来</span>` : ""}
         ${examImgCount(e) ? `<span class="hint-inline">上面那条附件是<b>试卷</b> —— 答题卡得用左边这个按钮单独传</span>` : ""}`;
     }
     const cardStrip = cards.length
@@ -13657,6 +13669,7 @@ const SYNC = (() => {
   function renderPaperPage() {
     const stage = $("stage");
     if (!stage) return;
+    _papCtx = null;   // 每次重画先失效，只有渲染学生整页时才重新赋上
     const batches = examBatches();
     let cur = view.paperBatch ? batches.find((b) => b.name === view.paperBatch) : null;
     // 批次名对不上了：最常见的成因是**核对确认时把这场考试的考试名改了**
@@ -13737,6 +13750,7 @@ const SYNC = (() => {
     const stage = $("stage");
     if (!stage) return;
     const e = batchExamOf(s, b.name);
+    _papCtx = e ? e.id : "";   // 这页按 Ctrl+V 就直接当这个学生的答题卡（2026-11-19 补）
     if (_editOwner !== s.id) { _editOwner = s.id; view.paperEdit = null; view.planEdit = null; }
 
     const st = e ? paperState(e) : "none";
@@ -16044,6 +16058,31 @@ const SYNC = (() => {
         dl.innerHTML = tplStore().exams
           .map((x) => `<option value="${esc(x.name)}">${x.full ? "上次满分 " + x.full : ""}</option>`).join("");
       } catch { dl.innerHTML = ""; }
+    }
+    // 「选已有考试」下拉（2026-11-19）：datalist 在 Edge 里点不动 = 根本选不了，
+    // 换成一个真 select；选中后把这场考试的日期、满分带过来
+    const pick = $("scoreExamPick");
+    if (pick) {
+      const nms = examNameList();
+      pick.innerHTML = `<option value="">— 选一场已有考试 —</option>` +
+        nms.map((nm) => `<option value="${esc(nm)}">${esc(nm)}</option>`).join("");
+      pick.value = "";
+      pick.onchange = () => {
+        const nm = pick.value;
+        if (!nm) return;
+        $("scoreExamName").value = nm;
+        let best = null;
+        for (const st of DB.students) {
+          for (const e of (st.exams || [])) {
+            if ((e.name || "").trim() !== nm) continue;
+            if (!best || String(e.date || "") > String(best.date || "")) best = e;
+          }
+        }
+        if (best) {
+          if (best.date) $("scoreDate").value = best.date;
+          if (typeof best.full === "number") $("scoreFull").value = best.full;
+        }
+      };
     }
     $("mScore").classList.add("open");
     $("scoreText").focus();
@@ -21382,6 +21421,24 @@ const SYNC = (() => {
           }
           ev.preventDefault();
           toast("剪贴板里没有图片。截图/复制的图片才行；也可以点「选择文件」或把图片 / PDF 拖进来", 7000);
+          return;
+        }
+
+        // ② 完整分析页（某个学生的整页）：粘进来直接当这个学生的答题卡（2026-11-19 补）
+        //    用户原话「我指的是粘贴图片上传答题卡」—— 之前这一页只有「选文件」，没接粘贴。
+        if (view.mode === "paper" && _papCtx) {
+          const imgs = await ppFromClipboard(ev);
+          if (imgs.length) { ev.preventDefault(); addAttachments(imgs, _papCtx, "paper"); return; }
+          const items = [...((ev.clipboardData && ev.clipboardData.items) || [])];
+          const files = items.filter((i) => i.kind === "file").map((i) => i.getAsFile()).filter(Boolean);
+          if (files.some(ppIsPdfFile)) { ev.preventDefault(); addAttachments(files, _papCtx, "paper"); return; }
+          if (files.length) {
+            ev.preventDefault();
+            toast("剪贴板里这个不是图片或 PDF —— 答题卡收图片或 PDF（PDF 会自动拆成每页一张图），文字不会被当成答题卡", 7000);
+            return;
+          }
+          ev.preventDefault();
+          toast("剪贴板里没有图片。先截一张答题卡的图（或复制图片），再按 Ctrl+V", 7000);
           return;
         }
 
