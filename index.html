@@ -10821,6 +10821,7 @@ const SYNC = (() => {
       "5. 板块名和题号以试卷原文为准，别自己编一套；",
       "6. 任何一页有任何地方读不出来，都要在 unreadable 里**逐条**写明（第几页、哪一项、为什么）。",
       "7. 手写的分数容易看错（6/8、3/5、1/7），每个数字都要在图上找到笔迹再填；拿不准就把 confidence 写低，别硬填。",
+      "8. 先把整卷从上到下扫一遍、把 sections 的板块和顺序定下来（含得 0 分 / 空着的板块），再逐个填分 —— 漏一个板块会让后面的分数整体错位。",
     ].join("\n");
   }
 
@@ -10910,6 +10911,12 @@ const SYNC = (() => {
 
   function paperVerifyAsk(ocr) {
     const secs = (ocr.sections || []).map((x) => ({ no: x.no, name: x.name, score: x.score, full: x.full }));
+    // 上一轮「把握不大」的字段 + 没读出来的项：让复核优先看第二眼，别平均用力
+    const low = Object.entries(ocr.confidence || {})
+      .filter(([k, v]) => typeof v === "number" && v < 0.75 && !k.startsWith("_"))
+      .map(([k, v]) => `${k}（上一轮把握 ${Math.round(v * 100)}%）`)
+      .slice(0, 10);
+    const miss = (ocr.unreadable || []).map((u) => `${u.field_or_no || "某项"}：${u.reason || "没读出"}`).slice(0, 8);
     return [
       "【上一轮读出的 JSON】",
       JSON.stringify({
@@ -10917,18 +10924,25 @@ const SYNC = (() => {
         sections: secs, confidence: ocr.confidence || {},
       }),
       "",
-      "请逐项对照图片复核。只输出需要修改的数字；不需要改就不要列。",
-      `输出 JSON：{"corrections":[{"field":"total_score"|"full_score"|"section_score"|"section_full",`,
-      ` "section":string|null,"value":number,"reason":string}]}，没有要改的就输出 {"corrections":[]}。`,
+      (low.length || miss.length)
+        ? "【上一轮把握不大、请重点看第二眼的地方】\n"
+          + (low.length ? "· 分数：" + low.join("；") + "\n" : "")
+          + (miss.length ? "· 没读出来：" + miss.join("；") + "\n" : "")
+          + "复核时优先核对上面这些，其余按原值即可。"
+        : "",
+      "请逐项对照图片复核。只输出需要修改的项；不需要改就不要列。",
+      `输出 JSON：{"corrections":[{"field":"total_score"|"full_score"|"section_score"|"section_full"|"section_name",`,
+      ` "section":string|null,"value":number|string,"reason":string}]}，没有要改的就输出 {"corrections":[]}。`,
       "规则：",
-      "1. 只在图上清楚看到另一个数字时才改，并写明你在哪一段/哪一块看到的；",
+      "1. 只在图上清楚看到另一个值时才改，并写明你在哪一段/哪一块看到的；",
       "2. 板块用 name 或 no 指认（比如「文言文」或「二」）；找不到对应板块就不改；",
       "3. 分数不能超过该板块满分，也不能是负数；",
-      "4. 不确定就不输出这一项。不要输出任何解释性文字。",
-    ].join("\\n");
+      "4. section_name 用来修板块名（卷面原文跟上一轮不一样时），value 写卷面上的名字；",
+      "5. 不确定就不输出这一项。不要输出任何解释性文字。",
+    ].join("\n");
   }
 
-  async function verifyPaperNumbers(ocr, parts) {
+async function verifyPaperNumbers(ocr, parts) {
     const r = await dsCall(PAPER_VERIFY_SYS, [
       { type: "text", text: paperVerifyAsk(ocr) },
       ...parts.map((p) => ({ type: "image_url", image_url: { url: p.url } })),
@@ -10939,9 +10953,19 @@ const SYNC = (() => {
     const changed = [];
     for (const c of list.slice(0, 12)) {
       const f = String(c && c.field || "");
+      const note = String(c && c.reason || "").slice(0, 80);
+      // 板块名修正（2026-11-19 加）：复核现在也能改名字，不只是改数字
+      if (f === "section_name") {
+        const key = String(c.section || "").trim();
+        const sec = (ocr.sections || []).find((x) => key && (String(x.name || "") === key || String(x.no || "") === key));
+        const nv = String(c.value == null ? "" : c.value).trim();
+        if (!sec || !nv || nv === sec.name) continue;
+        changed.push({ field: f, section: key, from: sec.name, to: nv, reason: note });
+        sec.name = nv;
+        continue;
+      }
       const v = Number(c && c.value);
       if (!isFinite(v) || v < 0) continue;
-      const note = String(c && c.reason || "").slice(0, 80);
       if (f === "total_score" || f === "full_score") {
         if (ocr[f] === v) continue;
         changed.push({ field: f, from: ocr[f], to: v, reason: note });
