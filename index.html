@@ -5430,6 +5430,8 @@ const SYNC = (() => {
     return {
       title: "学员看板",
       className: "",
+      // 班级信息（2026-11-19 加）：只是记录，学员名单暂不跟它绑定
+      classes: [],
       /* ---- 外观：主题 / 主色 / 背景图（都不影响数据） ---- */
       theme: "light",
       /* 主色默认改成温和的墨绿/灰绿（2026-10-16 混搭方案）。
@@ -20868,6 +20870,20 @@ const SYNC = (() => {
 
     $("setBody").innerHTML = `
       <div class="sect">
+        <h4>班级信息</h4>
+        <p class="desc">记下你带的班：名字、校区、科目、备注。可以随时加、改、删；<b>学员名单暂不跟班级绑定</b>。</p>
+        ${(c.classes || []).map((n, i) => `
+          <div class="rowset" data-classrow="${i}">
+            <input type="text" value="${esc(n.name || "")}" data-clf="name" data-i="${i}" placeholder="班级名（如 G7 精进A）" style="flex:0 0 158px">
+            <input type="text" value="${esc(n.campus || "")}" data-clf="campus" data-i="${i}" placeholder="校区" style="flex:0 0 74px">
+            <input type="text" value="${esc(n.subject || "")}" data-clf="subject" data-i="${i}" placeholder="科目" style="flex:0 0 66px">
+            <input type="text" value="${esc(n.note || "")}" data-clf="note" data-i="${i}" placeholder="备注" style="flex:1;min-width:96px">
+            <span class="x" data-delclass="${i}" title="删掉这个班级（只删信息，学员不动）">✕</span>
+          </div>`).join("")}
+        ${(c.classes || []).length ? "" : `<p class="hint" style="margin:2px 0 6px">还没有班级信息。</p>`}
+        <button class="btn" data-addclass="1">+ 加一个班级</button>
+      </div>
+      <div class="sect">
         <h4>外观</h4>
         <p class="desc">只影响长相，不动任何数据。</p>
 
@@ -21225,6 +21241,31 @@ const SYNC = (() => {
       }
       toast(r.msg, r.ok ? 8000 : 12000);
     };
+
+    /* ---- 班级信息（2026-11-19 加）---- */
+    $("setBody").querySelectorAll("[data-clf]").forEach((inp) => inp.onchange = () => {
+      const n = (DB.config.classes || [])[+inp.dataset.i];
+      if (!n) return;
+      n[inp.dataset.clf] = inp.value.trim();
+      save();
+    });
+    $("setBody").querySelectorAll("[data-delclass]").forEach((el) => el.onclick = () => {
+      const i = +el.dataset.delclass;
+      DB.config.classes ||= [];
+      const n = DB.config.classes[i];
+      if (!n) return;
+      const label = n.name || "这个班级";
+      if (!window.confirm(`删掉「${label}」？只删班级信息，学员和成绩都不动。`)) return;
+      DB.config.classes.splice(i, 1);
+      save(); drawSettings();
+      toast("已删掉「" + label + "」");
+    });
+    { const addCls = $("setBody").querySelector("[data-addclass]");
+      if (addCls) addCls.onclick = () => {
+        DB.config.classes ||= [];
+        DB.config.classes.push({ id: "cls" + Date.now().toString(36), name: "", campus: "", subject: "", note: "" });
+        save(); drawSettings();
+      }; }
 
     /* ---- 多设备同步 ---- */
     bindSyncSettings();
