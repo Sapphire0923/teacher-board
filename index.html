@@ -9867,6 +9867,17 @@ const SYNC = (() => {
     setTimeout(() => { if (!imeBusy() && _imePend) renderStage(); }, 0);
   }, true);
 
+  /**
+   * 重画但保持页面滚动位置（2026-11-19 用户反馈：勾选名单里的人，
+   * 页面会跳回最上面，还得重新往下拉）。勾选、全选、反选、清除都走这里。
+   */
+  function renderKeepScroll() {
+    const y = window.scrollY;
+    renderStage();
+    window.scrollTo(0, y);
+    requestAnimationFrame(() => window.scrollTo(0, y));
+  }
+
   function renderStage(keepDetail) {
     // 输入法正在组字：这一画先攒着，等上屏（compositionend）再补 —— 理由见上面那段
     if (imeBusy()) { _imePend = true; return; }
@@ -19300,7 +19311,7 @@ const SYNC = (() => {
         else view.scSel = view.scSel.filter((x) => x !== sid);
         view.scLastPick = sid;
         view.scShift = false;
-        renderStage();
+        renderKeepScroll();
       };
     });
     { const all = $("scPickAll"); toPickAll(all);
@@ -19309,19 +19320,19 @@ const SYNC = (() => {
         view.scSel ||= [];
         if (all.checked) ids.forEach((id) => { if (!view.scSel.includes(id)) view.scSel.push(id); });
         else view.scSel = view.scSel.filter((id) => !ids.includes(id));
-        renderStage();
+        renderKeepScroll();
       }; }
     const by = $("scBYes"); if (by) by.onclick = () => batchComm(cur, 1);
     const bn = $("scBNo"); if (bn) bn.onclick = () => batchComm(cur, 0);
     const bw = $("scBWeak"); if (bw) bw.onclick = () => batchWeak(cur);
     const bc = $("scBClear"); if (bc) bc.onclick = () => batchClearWeak(cur);
-    const bnone = $("scBNone"); if (bnone) bnone.onclick = () => { view.scSel = []; renderStage(); };
+    const bnone = $("scBNone"); if (bnone) bnone.onclick = () => { view.scSel = []; renderKeepScroll(); };
     const binv = $("scBInv"); if (binv) binv.onclick = () => {
       const ids = [...stage.querySelectorAll("[data-pick]")].map((x) => x.dataset.pick);
       const got = new Set(view.scSel || []);
       ids.forEach((id) => { if (got.has(id)) got.delete(id); else got.add(id); });
       view.scSel = [...got];
-      renderStage();
+      renderKeepScroll();
     };
 
     const ex1 = $("scExportX"); if (ex1) ex1.onclick = () => exportScoreXlsx(cur);
