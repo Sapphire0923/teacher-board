@@ -12393,7 +12393,8 @@ async function verifyPaperNumbers(ocr, parts) {
     const intro = paperIntroHtml(s, e);
     // 薄弱分级在「还没生成分析」时也要看得到 —— 核对确认完就有数了
     const weak = paperWeakHtml(s, e);
-    if (intro) return weak + intro;
+    // 作文分析不依赖整卷分析：只做了作文也要能看到（2026-11-20 修）
+    if (intro) return weak + intro + paperCompoHtml(s, e);
     return weak + paperAnaHtml(s, e) + paperCompoHtml(s, e) + paperTalkHtml(s, e) + paperExpHtml(s, e);
   }
 
@@ -14448,13 +14449,20 @@ async function verifyPaperNumbers(ocr, parts) {
     else if (!paperDone(e)) secAna = `<p class="hint">答题卡还没核对确认。回到上面点「📋 继续核对」或「🔍 识别答题卡」，确认之后才会生成分析 —— 没确认的内容不会写进成绩。</p>`;
     else secAna = paperWeakHtml(s, e) + (paperAnaHtml(s, e) || paperIntroHtml(s, e));
 
+    const secCompo = (e && paperDone(e)) ? paperCompoHtml(s, e) : "";
     const secTalk = ready ? paperTalkHtml(s, e) : "";
     const secExp = ready ? paperExpHtml(s, e) : "";
+    // 作文分析（2026-11-19 加）在完整分析页上漏了，2026-11-20 补成独立一节 ③，后面序号顺延
+    const nPlan = secCompo ? "④" : "③";
+    const nTalk = secCompo ? "⑤" : "④";
+    const nExp = secCompo ? "⑥" : "⑤";
 
     const jump = `<div class="papjump">
-      ${[["secCard", "① 答题卡与识别结果"], ["secAna", "② 成绩与板块分析"],
-        ["secPlan", "③ 个性化复习计划"]]
-        .concat(ready ? [["secTalk", "④ 给学生和家长的话术"], ["secExp", "⑤ 导出与复制"]] : [])
+      ${[["secCard", "① 答题卡与识别结果"], ["secAna", "② 成绩与板块分析"]]
+        .concat(secCompo ? [["secCompo", "③ 作文分析"]] : [])
+        .concat([["secPlan", nPlan + " 个性化复习计划"]])
+        .concat(ready ? [["secTalk", nTalk + " 给学生和家长的话术"],
+                         ["secExp", nExp + " 导出与复制"]] : [])
         .map(([id, t]) => `<button class="btnmini" data-jump="${id}">${t}</button>`).join("")}
       <span style="flex:1"></span>
       <span class="hint-inline">这一页是整份方案 —— 往下滚就能看全，不用在小窗里翻</span></div>`;
@@ -14471,9 +14479,10 @@ async function verifyPaperNumbers(ocr, parts) {
       ${jump}
       <section class="papsec" id="secCard"><h3>① 答题卡与识别结果</h3>${secCard}</section>
       <section class="papsec" id="secAna"><h3>② 成绩与板块分析</h3>${secAna}</section>
-      <section class="papsec" id="secPlan"><h3>③ 个性化复习计划</h3>${planBoxHtml(s)}</section>
-      ${ready ? `<section class="papsec" id="secTalk"><h3>④ 给学生和家长的话术</h3>${secTalk}</section>
-        <section class="papsec" id="secExp"><h3>⑤ 导出与复制</h3>${secExp}</section>` : ""}
+      ${secCompo ? `<section class="papsec" id="secCompo"><h3>③ 作文分析</h3>${secCompo}</section>` : ""}
+      <section class="papsec" id="secPlan"><h3>${nPlan} 个性化复习计划</h3>${planBoxHtml(s)}</section>
+      ${ready ? `<section class="papsec" id="secTalk"><h3>${nTalk} 给学生和家长的话术</h3>${secTalk}</section>
+        <section class="papsec" id="secExp"><h3>${nExp} 导出与复制</h3>${secExp}</section>` : ""}
     </div>`;
 
     // 操作绑定：整页上的按钮跟详情面板里是同一套逻辑
