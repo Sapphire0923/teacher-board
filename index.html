@@ -2956,7 +2956,7 @@ tr.rn-on td { background: var(--accent-soft); }
         <span class="hint-inline" id="matInfo">也可以从 Word 里复制文字，粘到下面</span>
       </div>
       <textarea id="matText" class="note" rows="14" placeholder="粘贴这一场的题目 / 答案要点 / 评分标准 / 解析…"></textarea>
-      <p class="hint" style="margin:8px 0 0">分析时只用<b>前 6000 字</b>（再多只是烧 token）。这段材料里<b>不要写学生姓名</b> —— 发给 AI 的内容仍然只有「该生」。</p>
+      <p class="hint" style="margin:8px 0 0">分析时最多带 <b>16000 字</b>；超过的部分会按这张卷的<b>题号</b>挑相关段落，不会把后面的题漏掉。这段材料里<b>不要写学生姓名</b> —— 发给 AI 的内容仍然只有「该生」。</p>
     </div>
     <footer>
       <span class="result" id="matResult"></span>
@@ -4512,7 +4512,9 @@ var __PPDF_WORKER_SRC__ = "/**\n * @licstart The following is the entire license
   "use strict";
 
   var MAX_CHARS = 200000;   // 存进看板的上限（localStorage 不能被一份材料撑爆）
-  var CLIP_CHARS = 6000;    // 喂给 AI 的上限（再多只是烧 token）
+  var CLIP_CHARS = 16000;   // 喂给 AI 的上限（2026-11-20 由 6000 提到 16000：6000 字常常只够一份卷的
+                            //   题目，解析被截掉一半，模型就拿材料里前半篇的内容去套后面的题号，
+                            //   实测把「梧桐树/奶奶」那篇的张冠李戴到了《济南的冬天》第 22 题上）
 
   function unesc(s) {
     return String(s || "")
@@ -11775,6 +11777,8 @@ async function verifyPaperNumbers(ocr, parts) {
     + "必须把「图上能直接确认的事实」「根据作答表现作出的推测」「材料不足、无法判断的」三类严格分开写，不许混着说。"
     + "如果下面给了「本次考试的题目与解析」，它是**权威材料**：涉及题目原文、答案要点、评分标准，一律以它为准，"
     + "不许再凭经验猜题意，也不许编造材料里没有的题目内容。"
+    + "材料里的篇目 / 题号如果跟这次卷面对不上（比如材料是别的文章的阅读），直接写「材料对不上」，"
+    + "不许把它的内容按到本次题号上。"
     + "系统里没有标准答案、也没有评分细则，所以你只能从「哪块丢分多、作答里出现了什么表现」去推，"
     + "不许把推测写成诊断，不许编造这个学生为什么做错。"
     + "禁止「不答全」「答不深」「基础不扎实」这类没有出处的空形容词 —— 每句话都要能指到题号或板块。";
@@ -11783,7 +11787,7 @@ async function verifyPaperNumbers(ocr, parts) {
     const secs = (ocr.sections || []).map((x) =>
       `- ${x.no || ""} ${x.name || "未命名板块"}：${x.score === null || x.score === undefined ? "未读到" : x.score}${x.full === null || x.full === undefined ? "" : "/" + x.full}`).join("\n");
     const ans = (ocr.answers || []).map((x) => `${x.no || "?"}.${x.answer || "?"}`).join("  ");
-    const mat = matPromptBlock(e.name);
+    const mat = matPromptBlock(e.name, (ocr.answers || []).map((x) => x.no));
     return [
       aiContext(s),
       "",
@@ -11849,9 +11853,14 @@ async function verifyPaperNumbers(ocr, parts) {
    *   · 发给 AI 的仍然只有昵称：老师自己打的字里若有全名，也换成昵称再发。
    */
   const PAPER_QA_SYS = "你是一位有经验的初中语文老师，刚给同事写完一份答题卡分析，现在同事对其中某些话有疑问，要跟你逐句核对。"
-    + "铁律：只依据给的材料（本次考试的题目/解析、识别出的作答与板块得分、你之前写的那份分析）回答。"
+    + "铁律一：只依据给的材料（本次考试的题目/解析、识别出的作答与板块得分、你之前写的那份分析）回答。"
     + "材料里没有的就直说「材料里没有」，不许编题目内容、不许编学生为什么做错。"
-    + "同事指出你写错的地方：先承认哪一句错了，再给出改正后的说法，带上题号或板块。"
+    + "铁律二：同事说你写错了，先回材料里核对，再开口。"
+    + "核对得上：引出材料里那一句原话（带引号），说清错在哪、改成什么；"
+    + "核对不上、或材料里没有这题的依据：直接说「我上一轮那句没有依据，撤销」，不要反过来硬撑。"
+    + "绝对不能因为同事质疑就无条件认错，更不能一轮说「材料里有」、下一轮又说「材料里没有」——每句话都要有出处。"
+    + "铁律三：涉及具体题号，先说清依据在材料哪一问 / 哪个评分点；引不出出处，就不要写这句。"
+    + "材料里的篇目或题号跟这次卷面对不上时，直接说「材料对不上」，不许拿它的内容按到本题上。"
     + "回答要短（一般 3~6 句）；需要重写某一段时，直接给出可以整段替换的文字。"
     + "不要提「AI」「模型」「提示词」；不要写学生全名，只按给的昵称称呼。";
 
@@ -11876,7 +11885,7 @@ async function verifyPaperNumbers(ocr, parts) {
         + (hasScore(e) ? `总分 ${e.score}${typeof e.full === "number" ? "/" + e.full : ""}` : "总分未记"),
       secs ? "【卷面板块得分（老师已核对）】\n" + secs : "【板块得分】卷面上没读到",
       ans ? "【作答】" + ans : "【作答】没读到",
-      matPromptBlock(e.name)
+      matPromptBlock(e.name, (ocr.answers || []).map((x) => x.no))
         || "【本次考试的材料】老师还没导入题目/解析 —— 题目原文看不到，涉及题目的判断只写「材料里没有」。",
       "",
       "【你之前写的那份分析（老师看过，可能不满意）】",
@@ -12968,11 +12977,11 @@ async function verifyPaperNumbers(ocr, parts) {
    *
    * 存哪儿：DB.config.examMaterial[归一化考试名] = { text, chars, cut, src, at }
    *   · 按考试名（批次）存，一次导入全班共用；跟着备份一起走；
-   *   · 只存文字、不上传；喂给 AI 时截到 6000 字；
+   *   · 只存文字、不上传；喂给 AI 上限 16000 字（超了按题号挑段落，见 matSliceByNos）；
    *   · 改名/删考试时材料跟着走（见 renameExam / deleteExam）。
    * 三条底线：材料只进 prompt，**不改成绩、不改分析文本**；清空立刻恢复原行为。
    */
-  const MAT_CLIP_CHARS = (typeof window !== "undefined" && window.MATKIT && window.MATKIT.CLIP_CHARS) || 6000;
+  const MAT_CLIP_CHARS = (typeof window !== "undefined" && window.MATKIT && window.MATKIT.CLIP_CHARS) || 16000;
   const MAT_MAX_CHARS = (typeof window !== "undefined" && window.MATKIT && window.MATKIT.MAX_CHARS) || 200000;
 
   function matKeyOf(name) { return examKeyOf({ name: String(name || "") }); }
@@ -13000,18 +13009,91 @@ async function verifyPaperNumbers(ocr, parts) {
     return true;
   }
 
+  /** 材料里一行开头的题号（2026-11-20）：「1.」「2、」「第3题」「（4）」「【5】」都算 */
+  function matNoOfLine(ln) {
+    const s = String(ln || "");
+    let m = s.match(/^\s*第\s*(\d{1,2})\s*题/);
+    if (m) return m[1];
+    m = s.match(/^\s*(\d{1,2})\s*[.．、:：)）](?!\d)/);
+    if (m) return m[1];
+    m = s.match(/^\s*[（(]\s*(\d{1,2})\s*[）)]/);
+    if (m) return m[1];
+    m = s.match(/^\s*【\s*(\d{1,2})\s*】/);
+    if (m) return m[1];
+    return "";
+  }
+
+  /** 材料超长时按本次卷面的题号挑段落（2026-11-20 修「张冠李戴」）。
+   *  原因：原来一律截前 6000 字，一份卷的解析常常从第 10 题往后就被切掉，
+   *  模型于是拿材料前半篇的内容去套后面的题号（实测把别的阅读篇目按到第 22 题上）。
+   *  返回空串 = 没挑到（调用方退回原来的整段截断）。 */
+  function matSliceByNos(text, nos, budget) {
+    const want = [];
+    for (const n of (nos || [])) {
+      const k = String(n || "").replace(/^0+/, "").trim();
+      if (k && want.indexOf(k) < 0) want.push(k);
+    }
+    if (!want.length) return "";
+    const lines = String(text || "").split("\n");
+    const segs = [];
+    let cur = null;
+    for (const ln of lines) {
+      const no = matNoOfLine(ln);
+      if (no) { if (cur) segs.push(cur); cur = { no: no, text: ln }; }
+      else if (cur) cur.text += "\n" + ln;
+    }
+    if (cur) segs.push(cur);
+    const byNo = new Map();
+    for (const s of segs) {
+      const arr = byNo.get(s.no) || [];
+      arr.push(String(s.text || "").trim());
+      byNo.set(s.no, arr);
+    }
+    const out = [];
+    const miss = [];
+    let used = 0;
+    for (const n of want) {
+      const arr = byNo.get(n);
+      if (!arr || !arr.length) { miss.push(n); continue; }
+      let t = arr.join("\n");
+      const room = (budget || MAT_CLIP_CHARS) - used;
+      if (room < 160) { miss.push(n + "（篇幅到头了）"); continue; }
+      if (t.length > room) t = t.slice(0, room) + "…";
+      out.push("【第 " + n + " 题】\n" + t);
+      used += t.length;
+    }
+    if (!out.length) return "";
+    let s = out.join("\n\n");
+    if (miss.length) s += "\n（这几个题号在材料里没找到对应段落：" + miss.join("、") + " —— 别猜，按「材料不足」写）";
+    return s;
+  }
+
   /** 材料 → prompt 段（没材料返回空串，调用方据此保持原来的行为） */
-  function matPromptBlock(name) {
+  function matPromptBlock(name, nos) {
     const m = materialOf(name);
     if (!m) return "";
     const text = String(m.text || "");
-    const body = text.length > MAT_CLIP_CHARS
-      ? text.slice(0, MAT_CLIP_CHARS) + "\n…（材料总长 " + text.length + " 字，这里只给了前 " + MAT_CLIP_CHARS + " 字）"
-      : text;
+    let body = "";
+    let tail = "";
+    if (text.length <= MAT_CLIP_CHARS) {
+      body = text;
+    } else {
+      const picked = matSliceByNos(text, nos, MAT_CLIP_CHARS - 1200);
+      if (picked) {
+        body = "（材料共 " + text.length + " 字，太长，下面按本次卷面的题号摘出相关段落）\n" + picked;
+        tail = "\n…（材料里其余部分没放进来；上面没列到的题一律按「材料不足」处理）";
+      } else {
+        body = text.slice(0, MAT_CLIP_CHARS) + "\n…（材料总长 " + text.length + " 字，这里只给了前 " + MAT_CLIP_CHARS + " 字）";
+        tail = "\n※ 后面还有 " + (text.length - MAT_CLIP_CHARS) + " 字没看到：涉及没给出部分的题，直接写「材料不足」，不许猜。";
+      }
+    }
     return [
       "【本次考试的题目与解析（老师提供的权威材料 —— 一切以它为准）】",
       body,
+      tail,
       "※ 材料里有明确题目原文 / 答案要点 / 评分标准的，一律按它判，不许再凭经验猜题意；材料里没涉及的题，仍按「材料不足」处理。",
+      "※ 材料里的篇目 / 题号和这次卷面对不上（比如材料里是别的文章的阅读），直接写「材料对不上」，不许把它的内容按到本次题号上。",
+      "※ 涉及具体题号时，先引材料原话（带引号）再下判断；引不出原话的，不许写成依据。",
       "※ 材料里如果出现学生姓名，一律忽略，不要写进回答。",
     ].join("\n");
   }
@@ -13025,7 +13107,7 @@ async function verifyPaperNumbers(ocr, parts) {
     if (!t || !r) return;
     const n = String(t.value || "").length;
     r.textContent = n
-      ? n + " 字" + (n > MAT_CLIP_CHARS ? `（分析时只用前 ${MAT_CLIP_CHARS} 字）` : "")
+      ? n + " 字" + (n > MAT_CLIP_CHARS ? `（超过 ${MAT_CLIP_CHARS} 字：分析时按卷面题号摘取相关段落）` : "")
       : "还没写内容";
   }
 
@@ -13098,7 +13180,9 @@ async function verifyPaperNumbers(ocr, parts) {
     window.__matDebug = {
       has: (n) => !!materialOf(n),
       text: (n) => materialText(n),
-      block: (n) => matPromptBlock(n),
+      block: (n, nos) => matPromptBlock(n, nos),
+      slice: (n, nos) => matSliceByNos(materialText(n), nos, MAT_CLIP_CHARS - 1200),
+      set: (n, t) => setMaterial(n, t, "e2e"),
     };
   } catch (e) { /* 忽略 */ }
 
