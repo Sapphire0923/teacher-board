@@ -2210,6 +2210,10 @@ section.list { background: var(--bg); }
   white-space: nowrap; flex: 0 0 auto; }
 .cd-hd .cd-nt { display: inline-flex; flex-wrap: wrap; gap: 4px; flex: 0 1 auto; min-width: 0; }
 .cd-hd .cd-lv { margin-left: auto; flex: none; }
+/* 学员号（2026-11-21）：名字右边的小灰字，太长就省略，悬停看全号 */
+.cd-hd .cd-no { font-size: 11.5px; color: var(--ink-3); letter-spacing: .02em;
+  white-space: nowrap; flex: 0 1 auto; min-width: 0; max-width: 120px;
+  overflow: hidden; text-overflow: ellipsis; }
 
 /* ② 标签行：问题标签（灰）+ 家长类型（彩），允许自然换行 */
 .card .cd-tags { display: flex; flex-wrap: wrap; gap: 6px; row-gap: 6px; }
@@ -10264,6 +10268,7 @@ const SYNC = (() => {
         <input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${on ? "checked" : ""}
           title="勾上可以批量操作（打卡、加标签、派任务…）">
         <button class="nm pf-link" type="button" data-profile="${esc(s.id)}" title="打开 ${esc(s.name)} 的学生档案">${esc(s.name)}</button>
+        ${s.no ? `<span class="cd-no" title="学员号 ${esc(s.no)}">${esc(s.no)}</span>` : ""}
         <span class="cd-nt">${classBadges(s)}${ntBadges(s)}</span>
         <span class="cd-lv">${levelBadge(s)}</span>
       </header>
@@ -10585,7 +10590,7 @@ const SYNC = (() => {
         return `<div class="card${on ? " checked" : ""}" data-id="${s.id}" style="border-left-color:${levelOf(s) ? levelColor(levelOf(s)) : "var(--line)"}">
           <div class="row1">
             <input type="checkbox" class="cbsel" data-cbsel="${esc(s.id)}" ${on ? "checked" : ""} title="勾上可以批量操作">
-            <button class="nm pf-link" type="button" data-profile="${esc(s.id)}" title="打开 ${esc(s.name)} 的学生档案">${esc(s.name)}</button>${classBadges(s)}${ntBadges(s)}${levelBadge(s)}
+            <button class="nm pf-link" type="button" data-profile="${esc(s.id)}" title="打开 ${esc(s.name)} 的学生档案">${esc(s.name)}</button>${s.no ? `<span class="cd-no" title="学员号 ${esc(s.no)}">${esc(s.no)}</span>` : ""}${classBadges(s)}${ntBadges(s)}${levelBadge(s)}
             <span style="flex:1"></span>
             <span class="chip ${s.followUp?.done ? "ok" : "no"}">${s.followUp?.done ? "已跟进" : "待跟进"}</span></div>
           ${scoreBox(s)}
