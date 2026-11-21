@@ -12732,35 +12732,53 @@ async function verifyPaperNumbers(ocr, parts) {
   }
 
   /**
-   * 有住校学生时的两个选项。返回 Promise<"all" | "noboard" | null>。
-   * 用自定义弹窗而不是 confirm()：两个选项都要写明人数，confirm 的
-   * 「确定/取消」说不清哪个是「去掉住校」。
+   * 复制前的选项（2026-11-21 加学员号）：一次问清两件事 ——
+   *   ① 带不带学员号（带的话每行是「姓名\t学员号」，粘进 Excel 自动成两列）；
+   *   ② 要不要去掉住校（只有名单里真有住校时才问）。
+   * 返回 Promise<{no:boolean, board:boolean} | null>。
    */
-  function askCopyBoard(allN, boardN) {
+  function askCopyOptions(allN, boardN, noN) {
     return new Promise((resolve) => {
       const old = document.getElementById("copyNameOv");
       if (old) old.remove();
       const ov = document.createElement("div");
       ov.className = "mask open";
       ov.id = "copyNameOv";
-      ov.innerHTML = `<div class="modal" style="width:min(480px,100%)" role="dialog" aria-modal="true" aria-labelledby="copyNameT">
-        <header id="copyNameT">这批名单里有住校学生</header>
+      ov.innerHTML = `<div class="modal" style="width:min(500px,100%)" role="dialog" aria-modal="true" aria-labelledby="copyNameT">
+        <header id="copyNameT">复制 ${allN} 人</header>
         <div class="body">
-          <p class="hint" style="margin-top:0">本次将复制 <b>${allN}</b> 人，其中带「住校」标签的 <b>${boardN}</b> 人。</p>
-          <p class="hint">选「去掉住校」只排除本次名单里的这 ${boardN} 人，<b>不会修改</b>学生档案上的标签。</p>
+          <label class="rowset" style="align-items:flex-start;gap:8px;cursor:pointer">
+            <input type="checkbox" id="cpWithNo" ${noN ? "checked" : "disabled"}>
+            <span style="font-size:13.5px;line-height:1.5">
+              <b>带学员号</b>
+              <span class="hint" style="display:block;margin:3px 0 0">
+                ${noN
+                  ? `每行是「姓名 + 学员号」，中间用 Tab 隔开 —— 粘到 Excel 里直接落成两个单元格。名单里有号的 ${noN} 人。`
+                  : "名单里还没有学员号 —— 先去「设置 → 学员号」导入一份。"}
+              </span>
+            </span>
+          </label>
+          ${boardN ? `<label class="rowset" style="align-items:flex-start;gap:8px;cursor:pointer;margin-top:10px">
+            <input type="checkbox" id="cpNoBoard">
+            <span style="font-size:13.5px;line-height:1.5">
+              <b>去掉住宿生（${boardN} 人）</b>
+              <span class="hint" style="display:block;margin:3px 0 0">只在这次复制里排除，不会修改学生档案上的标签。</span>
+            </span>
+          </label>` : ""}
         </div>
         <footer>
           <button class="btn ghost" id="copyNameCancel">取消</button>
-          <button class="btn" id="copyNoBoard">复制时去掉住校（${allN - boardN} 人）</button>
-          <button class="btn primary" id="copyAllNames">复制全部学生（${allN} 人）</button>
+          <button class="btn primary" id="copyNameOk">复制</button>
         </footer></div>`;
       document.body.appendChild(ov);
       const close = (v) => { if (ov.isConnected) ov.remove(); resolve(v); };
       ov.querySelector("#copyNameCancel").onclick = () => close(null);
-      ov.querySelector("#copyNoBoard").onclick = () => close("noboard");
-      ov.querySelector("#copyAllNames").onclick = () => close("all");
+      ov.querySelector("#copyNameOk").onclick = () => close({
+        no: !!(ov.querySelector("#cpWithNo") && ov.querySelector("#cpWithNo").checked),
+        board: !!(ov.querySelector("#cpNoBoard") && ov.querySelector("#cpNoBoard").checked),
+      });
       ov.addEventListener("click", (e) => { if (e.target === ov) close(null); });
-      const first = ov.querySelector("#copyAllNames");
+      const first = ov.querySelector("#copyNameOk");
       if (first) first.focus();
     });
   }
@@ -12796,29 +12814,40 @@ async function verifyPaperNumbers(ocr, parts) {
     const all = copyNameList(list);
     if (!all.length) return toast("当前没有可复制的学生");
     const board = copyBoardOf(all);
+    const haveNo = all.filter((s) => String(s.no || "").trim());
+    // 有住校 / 有学员号时才弹选项；两样都没有就直接复制姓名
+    let dropBoard = false;
+    let withNos = false;
+    if (board.length || haveNo.length) {
+      const choice = await askCopyOptions(all.length, board.length, haveNo.length);
+      if (!choice) return;
+      dropBoard = choice.board;
+      withNos = choice.no;
+    }
     let target = all;
     let removed = 0;
-    if (board.length) {
-      const choice = await askCopyBoard(all.length, board.length);
-      if (!choice) return;
-      if (choice === "noboard") {
-        target = all.filter((s) => !parentTagsOf(s).includes(COPY_BOARD_TAG));
-        removed = all.length - target.length;
-      }
+    if (dropBoard) {
+      target = all.filter((s) => !parentTagsOf(s).includes(COPY_BOARD_TAG));
+      removed = all.length - target.length;
     }
-    const names = target.map((s) => String(s.name || "").trim()).filter(Boolean);
-    if (!names.length) return toast("当前名单里没有可复制的姓名");
+    const lines = target.map((s) => {
+      const nm = String(s.name || "").trim();
+      if (!nm) return "";
+      return withNos ? nm + "\t" + String(s.no || "").trim() : nm;
+    }).filter(Boolean);
+    if (!lines.length) return toast("当前名单里没有可复制的姓名");
     const scopeTxt = meta && meta.scope ? "（" + meta.scope + "）" : "";
-    const hint = "下面是本次 " + names.length + " 人"
+    const hint = "下面是本次 " + lines.length + " 人"
       + (removed ? "（已排除住校 " + removed + " 人，名单共 " + all.length + " 人）" : "")
-      + "，每行一个姓名。点一下框、Ctrl+A 全选、Ctrl+C 复制，再粘到 Excel 就行。";
-    const ok = await copyPlainText(names.join("\n"), "手动复制姓名", hint);
+      + (withNos ? "，每行「姓名 + 学员号」，中间是 Tab —— 粘到 Excel 会落成两列。" : "，每行一个姓名。")
+      + "点一下框、Ctrl+A 全选、Ctrl+C 复制，再粘到 Excel 就行。";
+    const ok = await copyPlainText(lines.join("\n"), "手动复制姓名", hint);
     if (!ok) return;
     const boardTxt = board.length
       ? (removed ? "，已排除住校 " + removed + " 人（名单共 " + all.length + " 人）"
         : "，含住校 " + board.length + " 人")
       : "";
-    toast("已复制 " + names.length + " 人姓名" + scopeTxt + boardTxt, 5600);
+    toast("已复制 " + lines.length + " 人" + (withNos ? "（带学员号）" : "姓名") + scopeTxt + boardTxt, 5600);
   }
 
   /* ---- 答题卡总览页（侧栏「答题卡」） ------------------------------- */
