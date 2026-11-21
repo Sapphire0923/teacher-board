@@ -21785,7 +21785,16 @@ async function verifyPaperNumbers(ocr, parts) {
         const nm = String(r[nameCol] ?? "").trim();
         const no = String(r[noCol] ?? "").trim();
         if (!nm || !no || /^(序号|姓名|学员号|学号)$/.test(nm)) continue;
-        const arr = byName.get(coreName(nm) || nm);
+        const k0 = coreName(nm) || nm;
+        let arr = byName.get(k0);
+        if (!arr || !arr.length) {
+          // 宽松匹配（2026-11-21）：名单里写全名、看板里写小名（「耿汀萱」↔「汀萱」）
+          const hits = [];
+          for (const [name, list] of byName) {
+            if (name.length >= 2 && k0.length >= 2 && (k0.endsWith(name) || name.endsWith(k0))) hits.push(...list);
+          }
+          if (hits.length === 1) arr = hits;
+        }
         if (!arr || !arr.length) { miss.push(nm); continue; }
         for (const s of arr) { s.no = no; hit++; }
       }
