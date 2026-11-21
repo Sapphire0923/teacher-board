@@ -9412,7 +9412,7 @@ const SYNC = (() => {
   };
 
   const ROLES = [
-    ["skip", "忽略"], ["name", "学生姓名"], ["level", "等级 / 分组"],
+    ["skip", "忽略"], ["name", "学生姓名"], ["no", "学员号"], ["level", "等级 / 分组"],
     ["dim", "评分维度"], ["flag", "跟进项"], ["pros", "优点"], ["cons", "缺点 / 问题"], ["note", "备注"],
   ];
 
@@ -9421,6 +9421,7 @@ const SYNC = (() => {
    * 「学员粘合度」「学员表现」里都含「学员」，姓名规则要是排前面就会把评分列抢走。
    */
   const GUESS = [
+    [/学员号|学号|考号|学员编号|^编号$/i, "no"],
     [/粘合|沟通|表现|成绩|分数|评分|课堂|态度|纪律|水平|能力/i, "dim"],
     [/打卡|签到|电联|电话|联系|家访|回访|check/i, "flag"],
     [/等级|级别|层次|阶段|档位|level/i, "level"],
@@ -9609,6 +9610,7 @@ const SYNC = (() => {
     const prosCol = W.map.indexOf("pros");
     const consCol = W.map.indexOf("cons");
     const noteCol = W.map.indexOf("note");
+    const noCol = W.map.indexOf("no");
 
     // 先筛出「真正会变成学员」的行。
     // 猜跟进项类型时必须用这一批，不能用原始 rows ——
@@ -9637,6 +9639,7 @@ const SYNC = (() => {
       const name = String(row[nameCol] ?? "").trim();
       const s = {
         id: uid(), name,
+        no: noCol >= 0 ? String(row[noCol] ?? "").trim() : "",
         level: levelCol >= 0 ? String(row[levelCol] ?? "").trim() : "",
         dims: {}, flags: {},
         pros: prosCol >= 0 ? String(row[prosCol] ?? "").trim() : "",
@@ -9678,6 +9681,7 @@ const SYNC = (() => {
       return `［${tag}］` + (h || "");
     }), ...students.slice(0, 8).map((s) => head.map((_, i) => {
       if (i === nameCol) return s.name;
+      if (i === noCol) return s.no;
       const di = dimCols.indexOf(i); if (di >= 0) return s.dims["d" + di] ?? "";
       const fi = flagCols.indexOf(i); if (fi >= 0) return s.flags["f" + fi]?.raw ?? "";
       if (i === levelCol) return s.level;
@@ -9733,6 +9737,7 @@ const SYNC = (() => {
       used.add(old.id);
       updated++;
       nw.id = old.id;
+      if (!nw.no && old.no) nw.no = old.no;   // 新名单没填学员号 → 保留旧的（2026-11-21）
       nw.note = old.note || "";
       nw.chats = old.chats || [];
       nw.exams = old.exams || [];          // 成绩流水是老师自己记的，绝不能被名单刷新冲掉
@@ -15979,7 +15984,7 @@ async function verifyPaperNumbers(ocr, parts) {
     const hero = `<div class="pf-hero">
       <div class="pf-hero-main">
         <div class="pf-title"><h2>${esc(s.name)}</h2>${classBadges(s)}${ntBadges(s)} ${levelBadge(s) || ""}</div>
-        <div class="pf-sub">${DB.config.className ? "班级：" + esc(DB.config.className) : "班级：未设置"}${total !== null ? ` · 评分合计 ${total} 分` : ""}${(s.chats || []).length ? ` · 聊天 ${(s.chats || []).length} 条` : ""}</div>
+        <div class="pf-sub">${DB.config.className ? "班级：" + esc(DB.config.className) : "班级：未设置"}${s.no ? ` · 学员号 ${esc(s.no)}` : ""}${total !== null ? ` · 评分合计 ${total} 分` : ""}${(s.chats || []).length ? ` · 聊天 ${(s.chats || []).length} 条` : ""}</div>
         <div class="pf-chips">${ptagHtml}</div>
       </div>
       <div class="pf-hero-actions">
@@ -19469,8 +19474,15 @@ async function verifyPaperNumbers(ocr, parts) {
     if (!V.total) { toast("这场考试还没有人录分数"); return; }
     if (!V.rows.length) { toast("当前搜索条件下一个人都没有"); return; }
     const st = V.st;
-    const head = cols.map((x) => x.label);
+    // 学员号列（2026-11-21 用户要求）：跟在「姓名」后面一起导出
+    const outCols = [];
+    for (const c of cols) {
+      outCols.push(c.k);
+      if (c.k === "name") outCols.push("__no");
+    }
+    const head = outCols.map((k) => (k === "__no" ? "学员号" : (cols.find((c) => c.k === k) || {}).label));
     const cellOf = (x, k) => {
+      if (k === "__no") { const s0 = DB.students.find((y) => y.id === x.sid); return s0 ? (s0.no || "") : ""; }
       if (k === "rank") return x.rank;
       if (k === "name") return x.name;
       if (k === "score") return x.score;
@@ -19485,7 +19497,7 @@ async function verifyPaperNumbers(ocr, parts) {
       return "";
     };
     // 导出的是「当前筛选后、当前排好序」的全部行（不分页）—— 跟眼前看到的规则一致
-    const body = V.rows.map((x) => cols.map((k) => cellOf(x, k.k)));
+    const body = V.rows.map((x) => outCols.map((k) => cellOf(x, k)));
     // 末尾附一段统计和筛选说明，老师对着 Excel 也知道这张表是怎么来的
     body.push([]);
     // 表尾先把「这张表按什么口径出的」写清楚：考试名 / 满分 / 档次线 / 筛选条件
@@ -19506,10 +19518,10 @@ async function verifyPaperNumbers(ocr, parts) {
     if (view.scWeak && view.scWeak !== "all") body.push(["筛选·薄弱", view.scWeak === "none" ? "未标记" : view.scWeak]);
     if (view.scSort) body.push(["排序", (cols.find((x) => x.k === view.scSort)?.label || view.scSort)
       + (view.scDir === -1 ? " 降序" : " 升序")]);
-    const wide = (k) => (k === "name" ? 14 : k === "sec" ? 18 : k === "rank" ? 6 : 9);
+    const wide = (k) => (k === "name" ? 14 : k === "__no" ? 18 : k === "sec" ? 18 : k === "rank" ? 6 : 9);
     const blob = FB().makeXlsx([{
       name: safeFileName(name),
-      widths: cols.map((x) => wide(x.k)),
+      widths: outCols.map((x) => wide(x)),
       rows: [head, ...body],
     }]);
     downloadBlob(`${safeFileName(c.className || "学员")}_${safeFileName(name)}.xlsx`, blob);
@@ -21741,6 +21753,53 @@ async function verifyPaperNumbers(ocr, parts) {
     </p>`;
   }
 
+  /** 批量补学员号（2026-11-21 用户要求）
+   *  只读「姓名 + 学员号」两列 → 按姓名写 s.no；
+   *  **不碰成绩、打卡、备注、聊天、家长标签** 这些别的字段。
+   */
+  async function importStudentNo(file) {
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = await globalThis.XlsxLite.readWorkbook(buf);
+      const sheet = wb.sheets.find((x) => /总表|全员|名单/.test(String(x.name || ""))) || wb.sheets[0];
+      const rows = (sheet && sheet.rows) || [];
+      if (!rows.length) return toast("这个文件里没读到内容");
+      let headRow = -1, nameCol = -1, noCol = -1;
+      for (let i = 0; i < Math.min(10, rows.length); i++) {
+        const r = rows[i] || [];
+        const nc = r.findIndex((x) => /姓名|名字|学生/.test(String(x || "")));
+        const oc = r.findIndex((x) => /学员号|学号|考号|编号/.test(String(x || "")));
+        if (nc >= 0 && oc >= 0) { headRow = i; nameCol = nc; noCol = oc; break; }
+      }
+      if (headRow < 0) { nameCol = 0; noCol = 1; }   // 没表头就当第 1 列姓名、第 2 列学员号
+      const byName = new Map();
+      for (const s of DB.students) {
+        const k = coreName(s.name) || s.name;
+        if (!byName.has(k)) byName.set(k, []);
+        byName.get(k).push(s);
+      }
+      let hit = 0;
+      const miss = [];
+      for (let i = headRow + 1; i < rows.length; i++) {
+        const r = rows[i] || [];
+        const nm = String(r[nameCol] ?? "").trim();
+        const no = String(r[noCol] ?? "").trim();
+        if (!nm || !no || /^(序号|姓名|学员号|学号)$/.test(nm)) continue;
+        const arr = byName.get(coreName(nm) || nm);
+        if (!arr || !arr.length) { miss.push(nm); continue; }
+        for (const s of arr) { s.no = no; hit++; }
+      }
+      if (!hit) return toast("一个都没对上：「姓名」列和看板里的学生对不上，先看看表头", 7000);
+      save();
+      drawSettings();
+      if (view.profileSid) renderProfile();
+      toast(`学员号已写入 ${hit} 人${miss.length ? `；${miss.length} 人看板里没找到` : ""}`, 6000);
+    } catch (err) {
+      console.error(err);
+      toast("读学员号失败：" + (err.message || err), 7000);
+    }
+  }
+
   function drawSettings() {
     const c = DB.config;
     const line = (arr, key, label, extra) => arr.map((it, i) => `
@@ -21814,6 +21873,17 @@ async function verifyPaperNumbers(ocr, parts) {
         <div class="rowset"><label style="flex:0 0 66px;font-size:13px;color:var(--ink-2)">评分满分</label>
           <input type="text" data-cfg="maxScore" value="${c.maxScore}" style="max-width:70px">
           <span class="hint" style="margin:0">详情页里可以点 0 ~ 这个值</span></div>
+      </div>
+
+      <div class="sect">
+        <h4>学员号</h4>
+        <p class="desc">学员号跟着学生走：<b>学员档案里会显示，导出 Excel 时带成一列</b>。
+          手上有一张「姓名 + 学员号」的表（比如签到表）可以直接导进来，按姓名补号 ——
+          <b>只补学员号，不动成绩、打卡、备注、聊天</b>。</p>
+        <div class="rowset">
+          <button class="btn" id="noImport">导入学员号表格</button>
+          <span class="hint" style="margin:0">.xlsx / .csv，认「姓名」「学员号」两列</span>
+        </div>
       </div>
 
       <div class="sect">
@@ -21986,6 +22056,16 @@ async function verifyPaperNumbers(ocr, parts) {
       </div>`;
 
     // 绑定
+
+    /* ---- 学员号 ---- */
+    const noImpBtn = $("noImport");
+    if (noImpBtn) noImpBtn.onclick = () => {
+      const inp = document.createElement("input");
+      inp.type = "file";
+      inp.accept = ".xlsx,.csv,.txt";
+      inp.onchange = () => { if (inp.files && inp.files[0]) importStudentNo(inp.files[0]); };
+      inp.click();
+    };
     /* ---- 外观 ---- */
     // 缩略图直接用内存里那份 dataURL，不在 HTML 里再抄一遍（否则每张多 90KB）
     $("setBody").querySelectorAll("[data-thumb]").forEach((el) => {
